@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e0e0e" />
+  <title>Gastos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0e0e0e;
+      --bg-elev: #181818;
+      --bg-elev-2: #232323;
+      --border: #2a2a2a;
+      --text: #f4f0e8;
+      --text-dim: #9a958c;
+      --text-mute: #6a665e;
+      --accent: #d4ff3c;
+      --accent-dim: #a3c428;
+      --danger: #ff6b5e;
+      --ok: #6bd99a;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 16px;
+      line-height: 1.4;
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    /* ---------- Layout ---------- */
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 20px 120px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 12px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .brand {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-size: 34px;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .brand em {
+      font-style: italic;
+      color: var(--accent);
+      font-weight: 400;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-mute);
+      transition: background 0.3s;
+    }
+    .status-dot.ok { background: var(--ok); }
+    .status-dot.err { background: var(--danger); }
+
+    /* ---------- Tabs ---------- */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-elev);
+      padding: 4px;
+      border-radius: 999px;
+      margin-bottom: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      font-size: inherit;
+      letter-spacing: inherit;
+    }
+    .tab.active {
+      background: var(--accent);
+      color: #0a0a0a;
+      font-weight: 700;
+    }
+
+    /* ---------- Forms ---------- */
+    .field {
+      margin-bottom: 18px;
+    }
+    .field label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    input[type=text],
+    input[type=date],
+    input[type=number],
+    input[type=password],
+    select,
+    textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'Fraunces', serif;
+      font-size: 17px;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--bg-elev-2);
+    }
+    input::placeholder {
+      color: var(--text-mute);
+      font-style: italic;
+    }
+
+    /* Valor field gets a special treatment */
+    .valor-wrap {
+      position: relative;
+    }
+    .valor-wrap::before {
+      content: 'R$';
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-mute);
+      pointer-events: none;
+    }
+    .valor-wrap input { padding-left: 44px; font-variant-numeric: tabular-nums; }
+
+    /* Category chips */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+    }
+    .chip:active { transform: scale(0.95); }
+    .chip.selected {
+      background: var(--accent);
+      color: #0a0a0a;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Submit button */
+    .btn-primary {
+      width: 100%;
+      padding: 18px;
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+      margin-top: 8px;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled {
+      background: var(--bg-elev-2);
+      color: var(--text-mute);
+      cursor: not-allowed;
+    }
+
+    /* ---------- History ---------- */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .entry {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .entry-desc {
+      font-size: 16px;
+      letter-spacing: -0.01em;
+      grid-column: 1;
+    }
+    .entry-valor {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      align-self: start;
+    }
+    .entry-meta {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+    }
+    .entry-cat {
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg-elev);
+      color: var(--text-dim);
+    }
+
+    /* ---------- Summary ---------- */
+    .summary-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .summary-fatura {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .summary-total {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 16px;
+    }
+    .summary-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .summary-bar:first-of-type { border-top: none; padding-top: 0; }
+    .summary-bar-cat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+    }
+    .summary-bar-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+    }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position: fixed;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--bg-elev-2);
+      color: var(--text);
+      padding: 14px 22px;
+      border-radius: 999px;
+      font-size: 14px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      border: 1px solid var(--border);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 50;
+      pointer-events: none;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast.ok { border-color: var(--ok); }
+    .toast.err { border-color: var(--danger); color: var(--danger); }
+
+    /* ---------- Lock screen ---------- */
+    .lock {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 32px 24px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .lock h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-style: italic;
+      font-size: 56px;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      margin: 0 0 4px;
+    }
+    .lock p {
+      color: var(--text-dim);
+      font-size: 15px;
+      margin: 0 0 32px;
+      font-style: italic;
+    }
+
+    /* ---------- Empty ---------- */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-mute);
+      font-style: italic;
+    }
+
+    /* ---------- Loading ---------- */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(10,10,10,0.2);
+      border-top-color: #0a0a0a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+
+    /* ---------- Cache freshness badge ---------- */
+    .cache-age {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      text-align: right;
+      margin-bottom: 10px;
+      min-height: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOCK SCREEN -->
+  <div id="lock" class="lock">
+    <h1>gastos<em>.</em></h1>
+    <p id="lock-msg">Toque para entrar com Face ID</p>
+
+    <button class="btn-primary" id="lock-btn">Entrar</button>
+
+    <div id="register-form" class="hidden" style="margin-top: 8px;">
+      <div class="field">
+        <label>Bootstrap secret</label>
+        <input type="text" id="bootstrap-input" placeholder="Cole o segredo aqui" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+      </div>
+      <button class="btn-primary" id="register-btn">Registrar dispositivo</button>
+    </div>
+
+    <p style="margin-top: 32px; font-size: 13px; text-align: center; color: var(--text-mute); font-style: normal;">
+      <a id="register-link" href="#" style="color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; border-bottom: 1px dotted var(--text-mute); padding-bottom: 2px;">Registrar este dispositivo</a>
+    </p>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" class="app hidden">
+    <header>
+      <div class="brand">gastos<em>.</em></div>
+      <div class="status-dot" id="status-dot" title="Status da conexão"></div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="add">+ Novo</button>
+      <button class="tab" data-tab="history">Histórico</button>
+      <button class="tab" data-tab="summary">Resumo</button>
+    </div>
+
+    <!-- ADD VIEW -->
+    <section id="view-add">
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="f-data" />
+      </div>
+
+      <div class="field">
+        <label>Descrição</label>
+        <input type="text" id="f-descricao" placeholder="Ex: Sushi em casa" maxlength="200" />
+      </div>
+
+      <div class="field">
+        <label>Valor</label>
+        <div class="valor-wrap">
+          <input type="text" id="f-valor" inputmode="decimal" placeholder="0,00" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Categoria</label>
+        <div class="chips" id="f-categoria"></div>
+      </div>
+
+      <div class="field">
+        <label>Fatura</label>
+        <input type="text" id="f-fatura" placeholder="Ex: Junho 2026" />
+      </div>
+
+      <button class="btn-primary" id="submit-btn">Adicionar lançamento</button>
+    </section>
+
+    <!-- HISTORY VIEW -->
+    <section id="view-history" class="hidden">
+      <div class="cache-age" id="history-age"></div>
+      <div id="history-list" class="history-list">
+        <div class="empty">Carregando...</div>
+      </div>
+    </section>
+
+    <!-- SUMMARY VIEW -->
+    <section id="view-summary" class="hidden">
+      <div class="cache-age" id="summary-age"></div>
+      <div id="summary-list">
+        <div class="empty">Carregando...</div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    import { startRegistration, startAuthentication }
+      from 'https://esm.sh/@simplewebauthn/browser@13.1.0';
+
+    // ============= CONFIG =============
+    // Set this to the Cloudflare Worker URL (printed by `wrangler deploy`).
+    // No secrets in this file — auth happens via Face ID / passkey.
+    const WORKER_URL = 'https://gastos-auth.martinbianchoeduardo.workers.dev';
+    // ==================================
+
+    const CATEGORIES = [
+      'Carro', 'Comida', 'Mercado', 'Café', 'Lazer', 'Presente',
+      'Farmácia', 'Assinatura', 'Recorrente', 'Parcela',
+      'Emprestado', 'Outro'
+    ];
+
+    const $ = id => document.getElementById(id);
+    let jwt = sessionStorage.getItem('gastos_jwt') || '';
+    let selectedCategoria = '';
+
+    // ---------- Session / fetch helpers ----------
+    function setJwt(v) {
+      jwt = v || '';
+      if (v) sessionStorage.setItem('gastos_jwt', v);
+      else sessionStorage.removeItem('gastos_jwt');
+      scheduleTokenRefresh();
+    }
+
+    // Decode the unverified `exp` claim out of a JWT payload. We only use this
+    // for scheduling; signature verification still happens server-side on every call.
+    function decodeJwtExp(token) {
+      try {
+        const [, payloadB64] = String(token).split('.');
+        if (!payloadB64) return null;
+        const b64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = b64.length % 4 ? 4 - (b64.length % 4) : 0;
+        const { exp } = JSON.parse(atob(b64 + '='.repeat(pad)));
+        return typeof exp === 'number' ? exp : null;
+      } catch { return null; }
+    }
+
+    // Proactively refresh ~60s before expiry so long-open tabs don't hit an
+    // expired token when the user finally taps submit.
+    let refreshTimer;
+    function scheduleTokenRefresh() {
+      clearTimeout(refreshTimer);
+      if (!jwt) return;
+      const exp = decodeJwtExp(jwt);
+      if (!exp) return;
+      const ms = Math.max(0, exp * 1000 - Date.now() - 60 * 1000);
+      refreshTimer = setTimeout(refreshToken, ms);
+    }
+
+    async function refreshToken() {
+      if (!jwt) return;
+      try {
+        const { data } = await workerFetch('/auth/refresh', {
+          method: 'POST', headers: authHeaders(), body: '{}',
+        });
+        if (data.ok && data.jwt) setJwt(data.jwt);  // re-schedules via setJwt
+      } catch { /* silent — next api() call will surface session_expired and redirect to lock */ }
+    }
+
+    // ---------- Read-cache (localStorage; mobile-first: survives reloads + PWA close) ----------
+    // Tab switches render instantly from cache; no background revalidation. Writes from
+    // this app invalidate explicitly; the TTL is only a safety net for edits made
+    // directly in the Sheet.
+    const CACHE_PREFIX = 'gastos_cache_';
+    const CACHE_TTL_MS = 30 * 60 * 1000;
+
+    function cacheGet(key) {
+      try {
+        const raw = localStorage.getItem(CACHE_PREFIX + key);
+        if (!raw) return null;
+        const { ts, payload } = JSON.parse(raw);
+        if (Date.now() - ts > CACHE_TTL_MS) return null;
+        return { ts, payload };
+      } catch { return null; }
+    }
+
+    function cacheSet(key, payload) {
+      try {
+        localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), payload }));
+      } catch { /* quota / private mode — silent */ }
+    }
+
+    function cacheInvalidate(...keys) {
+      try { keys.forEach(k => localStorage.removeItem(CACHE_PREFIX + k)); } catch {}
+    }
+
+    function formatAge(tsMs) {
+      const sec = Math.floor((Date.now() - tsMs) / 1000);
+      if (sec < 30) return 'atualizado agora';
+      if (sec < 60) return 'atualizado há menos de 1 min';
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `atualizado há ${min} min`;
+      const h = Math.floor(min / 60);
+      if (h < 24) return `atualizado há ${h} h`;
+      return `atualizado há ${Math.floor(h / 24)} d`;
+    }
+
+    function setCacheAge(elId, tsMs) {
+      const el = $(elId);
+      if (el) el.textContent = formatAge(tsMs);
+    }
+
+    function authHeaders(extra) {
+      const h = { 'Content-Type': 'application/json', ...(extra || {}) };
+      if (jwt) h['Authorization'] = 'Bearer ' + jwt;
+      return h;
+    }
+
+    async function workerFetch(path, init) {
+      if (!WORKER_URL || WORKER_URL.startsWith('PASTE_')) {
+        throw new Error('configure_worker_url');
+      }
+      const res = await fetch(WORKER_URL + path, init);
+      const data = await res.json().catch(() => ({ ok: false, error: 'bad_json' }));
+      return { res, data };
+    }
+
+    // ---------- Auth: login with passkey ----------
+    async function loginWithPasskey() {
+      const btn = $('lock-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      try {
+        const { data: opts } = await workerFetch('/auth/login/options', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: '{}',
+        });
+        if (!opts.ok) throw new Error(opts.error || 'no_options');
+
+        const assertion = await startAuthentication({ optionsJSON: opts.options });
+
+        const { data: verify } = await workerFetch('/auth/login/verify', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ response: assertion, challengeToken: opts.challengeToken }),
+        });
+        if (!verify.ok || !verify.jwt) throw new Error(verify.error || 'verify_failed');
+
+        setJwt(verify.jwt);
+        $('status-dot').className = 'status-dot ok';
+        showApp();
+      } catch (err) {
+        if (err.name === 'NotAllowedError') toast('Autenticação cancelada', 'err');
+        else toast('Erro: ' + (err.message || err), 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    }
+
+    // ---------- Auth: register a device ----------
+    // iOS Safari requires startRegistration() to fire inside the same user
+    // gesture that triggered it. A prompt() dialog (or setTimeout) breaks
+    // that chain, so we use an inline form: the user taps a real button,
+    // which directly drives the WebAuthn ceremony.
+    async function registerDevice() {
+      const bootstrapSecret = $('bootstrap-input').value.trim();
+      if (!bootstrapSecret && !jwt) return toast('Cole o bootstrap secret', 'err');
+
+      const btn = $('register-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      try {
+        const headers = authHeaders();
+        if (bootstrapSecret) headers['X-Bootstrap-Secret'] = bootstrapSecret;
+
+        const { data: opts } = await workerFetch('/auth/register/options', {
+          method: 'POST', headers, body: '{}',
+        });
+        if (!opts.ok) throw new Error(opts.error || 'no_options');
+
+        const attestation = await startRegistration({ optionsJSON: opts.options });
+
+        const { data: verify } = await workerFetch('/auth/register/verify', {
+          method: 'POST', headers,
+          body: JSON.stringify({ response: attestation, challengeToken: opts.challengeToken }),
+        });
+        if (!verify.ok) throw new Error(verify.error || 'register_failed');
+
+        toast('Dispositivo registrado ✓ — toque Entrar', 'ok');
+        hideRegisterForm();
+        $('bootstrap-input').value = '';
+      } catch (err) {
+        if (err.name === 'NotAllowedError') toast('Registro cancelado', 'err');
+        else toast('Erro: ' + (err.message || err), 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Registrar dispositivo';
+      }
+    }
+
+    function showRegisterForm() {
+      $('register-form').classList.remove('hidden');
+      $('lock-btn').classList.add('hidden');
+      $('register-link').classList.add('hidden');
+      $('lock-msg').textContent = 'Cole o bootstrap secret e toque registrar';
+      setTimeout(() => $('bootstrap-input').focus(), 50);
+    }
+
+    function hideRegisterForm() {
+      $('register-form').classList.add('hidden');
+      $('lock-btn').classList.remove('hidden');
+      $('register-link').classList.remove('hidden');
+      $('lock-msg').textContent = 'Toque para entrar com Face ID';
+    }
+
+    $('lock-btn').onclick = loginWithPasskey;
+    $('register-btn').onclick = registerDevice;
+    $('register-link').onclick = (e) => { e.preventDefault(); showRegisterForm(); };
+
+    // On page load: try to refresh an existing JWT for a one-tap-skip experience.
+    (async () => {
+      if (!jwt) return;
+      try {
+        const { data } = await workerFetch('/auth/refresh', {
+          method: 'POST', headers: authHeaders(), body: '{}',
+        });
+        if (data.ok && data.jwt) {
+          setJwt(data.jwt);
+          $('status-dot').className = 'status-dot ok';
+          showApp();
+          return;
+        }
+      } catch { /* fall through to lock screen */ }
+      setJwt('');
+    })();
+
+    function showApp() {
+      $('lock').classList.add('hidden');
+      $('app').classList.remove('hidden');
+      init();
+    }
+
+    function showLock() {
+      $('app').classList.add('hidden');
+      $('lock').classList.remove('hidden');
+    }
+
+    // ---------- App API (proxied through Worker) ----------
+    async function api(action, payload) {
+      const { res, data } = await workerFetch('/api/' + action, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(payload || {}),
+      });
+      if (res.status === 401 || data.error === 'token_expired' || data.error === 'token_bad_signature') {
+        setJwt('');
+        showLock();
+        throw new Error('session_expired');
+      }
+      $('status-dot').className = 'status-dot ok';
+      if (!data.ok) throw new Error(data.error || 'unknown_error');
+      return data;
+    }
+
+    // ---------- UI: Tabs ----------
+    document.querySelectorAll('.tab').forEach(t => {
+      t.onclick = () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        ['add', 'history', 'summary'].forEach(v => {
+          $('view-' + v).classList.toggle('hidden', v !== t.dataset.tab);
+        });
+        if (t.dataset.tab === 'history') loadHistory();
+        if (t.dataset.tab === 'summary') loadSummary();
+      };
+    });
+
+    // ---------- UI: Categoria chips ----------
+    function renderChips() {
+      const c = $('f-categoria');
+      c.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.textContent = cat;
+        b.type = 'button';
+        b.onclick = () => {
+          document.querySelectorAll('#f-categoria .chip').forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
+          selectedCategoria = cat;
+        };
+        c.appendChild(b);
+      });
+    }
+
+    // ---------- Init ----------
+    function init() {
+      renderChips();
+      // Default date to today in local time (not UTC — avoids the date rolling
+      // forward late at night in negative-offset timezones like America/Sao_Paulo).
+      const today = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      $('f-data').value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+      $('f-fatura').value = defaultFatura(today);
+    }
+
+    // Prefer the fatura of the most recently logged entry (cached). Otherwise
+    // fall back to the date-based heuristic. This handles the case where you've
+    // started a new fatura before the month flips.
+    function defaultFatura(today) {
+      try {
+        const cached = cacheGet('list');
+        const rows = cached && cached.payload && cached.payload.rows;
+        if (rows && rows.length && rows[0].fatura) return rows[0].fatura;
+      } catch { /* fall through */ }
+      return guessFatura(today);
+    }
+
+    function guessFatura(d) {
+      // Simple heuristic: if day >= 25, fatura = next month
+      const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      let m = d.getMonth();
+      let y = d.getFullYear();
+      if (d.getDate() >= 25) { m = (m + 1) % 12; if (m === 0) y++; }
+      return months[m] + ' ' + y;
+    }
+
+    // ---------- Submit ----------
+    $('submit-btn').onclick = async () => {
+      const data = $('f-data').value;
+      const descricao = $('f-descricao').value.trim();
+      const valorStr = $('f-valor').value.trim();
+      const fatura = $('f-fatura').value.trim();
+
+      if (!data) return toast('Informe a data', 'err');
+      if (!descricao) return toast('Informe a descrição', 'err');
+      if (!valorStr) return toast('Informe o valor', 'err');
+      if (!selectedCategoria) return toast('Escolha uma categoria', 'err');
+      if (!fatura) return toast('Informe a fatura', 'err');
+
+      const valor = parseValor(valorStr);
+      if (isNaN(valor)) return toast('Valor inválido', 'err');
+
+      const btn = $('submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        await api('append', { data, descricao, valor, categoria: selectedCategoria, fatura });
+        cacheInvalidate('list', 'summary');
+        toast('Lançamento adicionado ✓', 'ok');
+        // Clear form
+        $('f-descricao').value = '';
+        $('f-valor').value = '';
+        document.querySelectorAll('#f-categoria .chip').forEach(x => x.classList.remove('selected'));
+        selectedCategoria = '';
+      } catch (err) {
+        if (err.message !== 'session_expired') {
+          $('status-dot').className = 'status-dot err';
+          toast('Erro: ' + err.message, 'err');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Adicionar lançamento';
+      }
+    };
+
+    // ---------- History ----------
+    function renderHistory(rows) {
+      const el = $('history-list');
+      if (!rows.length) { el.innerHTML = '<div class="empty">Nenhum lançamento ainda.</div>'; return; }
+      el.innerHTML = rows.map(r => `
+        <div class="entry">
+          <div class="entry-desc">${escapeHtml(r.descricao)}</div>
+          <div class="entry-valor">${escapeHtml(r.valor)}</div>
+          <div class="entry-meta">
+            <span>${escapeHtml(r.data)}</span>
+            <span class="entry-cat">${escapeHtml(r.categoria)}</span>
+            <span>${escapeHtml(r.fatura)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadHistory() {
+      const el = $('history-list');
+      const cached = cacheGet('list');
+      if (cached) {
+        renderHistory(cached.payload.rows);
+        setCacheAge('history-age', cached.ts);
+        return;
+      }
+      $('history-age').textContent = '';
+      el.innerHTML = '<div class="empty">Carregando...</div>';
+      try {
+        const fresh = await api('list', { limit: 50 });
+        cacheSet('list', fresh);
+        renderHistory(fresh.rows);
+        setCacheAge('history-age', Date.now());
+      } catch (err) {
+        if (err.message === 'session_expired') return;
+        el.innerHTML = `<div class="empty">Erro: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // ---------- Summary ----------
+    function renderSummary(summary) {
+      const el = $('summary-list');
+      const faturas = Object.keys(summary);
+      if (!faturas.length) { el.innerHTML = '<div class="empty">Sem dados ainda.</div>'; return; }
+      el.innerHTML = faturas.map(f => {
+        const s = summary[f];
+        const cats = Object.entries(s.byCategoria).sort((a, b) => b[1] - a[1]);
+        return `
+          <div class="summary-card">
+            <div class="summary-fatura">${escapeHtml(f)}</div>
+            <div class="summary-total">${formatBRL(s.total)}</div>
+            ${cats.map(([cat, v]) => `
+              <div class="summary-bar">
+                <span class="summary-bar-cat">${escapeHtml(cat)}</span>
+                <span class="summary-bar-val">${formatBRL(v)}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadSummary() {
+      const el = $('summary-list');
+      const cached = cacheGet('summary');
+      if (cached) {
+        renderSummary(cached.payload.summary);
+        setCacheAge('summary-age', cached.ts);
+        return;
+      }
+      $('summary-age').textContent = '';
+      el.innerHTML = '<div class="empty">Carregando...</div>';
+      try {
+        const fresh = await api('summary');
+        cacheSet('summary', fresh);
+        renderSummary(fresh.summary);
+        setCacheAge('summary-age', Date.now());
+      } catch (err) {
+        if (err.message === 'session_expired') return;
+        el.innerHTML = `<div class="empty">Erro: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function formatBRL(n) {
+      return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    // Accepts BRL ("12,50", "1.234,56"), US ("12.50", "1,234.56"), or plain ("12").
+    // Rule: when both separators are present, the rightmost is decimal.
+    // With one separator + exactly 2 trailing digits → decimal. Otherwise → thousands.
+    function parseValor(s) {
+      s = String(s).trim().replace(/[^\d.,\-]/g, '');
+      if (!s) return NaN;
+      const hasDot = s.includes('.');
+      const hasComma = s.includes(',');
+      if (hasDot && hasComma) {
+        const lastDot = s.lastIndexOf('.');
+        const lastComma = s.lastIndexOf(',');
+        return lastComma > lastDot
+          ? parseFloat(s.replace(/\./g, '').replace(',', '.'))   // 1.234,56 → 1234.56
+          : parseFloat(s.replace(/,/g, ''));                     // 1,234.56 → 1234.56
+      }
+      if (hasComma) {
+        const [, frac] = s.split(',');
+        return frac && frac.length === 2
+          ? parseFloat(s.replace(',', '.'))
+          : parseFloat(s.replace(/,/g, ''));
+      }
+      if (hasDot) {
+        const [, frac] = s.split('.');
+        return frac && frac.length === 2
+          ? parseFloat(s)
+          : parseFloat(s.replace(/\./g, ''));
+      }
+      return parseFloat(s);
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[m]));
+    }
+
+    // ---------- Toast ----------
+    let toastTimer;
+    function toast(msg, kind) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.className = 'toast show ' + (kind || '');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.className = 'toast ' + (kind || ''), 2400);
+    }
+  </script>
+</body>
+</html>
