@@ -2,3 +2,6 @@
 .wrangler/
 docs/
 CLAUDE.md
+.claude/
+# Local runtime config (Worker URL etc.). Use config.example.js as a template.
+config.local.js

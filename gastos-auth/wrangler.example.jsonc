@@ -1,0 +1,55 @@
+// Cloudflare Worker config TEMPLATE.
+//
+// Copy this file to wrangler.jsonc (gitignored) and fill in the real values
+// before deploying. See https://developers.cloudflare.com/workers/wrangler/configuration/
+//
+// Setup steps (one-time):
+//   1. Create the KV namespace:
+//        npx wrangler kv namespace create CREDENTIALS
+//      Paste the printed id into `kv_namespaces[0].id` below.
+//
+//   2. Create the D1 database:
+//        npx wrangler d1 create gastos-db
+//      Paste the printed database_id into `d1_databases[0].database_id` below.
+//      Then apply the initial schema:
+//        npx wrangler d1 execute gastos-db --remote --file=migrations/0001_initial.sql
+//
+//   3. After deploying the frontend to Cloudflare Pages, set RP_ID to the bare
+//      hostname (e.g. "your-app.pages.dev") and FRONTEND_ORIGIN to the full
+//      scheme+host. RP_ID is BAKED INTO every passkey at registration —
+//      changing it later forces re-registration on every device, so commit to
+//      one value before registering.
+//
+// Secrets (set via `npx wrangler secret put NAME`, never committed):
+//   - HMAC_SECRET       random 32+ bytes; signs challenge tokens + session JWTs
+//   - BOOTSTRAP_SECRET  random 32+ bytes; gates first-device registration
+//   - APP_SECRET        the Apps Script Script Property of the same name
+//   - APPS_SCRIPT_URL   your Apps Script /exec URL
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "gastos-auth",
+	"main": "src/index.js",
+	"compatibility_date": "2025-11-01",
+	"workers_dev": true,
+	"observability": {
+		"enabled": true
+	},
+	"kv_namespaces": [
+		{
+			"binding": "CREDENTIALS",
+			"id": "<paste KV namespace id here>"
+		}
+	],
+	"vars": {
+		"RP_NAME": "Gastos",
+		"RP_ID": "<your-app.pages.dev>",
+		"FRONTEND_ORIGIN": "https://<your-app.pages.dev>"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "gastos-db",
+			"database_id": "<paste D1 database id here>"
+		}
+	]
+}

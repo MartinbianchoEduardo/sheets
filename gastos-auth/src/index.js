@@ -27,6 +27,14 @@ import { issueSession, verifySession, readBearer } from './session.js';
 import { getCredential, putCredential, listCredentials } from './kv.js';
 import { corsPreflightResponse, jsonResponse } from './cors.js';
 import { callAppsScript } from './proxy.js';
+import { queryOne } from './db.js';
+import { ERR } from './errors.js';
+import {
+  listFaturas, createFatura, updateFatura, deleteFatura,
+} from './faturas.js';
+import {
+  listTx, createTx, updateTx, softDeleteTx, restoreTx,
+} from './transactions.js';
 
 export default {
   async fetch(request, env) {
@@ -40,6 +48,10 @@ export default {
         return jsonResponse({ ok: true, service: 'gastos-auth' }, {}, env);
       }
 
+      if (request.method === 'GET' && path === '/health/db') {
+        return handleHealthDb(env);
+      }
+
       if (request.method === 'POST') {
         switch (path) {
           case '/auth/register/options': return handleRegisterOptions(request, env);
@@ -50,6 +62,17 @@ export default {
           case '/api/list':              return handleApi(request, env, 'list');
           case '/api/append':            return handleApi(request, env, 'append');
           case '/api/summary':           return handleApi(request, env, 'summary');
+
+          case '/api/faturas/list':      return handleFaturasList(request, env);
+          case '/api/faturas/create':    return handleFaturasCreate(request, env);
+          case '/api/faturas/update':    return handleFaturasUpdate(request, env);
+          case '/api/faturas/delete':    return handleFaturasDelete(request, env);
+
+          case '/api/transactions/list':   return handleTxList(request, env);
+          case '/api/transactions/create': return handleTxCreate(request, env);
+          case '/api/transactions/update': return handleTxUpdate(request, env);
+          case '/api/transactions/delete': return handleTxDelete(request, env);
+          case '/api/transactions/restore': return handleTxRestore(request, env);
         }
       }
 
@@ -63,6 +86,140 @@ export default {
     }
   },
 };
+
+// ---------- /health/db ----------
+async function handleHealthDb(env) {
+  const f = await queryOne(env, 'SELECT COUNT(*) AS c FROM faturas');
+  const t = await queryOne(env, 'SELECT COUNT(*) AS c FROM transactions');
+  const r = await queryOne(env, 'SELECT COUNT(*) AS c FROM merchant_rules');
+  return jsonResponse({
+    ok: true,
+    counts: {
+      faturas: f.c,
+      transactions: t.c,
+      merchant_rules: r.c,
+    },
+  }, {}, env);
+}
+
+// ---------- /api/faturas/* ----------
+
+async function authedJsonBody(request, env) {
+  await requireSession(request, env);
+  return request.json().catch(() => ({}));
+}
+
+function errToStatus(code) {
+  switch (code) {
+    case ERR.validation_failed:
+    case ERR.category_invalid:
+    case ERR.csv_parse_failed:
+    case ERR.duplicate_fatura_name:
+      return 400;
+    case ERR.fatura_not_found:
+    case ERR.not_found:
+      return 404;
+    case ERR.unauthorized:
+    case ERR.bootstrap_invalid:
+      return 401;
+    default:
+      return 500;
+  }
+}
+
+function resultToResponse(env, result) {
+  if (result && result.error) {
+    const { error, ...rest } = result;
+    return jsonResponse({ ok: false, error, ...rest }, { status: errToStatus(error) }, env);
+  }
+  return jsonResponse({ ok: true, ...result }, {}, env);
+}
+
+async function handleFaturasList(request, env) {
+  try {
+    await requireSession(request, env);
+  } catch (err) {
+    return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env);
+  }
+  const faturas = await listFaturas(env);
+  return jsonResponse({ ok: true, faturas }, {}, env);
+}
+
+async function handleFaturasCreate(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  return resultToResponse(env, await createFatura(env, body));
+}
+
+async function handleFaturasUpdate(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  const { id, ...patch } = body;
+  if (!Number.isInteger(id)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await updateFatura(env, id, patch));
+}
+
+async function handleFaturasDelete(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  if (!Number.isInteger(body.id)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await deleteFatura(env, body.id));
+}
+
+// ---------- /api/transactions/* ----------
+
+async function handleTxList(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  const transactions = await listTx(env, body || {});
+  return jsonResponse({ ok: true, transactions }, {}, env);
+}
+
+async function handleTxCreate(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  return resultToResponse(env, await createTx(env, body));
+}
+
+async function handleTxUpdate(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  const { id, ...patch } = body;
+  if (typeof id !== 'string' || !id) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await updateTx(env, id, patch));
+}
+
+async function handleTxDelete(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  if (typeof body.id !== 'string' || !body.id) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await softDeleteTx(env, body.id));
+}
+
+async function handleTxRestore(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  if (typeof body.id !== 'string' || !body.id) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await restoreTx(env, body.id));
+}
 
 // ---------- helpers ----------
 

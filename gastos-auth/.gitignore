@@ -3,3 +3,5 @@ node_modules/
 .dev.vars
 *.log
 .DS_Store
+# Real Wrangler config with KV/D1 resource IDs — use wrangler.example.jsonc as a template.
+wrangler.jsonc

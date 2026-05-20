@@ -40,13 +40,20 @@
       min-height: 100vh;
       min-height: 100dvh;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      display: flex;
+      flex-direction: column;
     }
 
     /* ---------- Layout ---------- */
     .app {
       max-width: 520px;
+      width: 100%;
       margin: 0 auto;
-      padding: 24px 20px 120px;
+      padding: 24px 20px 0;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
     }
 
     header {
@@ -218,6 +225,153 @@
       cursor: not-allowed;
     }
 
+    /* ---------- In-place row editing ---------- */
+    .entry { user-select: none; -webkit-user-select: none; }
+    .entry.editing {
+      display: block;
+      border-left: 2px solid var(--accent);
+      background: var(--bg-elev);
+      border-radius: 10px;
+      padding: 16px 16px 12px;
+      border-bottom: none;
+      margin: 8px 0;
+    }
+    /* Row morph animation: max-height is set inline by JS (FLIP-style);
+       the transition + overflow-hidden are global so both expand and shrink animate. */
+    .entry.morphing {
+      overflow: hidden;
+      transition: max-height 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .entry.collapsing { /* used for delete animation */
+      overflow: hidden;
+      transition: max-height 0.22s ease, opacity 0.18s ease, padding 0.22s ease, margin 0.22s ease, border 0.22s ease;
+    }
+    /* Stagger fade-in for editor children when entering edit mode */
+    .entry.editing .edit-row,
+    .entry.editing .edit-fatura,
+    .entry.editing .edit-chips,
+    .entry.editing .edit-actions {
+      animation: edit-fade-in 0.22s ease-out backwards;
+    }
+    .entry.editing .edit-row:nth-of-type(1) { animation-delay: 0.02s; }
+    .entry.editing .edit-row:nth-of-type(2) { animation-delay: 0.06s; }
+    .entry.editing .edit-fatura            { animation-delay: 0.09s; }
+    .entry.editing .edit-chips             { animation-delay: 0.11s; }
+    .entry.editing .edit-actions           { animation-delay: 0.14s; }
+
+    /* Mirror fade-in for display row when shrinking back from edit — without
+       this, the new (display) content snaps in instantly while the box
+       smoothly shrinks around it, which feels abrupt. Scoped to .morphing so
+       it only fires during the edit→display transition, not on initial list
+       renders. */
+    .entry.morphing:not(.editing) .entry-desc { animation: edit-fade-in 0.22s ease-out 0.04s backwards; }
+    .entry.morphing:not(.editing) .entry-valor { animation: edit-fade-in 0.22s ease-out 0.07s backwards; }
+    .entry.morphing:not(.editing) .entry-meta  { animation: edit-fade-in 0.22s ease-out 0.10s backwards; }
+
+    @keyframes edit-fade-in {
+      from { opacity: 0; transform: translateY(-3px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .edit-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .edit-row input {
+      width: 100%;
+      padding: 11px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Fraunces', serif;
+      font-size: 15px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .edit-row input:focus { outline: none; border-color: var(--accent); }
+    .edit-valor { flex: 1; font-variant-numeric: tabular-nums; }
+    .edit-data { flex: 1; }
+    .edit-fatura {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      margin: -4px 0 16px;
+    }
+    .edit-fatura::before { content: 'fatura · '; }
+    .edit-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 18px;
+    }
+    .edit-chips .chip {
+      padding: 7px 11px;
+      font-size: 11px;
+    }
+    .edit-actions {
+      display: flex;
+      justify-content: flex-start;
+      gap: 22px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      padding-top: 4px;
+    }
+    .edit-action {
+      background: none;
+      border: none;
+      padding: 4px 0;
+      cursor: pointer;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: inherit;
+      letter-spacing: inherit;
+    }
+    .edit-action.danger { color: var(--danger); }
+    .edit-action.muted { color: var(--text-mute); }
+    .edit-action:active { transform: scale(0.95); }
+
+    /* ---------- Tab deck (horizontal scroll-snap) ---------- */
+    .deck {
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      margin: 0 -20px;
+      min-height: 0;
+    }
+    .deck::-webkit-scrollbar { display: none; }
+    .deck-page {
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 20px 120px;
+      min-width: 0;
+    }
+
+    /* ---------- Toast action (e.g., "desfazer") ---------- */
+    .toast-action {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      cursor: pointer;
+      padding: 4px 0;
+      margin-left: 14px;
+    }
+    .toast { display: inline-flex; align-items: center; }
+
     /* ---------- History ---------- */
     .history-list {
       display: flex;
@@ -327,6 +481,7 @@
     .toast.show {
       transform: translateX(-50%) translateY(0);
       opacity: 1;
+      pointer-events: auto;
     }
     .toast.ok { border-color: var(--ok); }
     .toast.err { border-color: var(--danger); color: var(--danger); }
@@ -428,76 +583,96 @@
       <button class="tab" data-tab="summary">Resumo</button>
     </div>
 
-    <!-- ADD VIEW -->
-    <section id="view-add">
-      <div class="field">
-        <label>Data</label>
-        <input type="date" id="f-data" />
-      </div>
-
-      <div class="field">
-        <label>Descrição</label>
-        <input type="text" id="f-descricao" placeholder="Ex: Sushi em casa" maxlength="200" />
-      </div>
-
-      <div class="field">
-        <label>Valor</label>
-        <div class="valor-wrap">
-          <input type="text" id="f-valor" inputmode="decimal" placeholder="0,00" />
+    <div class="deck" id="deck">
+      <!-- ADD VIEW -->
+      <section id="view-add" class="deck-page">
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="f-data" />
         </div>
-      </div>
 
-      <div class="field">
-        <label>Categoria</label>
-        <div class="chips" id="f-categoria"></div>
-      </div>
+        <div class="field">
+          <label>Descrição</label>
+          <input type="text" id="f-descricao" placeholder="Ex: Sushi em casa" maxlength="200" />
+        </div>
 
-      <div class="field">
-        <label>Fatura</label>
-        <input type="text" id="f-fatura" placeholder="Ex: Junho 2026" />
-      </div>
+        <div class="field">
+          <label>Valor</label>
+          <div class="valor-wrap">
+            <input type="text" id="f-valor" inputmode="decimal" placeholder="0,00" />
+          </div>
+        </div>
 
-      <button class="btn-primary" id="submit-btn">Adicionar lançamento</button>
-    </section>
+        <div class="field">
+          <label>Categoria</label>
+          <div class="chips" id="f-categoria"></div>
+        </div>
 
-    <!-- HISTORY VIEW -->
-    <section id="view-history" class="hidden">
-      <div class="cache-age" id="history-age"></div>
-      <div id="history-list" class="history-list">
-        <div class="empty">Carregando...</div>
-      </div>
-    </section>
+        <div class="field">
+          <label>Fatura</label>
+          <input type="text" id="f-fatura" readonly placeholder="—" />
+        </div>
 
-    <!-- SUMMARY VIEW -->
-    <section id="view-summary" class="hidden">
-      <div class="cache-age" id="summary-age"></div>
-      <div id="summary-list">
-        <div class="empty">Carregando...</div>
-      </div>
-    </section>
+        <button class="btn-primary" id="submit-btn">Adicionar lançamento</button>
+      </section>
+
+      <!-- HISTORY VIEW -->
+      <section id="view-history" class="deck-page">
+        <div class="cache-age" id="history-age"></div>
+        <div id="history-list" class="history-list">
+          <div class="empty">Carregando...</div>
+        </div>
+      </section>
+
+      <!-- SUMMARY VIEW -->
+      <section id="view-summary" class="deck-page">
+        <div class="cache-age" id="summary-age"></div>
+        <div id="summary-list">
+          <div class="empty">Carregando...</div>
+        </div>
+      </section>
+    </div>
   </div>
 
   <div id="toast" class="toast"></div>
+
+  <!-- Runtime config (Worker URL etc.) — gitignored, ships with the deploy.
+       See config.example.js for the template. -->
+  <script src="./config.local.js"></script>
 
   <script type="module">
     import { startRegistration, startAuthentication }
       from 'https://esm.sh/@simplewebauthn/browser@13.1.0';
 
     // ============= CONFIG =============
-    // Set this to the Cloudflare Worker URL (printed by `wrangler deploy`).
-    // No secrets in this file — auth happens via Face ID / passkey.
-    const WORKER_URL = 'https://gastos-auth.martinbianchoeduardo.workers.dev';
+    // WORKER_URL is injected by config.local.js (gitignored). The source tree
+    // only contains the template at config.example.js so the deployed Worker
+    // URL stays out of the public repo.
+    const WORKER_URL = (window.__GASTOS_CONFIG__ || {}).WORKER_URL;
+    if (!WORKER_URL) {
+      document.body.innerHTML = '<pre style="color:#ff6b5e;padding:24px;font-family:monospace;">'
+        + 'config.local.js not loaded. Copy config.example.js → config.local.js and set WORKER_URL.'
+        + '</pre>';
+      throw new Error('config_not_loaded');
+    }
     // ==================================
 
     const CATEGORIES = [
-      'Carro', 'Comida', 'Mercado', 'Café', 'Lazer', 'Presente',
-      'Farmácia', 'Assinatura', 'Recorrente', 'Parcela',
-      'Emprestado', 'Outro'
+      'Assinatura', 'Café', 'Carro', 'Comida', 'Educação', 'Emprestado',
+      'Farmácia', 'Lazer', 'Mercado', 'Outro', 'Parcela', 'Pix',
+      'Presente', 'Recorrente', 'Viagem'
     ];
 
     const $ = id => document.getElementById(id);
     let jwt = sessionStorage.getItem('gastos_jwt') || '';
     let selectedCategoria = '';
+
+    // Module-scoped UI state. `faturas` is loaded at init from /api/faturas/list.
+    // `editingId` is the tx id currently in inline-edit mode (one at a time).
+    const state = {
+      faturas: [],
+      editingId: null,
+    };
 
     // ---------- Session / fetch helpers ----------
     function setJwt(v) {
@@ -546,7 +721,9 @@
     // Tab switches render instantly from cache; no background revalidation. Writes from
     // this app invalidate explicitly; the TTL is only a safety net for edits made
     // directly in the Sheet.
-    const CACHE_PREFIX = 'gastos_cache_';
+    // v2_ marks the cutover from Apps Script payloads to D1 payloads. Bumping
+    // the prefix orphans every legacy cache entry so stale Sheet data can't leak.
+    const CACHE_PREFIX = 'gastos_cache_v2_';
     const CACHE_TTL_MS = 30 * 60 * 1000;
 
     function cacheGet(key) {
@@ -739,18 +916,44 @@
       return data;
     }
 
-    // ---------- UI: Tabs ----------
+    // ---------- UI: Tabs + deck scroll-snap ----------
+    // Tab pill is the source-of-truth for the visible page on tap; scroll
+    // position is the source-of-truth on swipe. IntersectionObserver bridges
+    // the two: whichever page is >50% in view sets the active pill.
+    const TAB_ORDER = ['add', 'history', 'summary'];
+
+    function scrollToTab(name, behavior = 'smooth') {
+      const idx = TAB_ORDER.indexOf(name);
+      if (idx < 0) return;
+      const deck = $('deck');
+      deck.scrollTo({ left: deck.clientWidth * idx, behavior });
+    }
+
+    function setActiveTab(name) {
+      document.querySelectorAll('.tab').forEach(x => {
+        x.classList.toggle('active', x.dataset.tab === name);
+      });
+      if (name === 'history') loadHistory();
+      if (name === 'summary') loadSummary();
+    }
+
     document.querySelectorAll('.tab').forEach(t => {
-      t.onclick = () => {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-        t.classList.add('active');
-        ['add', 'history', 'summary'].forEach(v => {
-          $('view-' + v).classList.toggle('hidden', v !== t.dataset.tab);
-        });
-        if (t.dataset.tab === 'history') loadHistory();
-        if (t.dataset.tab === 'summary') loadSummary();
-      };
+      t.onclick = () => scrollToTab(t.dataset.tab);
     });
+
+    // Wire up the observer after init() so it doesn't fire prematurely.
+    function wireDeckObserver() {
+      const deck = $('deck');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.intersectionRatio >= 0.5) {
+            const name = entry.target.id.replace('view-', '');
+            setActiveTab(name);
+          }
+        });
+      }, { root: deck, threshold: [0.5] });
+      document.querySelectorAll('.deck-page').forEach(p => io.observe(p));
+    }
 
     // ---------- UI: Categoria chips ----------
     function renderChips() {
@@ -771,62 +974,69 @@
     }
 
     // ---------- Init ----------
-    function init() {
+    async function init() {
       renderChips();
       // Default date to today in local time (not UTC — avoids the date rolling
       // forward late at night in negative-offset timezones like America/Sao_Paulo).
       const today = new Date();
       const pad = n => String(n).padStart(2, '0');
       $('f-data').value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-      $('f-fatura').value = defaultFatura(today);
+      await loadFaturas();
+      refreshFaturaDisplay();
+      wireDeckObserver();
+      // Make sure we start anchored to + Novo (deck.scrollLeft = 0).
+      $('deck').scrollLeft = 0;
     }
 
-    // Prefer the fatura of the most recently logged entry (cached). Otherwise
-    // fall back to the date-based heuristic. This handles the case where you've
-    // started a new fatura before the month flips.
-    function defaultFatura(today) {
+    async function loadFaturas() {
       try {
-        const cached = cacheGet('list');
-        const rows = cached && cached.payload && cached.payload.rows;
-        if (rows && rows.length && rows[0].fatura) return rows[0].fatura;
-      } catch { /* fall through */ }
-      return guessFatura(today);
+        const cached = cacheGet('faturas');
+        if (cached) { state.faturas = cached.payload.faturas || []; }
+        const fresh = await api('faturas/list', {});
+        state.faturas = fresh.faturas || [];
+        cacheSet('faturas', fresh);
+      } catch (err) {
+        if (err.message === 'session_expired') return;
+        // Non-fatal: form can still submit; server will set fatura_id = null.
+      }
     }
 
-    function guessFatura(d) {
-      // Simple heuristic: if day >= 25, fatura = next month
-      const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-      let m = d.getMonth();
-      let y = d.getFullYear();
-      if (d.getDate() >= 25) { m = (m + 1) % 12; if (m === 0) y++; }
-      return months[m] + ' ' + y;
+    function refreshFaturaDisplay() {
+      const iso = $('f-data').value;
+      const f = resolveFaturaForDateClient(iso);
+      $('f-fatura').value = f ? f.nome : '—';
     }
 
-    // ---------- Submit ----------
+    // Recompute the fatura display whenever the user edits the date.
+    document.addEventListener('change', e => {
+      if (e.target && e.target.id === 'f-data') refreshFaturaDisplay();
+    });
+
+    // ---------- Submit (+ Novo) ----------
     $('submit-btn').onclick = async () => {
       const data = $('f-data').value;
       const descricao = $('f-descricao').value.trim();
       const valorStr = $('f-valor').value.trim();
-      const fatura = $('f-fatura').value.trim();
 
       if (!data) return toast('Informe a data', 'err');
       if (!descricao) return toast('Informe a descrição', 'err');
       if (!valorStr) return toast('Informe o valor', 'err');
       if (!selectedCategoria) return toast('Escolha uma categoria', 'err');
-      if (!fatura) return toast('Informe a fatura', 'err');
 
       const valor = parseValor(valorStr);
       if (isNaN(valor)) return toast('Valor inválido', 'err');
+      const valor_cents = Math.round(valor * 100);
 
       const btn = $('submit-btn');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>';
 
       try {
-        await api('append', { data, descricao, valor, categoria: selectedCategoria, fatura });
-        cacheInvalidate('list', 'summary');
+        await api('transactions/create', {
+          data, descricao, valor_cents, categoria: selectedCategoria,
+        });
+        cacheInvalidate('transactions', 'summary');
         toast('Lançamento adicionado ✓', 'ok');
-        // Clear form
         $('f-descricao').value = '';
         $('f-valor').value = '';
         document.querySelectorAll('#f-categoria .chip').forEach(x => x.classList.remove('selected'));
@@ -843,36 +1053,112 @@
     };
 
     // ---------- History ----------
+    function faturaNameById(id) {
+      if (id == null) return '';
+      const f = state.faturas.find(x => x.id === id);
+      return f ? f.nome : '';
+    }
+
+    // Module-scoped cache of last-loaded rows so the inline editor can look up
+    // the source row without another fetch.
+    let historyRows = [];
+
+    function renderEntry(r) {
+      if (r.id === state.editingId) return renderEditingEntry(r);
+      return `
+        <div class="entry" data-id="${escapeHtml(r.id)}">
+          <div class="entry-desc">${escapeHtml(r.descricao)}</div>
+          <div class="entry-valor">${escapeHtml(formatBRL(r.valor_cents))}</div>
+          <div class="entry-meta">
+            <span>${escapeHtml(formatDate(r.data))}</span>
+            <span class="entry-cat">${escapeHtml(r.categoria)}</span>
+            <span>${escapeHtml(faturaNameById(r.fatura_id))}</span>
+          </div>
+        </div>`;
+    }
+
+    function renderEditingEntry(r) {
+      const valorStr = (r.valor_cents / 100).toFixed(2).replace('.', ',');
+      const chips = CATEGORIES.map(c => `
+        <button class="chip ${c === r.categoria ? 'selected' : ''}" data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>
+      `).join('');
+      const faturaName = (resolveFaturaForDateClient(r.data) || {}).nome || '—';
+      return `
+        <div class="entry editing" data-id="${escapeHtml(r.id)}">
+          <div class="edit-row">
+            <input class="edit-desc" maxlength="200" value="${escapeHtml(r.descricao)}">
+          </div>
+          <div class="edit-row">
+            <input class="edit-valor" inputmode="decimal" value="${escapeHtml(valorStr)}">
+            <input class="edit-data" type="date" value="${escapeHtml(r.data)}">
+          </div>
+          <div class="edit-fatura">${escapeHtml(faturaName)}</div>
+          <div class="edit-chips">${chips}</div>
+          <div class="edit-actions">
+            <button class="edit-action" data-action="save">salvar</button>
+            <button class="edit-action danger" data-action="delete">excluir</button>
+            <button class="edit-action muted" data-action="cancel">cancelar</button>
+          </div>
+        </div>`;
+    }
+
     function renderHistory(rows) {
+      historyRows = rows;
       const el = $('history-list');
       if (!rows.length) { el.innerHTML = '<div class="empty">Nenhum lançamento ainda.</div>'; return; }
-      el.innerHTML = rows.map(r => `
-        <div class="entry">
-          <div class="entry-desc">${escapeHtml(r.descricao)}</div>
-          <div class="entry-valor">${escapeHtml(r.valor)}</div>
-          <div class="entry-meta">
-            <span>${escapeHtml(r.data)}</span>
-            <span class="entry-cat">${escapeHtml(r.categoria)}</span>
-            <span>${escapeHtml(r.fatura)}</span>
-          </div>
-        </div>
-      `).join('');
+      el.innerHTML = rows.map(renderEntry).join('');
+      wireRowInteractions();
+    }
+
+    // FLIP-ish: measure old height, swap DOM, measure new height, then animate
+    // max-height between the two so display ⇄ edit transitions feel like the
+    // row itself is morphing rather than two distinct elements.
+    function rerenderRow(id, { animate = true } = {}) {
+      const node = document.querySelector(`#history-list .entry[data-id="${id}"]`);
+      const row = historyRows.find(r => r.id === id);
+      if (!node || !row) return;
+
+      const beforeH = animate ? node.offsetHeight : 0;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderEntry(row);
+      const newNode = tmp.firstElementChild;
+      node.replaceWith(newNode);
+
+      if (animate) {
+        const afterH = newNode.offsetHeight;
+        newNode.classList.add('morphing');
+        newNode.style.maxHeight = beforeH + 'px';
+        // Force layout so the next change actually transitions.
+        newNode.offsetHeight; // eslint-disable-line no-unused-expressions
+        requestAnimationFrame(() => {
+          newNode.style.maxHeight = afterH + 'px';
+        });
+        setTimeout(() => {
+          newNode.classList.remove('morphing');
+          newNode.style.maxHeight = '';
+        }, 280);
+      }
+
+      // Only re-wire the swapped node — touching other rows would stack
+      // duplicate listeners every time anyone is edited.
+      if (newNode.classList.contains('editing')) wireEditingRow(newNode);
+      else wireDisplayRow(newNode);
     }
 
     async function loadHistory() {
       const el = $('history-list');
-      const cached = cacheGet('list');
+      const cached = cacheGet('transactions');
       if (cached) {
-        renderHistory(cached.payload.rows);
+        renderHistory(cached.payload.transactions);
         setCacheAge('history-age', cached.ts);
         return;
       }
       $('history-age').textContent = '';
       el.innerHTML = '<div class="empty">Carregando...</div>';
       try {
-        const fresh = await api('list', { limit: 50 });
-        cacheSet('list', fresh);
-        renderHistory(fresh.rows);
+        const fresh = await api('transactions/list', { limit: 50 });
+        cacheSet('transactions', fresh);
+        renderHistory(fresh.transactions);
         setCacheAge('history-age', Date.now());
       } catch (err) {
         if (err.message === 'session_expired') return;
@@ -880,7 +1166,181 @@
       }
     }
 
+    // ---------- Long-press → in-place edit ----------
+    // A 500ms hold morphs the row into an editor. Movement cancels the timer,
+    // so swipe-paging the tabs never accidentally triggers edit mode.
+    let pressTimer;
+
+    function wireRowInteractions() {
+      document.querySelectorAll('#history-list .entry').forEach(el => {
+        if (el.classList.contains('editing')) {
+          wireEditingRow(el);
+        } else {
+          wireDisplayRow(el);
+        }
+      });
+    }
+
+    function wireDisplayRow(el) {
+      const id = el.dataset.id;
+      const onStart = () => {
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(() => {
+          // Closing any other open editor first
+          if (state.editingId && state.editingId !== id) {
+            const prev = state.editingId;
+            state.editingId = null;
+            rerenderRow(prev);
+          }
+          state.editingId = id;
+          rerenderRow(id);
+          // Focus descricao input so the keyboard pops on iPhone
+          const input = document.querySelector(`#history-list .entry[data-id="${id}"] .edit-desc`);
+          if (input) input.focus();
+        }, 500);
+      };
+      const onEnd = () => clearTimeout(pressTimer);
+      el.addEventListener('touchstart', onStart, { passive: true });
+      el.addEventListener('touchend', onEnd);
+      el.addEventListener('touchcancel', onEnd);
+      el.addEventListener('touchmove', onEnd);
+      el.addEventListener('mousedown', onStart);
+      el.addEventListener('mouseup', onEnd);
+      el.addEventListener('mouseleave', onEnd);
+    }
+
+    function wireEditingRow(el) {
+      const id = el.dataset.id;
+      // Chip selection inside the editor
+      el.querySelectorAll('.edit-chips .chip').forEach(chip => {
+        chip.onclick = () => {
+          el.querySelectorAll('.edit-chips .chip').forEach(x => x.classList.remove('selected'));
+          chip.classList.add('selected');
+        };
+      });
+      // Live-update the fatura label when the date changes
+      const dataInput = el.querySelector('.edit-data');
+      const faturaEl = el.querySelector('.edit-fatura');
+      if (dataInput && faturaEl) {
+        dataInput.addEventListener('change', () => {
+          const f = resolveFaturaForDateClient(dataInput.value);
+          faturaEl.textContent = f ? f.nome : '—';
+        });
+      }
+      el.querySelectorAll('.edit-action').forEach(btn => {
+        btn.onclick = () => handleEditAction(id, btn.dataset.action);
+      });
+    }
+
+    async function handleEditAction(id, action) {
+      const el = document.querySelector(`#history-list .entry[data-id="${id}"]`);
+      if (!el) return;
+      if (action === 'cancel') {
+        state.editingId = null;
+        rerenderRow(id);
+        return;
+      }
+      if (action === 'delete') {
+        await deleteWithUndo(id);
+        return;
+      }
+      if (action === 'save') {
+        const descricao = el.querySelector('.edit-desc').value.trim();
+        const valorStr = el.querySelector('.edit-valor').value.trim();
+        const data = el.querySelector('.edit-data').value;
+        const selected = el.querySelector('.edit-chips .chip.selected');
+        if (!descricao) return toast('Informe a descrição', 'err');
+        if (!valorStr) return toast('Informe o valor', 'err');
+        if (!data) return toast('Informe a data', 'err');
+        if (!selected) return toast('Escolha uma categoria', 'err');
+
+        const valor = parseValor(valorStr);
+        if (isNaN(valor)) return toast('Valor inválido', 'err');
+        const valor_cents = Math.round(valor * 100);
+        const categoria = selected.dataset.cat;
+
+        try {
+          const res = await api('transactions/update', {
+            id, descricao, valor_cents, data, categoria,
+          });
+          cacheInvalidate('transactions', 'summary');
+          // Merge the server's updated row back into local state
+          const idx = historyRows.findIndex(r => r.id === id);
+          if (idx >= 0 && res.transaction) historyRows[idx] = res.transaction;
+          state.editingId = null;
+          rerenderRow(id);
+          toast('Atualizado ✓', 'ok');
+        } catch (err) {
+          if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        }
+      }
+    }
+
+    // ---------- Delete with undo ----------
+    // Optimistic-ish: commit delete to server immediately so durability is
+    // preserved if the user closes the tab. Undo within 4s calls restore.
+    async function deleteWithUndo(id) {
+      const el = document.querySelector(`#history-list .entry[data-id="${id}"]`);
+      if (!el) return;
+      const snapshot = historyRows.find(r => r.id === id);
+
+      // Animate row collapse
+      const h = el.getBoundingClientRect().height;
+      el.classList.add('collapsing');
+      el.style.maxHeight = h + 'px';
+      requestAnimationFrame(() => {
+        el.style.maxHeight = '0px';
+        el.style.opacity = '0';
+        el.style.padding = '0';
+        el.style.margin = '0';
+        el.style.borderWidth = '0';
+      });
+      setTimeout(() => el.remove(), 240);
+
+      // Remove from local cache + state immediately
+      historyRows = historyRows.filter(r => r.id !== id);
+      state.editingId = null;
+
+      try {
+        await api('transactions/delete', { id });
+        cacheInvalidate('transactions', 'summary');
+      } catch (err) {
+        if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        return;
+      }
+
+      toast('Lançamento excluído', 'ok', {
+        label: 'desfazer',
+        onClick: async () => {
+          try {
+            const res = await api('transactions/restore', { id });
+            cacheInvalidate('transactions', 'summary');
+            // Reinsert at correct chronological position (server returns the full row)
+            if (res.transaction) {
+              historyRows.push(res.transaction);
+              historyRows.sort((a, b) => {
+                if (a.data !== b.data) return b.data.localeCompare(a.data);
+                return (b.created_at || 0) - (a.created_at || 0);
+              });
+            } else if (snapshot) {
+              historyRows.push(snapshot);
+            }
+            renderHistory(historyRows);
+            toast('Restaurado ✓', 'ok');
+          } catch (err) {
+            if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+          }
+        },
+      });
+    }
+
     // ---------- Summary ----------
+    // NOTE: this view still reads from Apps Script (Phase 2 keeps Resumo on the
+    // Sheet). Apps Script returns values in reais (floats), so we convert to
+    // cents at this boundary — formatBRL is canonical on cents. Phase 3 swaps
+    // this to /api/summary/fatura, after which the conversion drops out.
+    const toCents = v => Math.round((Number(v) || 0) * 100);
+
     function renderSummary(summary) {
       const el = $('summary-list');
       const faturas = Object.keys(summary);
@@ -891,11 +1351,11 @@
         return `
           <div class="summary-card">
             <div class="summary-fatura">${escapeHtml(f)}</div>
-            <div class="summary-total">${formatBRL(s.total)}</div>
+            <div class="summary-total">${formatBRL(toCents(s.total))}</div>
             ${cats.map(([cat, v]) => `
               <div class="summary-bar">
                 <span class="summary-bar-cat">${escapeHtml(cat)}</span>
-                <span class="summary-bar-val">${formatBRL(v)}</span>
+                <span class="summary-bar-val">${formatBRL(toCents(v))}</span>
               </div>
             `).join('')}
           </div>
@@ -924,8 +1384,29 @@
       }
     }
 
-    function formatBRL(n) {
-      return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    // Takes signed integer cents → "R$ 1.234,56" (sign preserved).
+    function formatBRL(cents) {
+      const n = (Number(cents) || 0) / 100;
+      const sign = n < 0 ? '-' : '';
+      const v = Math.abs(n).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return sign + 'R$ ' + v;
+    }
+
+    // ISO YYYY-MM-DD → dd/mm/yyyy
+    function formatDate(iso) {
+      if (!iso || typeof iso !== 'string') return '';
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    // Given an ISO date, find the fatura whose start_date is the largest <= iso.
+    // Returns the row or null. state.faturas is ordered start_date DESC.
+    function resolveFaturaForDateClient(iso) {
+      if (!iso) return null;
+      for (const f of state.faturas) {
+        if (f.start_date <= iso) return f;
+      }
+      return null;
     }
 
     // Accepts BRL ("12,50", "1.234,56"), US ("12.50", "1,234.56"), or plain ("12").
@@ -966,12 +1447,29 @@
 
     // ---------- Toast ----------
     let toastTimer;
-    function toast(msg, kind) {
+    function toast(msg, kind, action) {
       const el = $('toast');
-      el.textContent = msg;
+      el.innerHTML = '';
+      const span = document.createElement('span');
+      span.textContent = msg;
+      el.appendChild(span);
+      if (action && action.label && typeof action.onClick === 'function') {
+        const btn = document.createElement('button');
+        btn.className = 'toast-action';
+        btn.textContent = action.label;
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          el.className = 'toast ' + (kind || '');
+          action.onClick();
+        };
+        el.appendChild(btn);
+      }
       el.className = 'toast show ' + (kind || '');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.className = 'toast ' + (kind || ''), 2400);
+      toastTimer = setTimeout(
+        () => el.className = 'toast ' + (kind || ''),
+        action ? 4000 : 2400,
+      );
     }
   </script>
 </body>
