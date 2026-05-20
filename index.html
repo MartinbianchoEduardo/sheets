@@ -416,27 +416,84 @@
     }
 
     /* ---------- Summary ---------- */
-    .summary-card {
-      background: var(--bg-elev);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+    .summary-picker {
       margin-bottom: 16px;
     }
-    .summary-fatura {
+    .summary-picker label {
+      display: block;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-dim);
-      margin-bottom: 4px;
+      margin-bottom: 8px;
     }
-    .summary-total {
-      font-size: 36px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      font-variant-numeric: tabular-nums;
+    .summary-picker select {
+      background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+                        linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 36px;
+    }
+
+    .summary-totals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
       margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .stat-card.fatura {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, var(--bg-elev) 0%, var(--bg-elev-2) 100%);
+      border-color: var(--accent-dim);
+    }
+    .stat-card .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    .stat-card .value {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      font-size: 22px;
+    }
+    .stat-card.fatura .value { font-size: 34px; }
+
+    .summary-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .summary-card-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .summary-card-title .total {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+      color: var(--text);
     }
     .summary-bar {
       display: flex;
@@ -444,6 +501,7 @@
       padding: 8px 0;
       border-top: 1px solid var(--border);
       font-size: 14px;
+      align-items: baseline;
     }
     .summary-bar:first-of-type { border-top: none; padding-top: 0; }
     .summary-bar-cat {
@@ -452,11 +510,103 @@
       letter-spacing: 0.04em;
       color: var(--text-dim);
     }
+    .summary-bar-cat .count {
+      color: var(--text-mute);
+      margin-left: 6px;
+      font-size: 10.5px;
+    }
     .summary-bar-val {
       font-family: 'JetBrains Mono', monospace;
       font-variant-numeric: tabular-nums;
       font-size: 13px;
     }
+
+    .panel-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .panel-row:first-of-type { border-top: none; padding-top: 0; }
+    .panel-row .desc { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .panel-row .meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.05em;
+      color: var(--text-mute);
+    }
+    .panel-row .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+
+    .averages-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px 14px;
+      padding: 7px 0;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      align-items: baseline;
+    }
+    .averages-row:first-of-type { border-top: none; padding-top: 0; }
+    .averages-row .cat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+    }
+    .averages-row .avg {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+      color: var(--text-mute);
+    }
+    .averages-row .delta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
+      min-width: 56px;
+      text-align: right;
+    }
+    .averages-row .delta.up    { color: var(--danger); }
+    .averages-row .delta.down  { color: var(--ok); }
+    .averages-row .delta.flat  { color: var(--text-mute); }
+
+    /* ---------- Rollover banner ---------- */
+    .rollover {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--bg-elev);
+      border: 1px solid var(--accent-dim);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+    .rollover .msg { color: var(--text-dim); }
+    .rollover .msg strong { color: var(--text); font-weight: 500; }
+    .rollover button {
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .rollover button:active { transform: scale(0.95); }
 
     /* ---------- Toast ---------- */
     .toast {
@@ -577,6 +727,11 @@
       <div class="status-dot" id="status-dot" title="Status da conexão"></div>
     </header>
 
+    <div id="rollover" class="rollover hidden">
+      <div class="msg">Nova fatura: <strong id="rollover-name"></strong></div>
+      <button id="rollover-btn" type="button">Trocar</button>
+    </div>
+
     <div class="tabs">
       <button class="tab active" data-tab="add">+ Novo</button>
       <button class="tab" data-tab="history">Histórico</button>
@@ -627,7 +782,11 @@
       <!-- SUMMARY VIEW -->
       <section id="view-summary" class="deck-page">
         <div class="cache-age" id="summary-age"></div>
-        <div id="summary-list">
+        <div class="summary-picker">
+          <label>Fatura</label>
+          <select id="summary-select"></select>
+        </div>
+        <div id="summary-body">
           <div class="empty">Carregando...</div>
         </div>
       </section>
@@ -668,11 +827,18 @@
     let selectedCategoria = '';
 
     // Module-scoped UI state. `faturas` is loaded at init from /api/faturas/list.
-    // `editingId` is the tx id currently in inline-edit mode (one at a time).
+    // `currentFaturaId` is the cycle the user is operating in — set at init from
+    // /api/faturas/current (which respects the server override). It only moves
+    // when the user accepts the rollover banner; the Resumo dropdown is a view
+    // selector that does NOT mutate this.
     const state = {
       faturas: [],
+      currentFaturaId: null,
+      faturaOverrideSet: false,
       editingId: null,
     };
+    // Resumo's view-only fatura selection (independent from state.currentFaturaId).
+    let summaryViewFaturaId = null;
 
     // ---------- Session / fetch helpers ----------
     function setJwt(v) {
@@ -744,6 +910,20 @@
 
     function cacheInvalidate(...keys) {
       try { keys.forEach(k => localStorage.removeItem(CACHE_PREFIX + k)); } catch {}
+    }
+
+    // Wipe every `summary:fatura:*` cache entry — used on transaction writes,
+    // since one tx can affect any fatura (e.g. moving its date across a cycle).
+    function cacheInvalidateAllSummaries() {
+      try {
+        const prefix = CACHE_PREFIX + 'summary:fatura:';
+        const doomed = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(prefix)) doomed.push(k);
+        }
+        doomed.forEach(k => localStorage.removeItem(k));
+      } catch {}
     }
 
     function formatAge(tsMs) {
@@ -933,6 +1113,7 @@
       document.querySelectorAll('.tab').forEach(x => {
         x.classList.toggle('active', x.dataset.tab === name);
       });
+      refreshRolloverBanner();
       if (name === 'history') loadHistory();
       if (name === 'summary') loadSummary();
     }
@@ -976,13 +1157,16 @@
     // ---------- Init ----------
     async function init() {
       renderChips();
+      wireValorMask($('f-valor'));
       // Default date to today in local time (not UTC — avoids the date rolling
       // forward late at night in negative-offset timezones like America/Sao_Paulo).
       const today = new Date();
       const pad = n => String(n).padStart(2, '0');
       $('f-data').value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
       await loadFaturas();
+      await loadCurrentFatura();
       refreshFaturaDisplay();
+      refreshRolloverBanner();
       wireDeckObserver();
       // Make sure we start anchored to + Novo (deck.scrollLeft = 0).
       $('deck').scrollLeft = 0;
@@ -1000,6 +1184,58 @@
         // Non-fatal: form can still submit; server will set fatura_id = null.
       }
     }
+
+    async function loadCurrentFatura() {
+      try {
+        const res = await api('faturas/current', {});
+        state.currentFaturaId = res.fatura ? res.fatura.id : null;
+        state.faturaOverrideSet = !!res.override_set;
+        // Default Resumo's view to the current fatura.
+        if (summaryViewFaturaId == null) summaryViewFaturaId = state.currentFaturaId;
+      } catch (err) {
+        if (err.message === 'session_expired') return;
+      }
+    }
+
+    // ---------- Rollover banner ----------
+    // Fires when today's resolved fatura is strictly newer than the one the
+    // user is "currently" in, AND they haven't pinned a fatura via override.
+    function refreshRolloverBanner() {
+      const banner = $('rollover');
+      if (!banner) return;
+      if (state.faturaOverrideSet) return banner.classList.add('hidden');
+
+      const today = isoToday();
+      const todayFatura = resolveFaturaForDateClient(today);
+      if (!todayFatura) return banner.classList.add('hidden');
+      if (state.currentFaturaId === todayFatura.id) return banner.classList.add('hidden');
+
+      const currentRow = state.faturas.find(f => f.id === state.currentFaturaId);
+      if (currentRow && currentRow.start_date >= todayFatura.start_date) {
+        return banner.classList.add('hidden');
+      }
+      $('rollover-name').textContent = todayFatura.nome;
+      banner.classList.remove('hidden');
+    }
+
+    function isoToday() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    $('rollover-btn').onclick = () => {
+      const today = isoToday();
+      const todayFatura = resolveFaturaForDateClient(today);
+      if (!todayFatura) return;
+      state.currentFaturaId = todayFatura.id;
+      summaryViewFaturaId = todayFatura.id;
+      refreshRolloverBanner();
+      // If the user is on Resumo, reflect the switch immediately.
+      if (document.querySelector('.tab.active')?.dataset.tab === 'summary') {
+        loadSummary();
+      }
+    };
 
     function refreshFaturaDisplay() {
       const iso = $('f-data').value;
@@ -1035,7 +1271,8 @@
         await api('transactions/create', {
           data, descricao, valor_cents, categoria: selectedCategoria,
         });
-        cacheInvalidate('transactions', 'summary');
+        cacheInvalidate('transactions');
+        cacheInvalidateAllSummaries();
         toast('Lançamento adicionado ✓', 'ok');
         $('f-descricao').value = '';
         $('f-valor').value = '';
@@ -1211,6 +1448,7 @@
 
     function wireEditingRow(el) {
       const id = el.dataset.id;
+      wireValorMask(el.querySelector('.edit-valor'));
       // Chip selection inside the editor
       el.querySelectorAll('.edit-chips .chip').forEach(chip => {
         chip.onclick = () => {
@@ -1263,7 +1501,8 @@
           const res = await api('transactions/update', {
             id, descricao, valor_cents, data, categoria,
           });
-          cacheInvalidate('transactions', 'summary');
+          cacheInvalidate('transactions');
+          cacheInvalidateAllSummaries();
           // Merge the server's updated row back into local state
           const idx = historyRows.findIndex(r => r.id === id);
           if (idx >= 0 && res.transaction) historyRows[idx] = res.transaction;
@@ -1303,7 +1542,8 @@
 
       try {
         await api('transactions/delete', { id });
-        cacheInvalidate('transactions', 'summary');
+        cacheInvalidate('transactions');
+        cacheInvalidateAllSummaries();
       } catch (err) {
         if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
         return;
@@ -1314,7 +1554,8 @@
         onClick: async () => {
           try {
             const res = await api('transactions/restore', { id });
-            cacheInvalidate('transactions', 'summary');
+            cacheInvalidate('transactions');
+          cacheInvalidateAllSummaries();
             // Reinsert at correct chronological position (server returns the full row)
             if (res.transaction) {
               historyRows.push(res.transaction);
@@ -1334,49 +1575,133 @@
       });
     }
 
-    // ---------- Summary ----------
-    // NOTE: this view still reads from Apps Script (Phase 2 keeps Resumo on the
-    // Sheet). Apps Script returns values in reais (floats), so we convert to
-    // cents at this boundary — formatBRL is canonical on cents. Phase 3 swaps
-    // this to /api/summary/fatura, after which the conversion drops out.
-    const toCents = v => Math.round((Number(v) || 0) * 100);
+    // ---------- Summary (Resumo) ----------
+    function renderSummaryPicker() {
+      const sel = $('summary-select');
+      if (!sel) return;
+      if (!state.faturas.length) {
+        sel.innerHTML = '<option>—</option>';
+        sel.disabled = true;
+        return;
+      }
+      sel.disabled = false;
+      sel.innerHTML = state.faturas.map(f =>
+        `<option value="${f.id}" ${f.id === summaryViewFaturaId ? 'selected' : ''}>${escapeHtml(f.nome)}</option>`
+      ).join('');
+    }
 
-    function renderSummary(summary) {
-      const el = $('summary-list');
-      const faturas = Object.keys(summary);
-      if (!faturas.length) { el.innerHTML = '<div class="empty">Sem dados ainda.</div>'; return; }
-      el.innerHTML = faturas.map(f => {
-        const s = summary[f];
-        const cats = Object.entries(s.byCategoria).sort((a, b) => b[1] - a[1]);
-        return `
-          <div class="summary-card">
-            <div class="summary-fatura">${escapeHtml(f)}</div>
-            <div class="summary-total">${formatBRL(toCents(s.total))}</div>
-            ${cats.map(([cat, v]) => `
-              <div class="summary-bar">
-                <span class="summary-bar-cat">${escapeHtml(cat)}</span>
-                <span class="summary-bar-val">${formatBRL(toCents(v))}</span>
-              </div>
-            `).join('')}
+    $('summary-select').addEventListener('change', e => {
+      summaryViewFaturaId = Number(e.target.value) || null;
+      loadSummary();
+    });
+
+    function renderSummary(payload) {
+      const el = $('summary-body');
+      if (!payload || !payload.fatura) {
+        el.innerHTML = '<div class="empty">Sem dados ainda.</div>';
+        return;
+      }
+      const { totals, byCategoria, pixPanel, emprestadoPanel, averages } = payload;
+
+      const totalsHtml = `
+        <div class="summary-totals">
+          <div class="stat-card fatura">
+            <div class="label">Total da fatura</div>
+            <div class="value">${escapeHtml(formatBRL(totals.fatura_cents))}</div>
           </div>
-        `;
-      }).join('');
+          <div class="stat-card">
+            <div class="label">Total do mês</div>
+            <div class="value">${escapeHtml(formatBRL(totals.mes_cents))}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Parcelas</div>
+            <div class="value">${escapeHtml(formatBRL(totals.parcelas_cents))}</div>
+          </div>
+        </div>`;
+
+      const byCatHtml = byCategoria.length ? `
+        <div class="summary-card">
+          <div class="summary-card-title">
+            <span>Por categoria</span>
+          </div>
+          ${byCategoria.map(c => `
+            <div class="summary-bar">
+              <span class="summary-bar-cat">${escapeHtml(c.categoria)}<span class="count">${c.count}</span></span>
+              <span class="summary-bar-val">${escapeHtml(formatBRL(c.total_cents))}</span>
+            </div>
+          `).join('')}
+        </div>` : '';
+
+      const pixHtml = renderPanel('Pix do mês', totals.pix_cents, pixPanel);
+      const empHtml = renderPanel('Emprestado', totals.emprestado_cents, emprestadoPanel);
+
+      const avgHtml = renderAveragesStrip(byCategoria, averages);
+
+      el.innerHTML = totalsHtml + byCatHtml + pixHtml + empHtml + avgHtml;
+    }
+
+    function renderPanel(title, total, rows) {
+      if (!rows || !rows.length) return '';
+      return `
+        <div class="summary-card">
+          <div class="summary-card-title">
+            <span>${escapeHtml(title)}</span>
+            <span class="total">${escapeHtml(formatBRL(total))}</span>
+          </div>
+          ${rows.map(r => `
+            <div class="panel-row">
+              <span class="desc">${escapeHtml(r.descricao)}</span>
+              <span class="meta">${escapeHtml(formatDate(r.data))}</span>
+              <span class="val">${escapeHtml(formatBRL(r.valor_cents))}</span>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
+    function renderAveragesStrip(byCategoria, averages) {
+      const entries = Object.entries(averages || {}).filter(([, v]) => v);
+      if (!entries.length) return '';
+      const currByCat = Object.fromEntries(byCategoria.map(c => [c.categoria, c.total_cents]));
+      entries.sort((a, b) => b[1] - a[1]);
+      return `
+        <div class="summary-card">
+          <div class="summary-card-title"><span>Média histórica</span></div>
+          ${entries.map(([cat, avg]) => {
+            const cur = currByCat[cat] || 0;
+            const delta = cur - avg;
+            const pct = avg ? Math.round((delta / Math.abs(avg)) * 100) : 0;
+            let cls = 'flat', label = '·';
+            if (cur && pct !== 0) {
+              cls = pct > 0 ? 'up' : 'down';
+              label = (pct > 0 ? '+' : '') + pct + '%';
+            }
+            return `
+              <div class="averages-row">
+                <span class="cat">${escapeHtml(cat)}</span>
+                <span class="avg">${escapeHtml(formatBRL(avg))}</span>
+                <span class="delta ${cls}">${escapeHtml(label)}</span>
+              </div>`;
+          }).join('')}
+        </div>`;
     }
 
     async function loadSummary() {
-      const el = $('summary-list');
-      const cached = cacheGet('summary');
+      renderSummaryPicker();
+      const el = $('summary-body');
+      const faturaId = summaryViewFaturaId;
+      const cacheKey = `summary:fatura:${faturaId == null ? 'current' : faturaId}`;
+      const cached = cacheGet(cacheKey);
       if (cached) {
-        renderSummary(cached.payload.summary);
+        renderSummary(cached.payload);
         setCacheAge('summary-age', cached.ts);
         return;
       }
       $('summary-age').textContent = '';
       el.innerHTML = '<div class="empty">Carregando...</div>';
       try {
-        const fresh = await api('summary');
-        cacheSet('summary', fresh);
-        renderSummary(fresh.summary);
+        const fresh = await api('summary/fatura', faturaId != null ? { fatura_id: faturaId } : {});
+        cacheSet(cacheKey, fresh);
+        renderSummary(fresh);
         setCacheAge('summary-age', Date.now());
       } catch (err) {
         if (err.message === 'session_expired') return;
@@ -1409,34 +1734,45 @@
       return null;
     }
 
-    // Accepts BRL ("12,50", "1.234,56"), US ("12.50", "1,234.56"), or plain ("12").
-    // Rule: when both separators are present, the rightmost is decimal.
-    // With one separator + exactly 2 trailing digits → decimal. Otherwise → thousands.
+    // The rightmost separator is always the decimal point; any prior separators
+    // are stripped as thousands grouping. The input mask (wireValorMask) caps
+    // typed input to ≤2 decimal digits, so "10,9" parses as 10.9 not 109.
     function parseValor(s) {
       s = String(s).trim().replace(/[^\d.,\-]/g, '');
       if (!s) return NaN;
-      const hasDot = s.includes('.');
-      const hasComma = s.includes(',');
-      if (hasDot && hasComma) {
-        const lastDot = s.lastIndexOf('.');
-        const lastComma = s.lastIndexOf(',');
-        return lastComma > lastDot
-          ? parseFloat(s.replace(/\./g, '').replace(',', '.'))   // 1.234,56 → 1234.56
-          : parseFloat(s.replace(/,/g, ''));                     // 1,234.56 → 1234.56
-      }
-      if (hasComma) {
-        const [, frac] = s.split(',');
-        return frac && frac.length === 2
-          ? parseFloat(s.replace(',', '.'))
-          : parseFloat(s.replace(/,/g, ''));
-      }
-      if (hasDot) {
-        const [, frac] = s.split('.');
-        return frac && frac.length === 2
-          ? parseFloat(s)
-          : parseFloat(s.replace(/\./g, ''));
-      }
-      return parseFloat(s);
+      const sign = s.startsWith('-') ? -1 : 1;
+      s = s.replace(/-/g, '');
+      if (!s) return NaN;
+      const lastSep = Math.max(s.lastIndexOf('.'), s.lastIndexOf(','));
+      const intPart = lastSep < 0 ? s : s.slice(0, lastSep).replace(/[.,]/g, '');
+      const fracPart = lastSep < 0 ? '' : s.slice(lastSep + 1);
+      const n = parseFloat((intPart || '0') + (fracPart ? '.' + fracPart : ''));
+      return isNaN(n) ? NaN : sign * n;
+    }
+
+    // Live-clamp the valor input to: optional leading "-", digits, at most one
+    // separator (. or ,), and at most 2 decimal digits. Wired on the + Novo
+    // input and on each inline-edit row's valor input.
+    function wireValorMask(input) {
+      if (!input || input.dataset.valorMasked) return;
+      input.dataset.valorMasked = '1';
+      input.addEventListener('input', () => {
+        const before = input.value;
+        let v = before.replace(/[^\d.,\-]/g, '');
+        const hadMinus = v.startsWith('-');
+        v = v.replace(/-/g, '');
+        const firstSep = v.search(/[.,]/);
+        if (firstSep >= 0) {
+          v = v.slice(0, firstSep + 1) + v.slice(firstSep + 1).replace(/[.,]/g, '');
+          v = v.replace(/([.,]\d{2}).*/, '$1');
+        }
+        if (hadMinus) v = '-' + v;
+        if (v !== before) {
+          const pos = Math.max(0, (input.selectionStart || 0) - (before.length - v.length));
+          input.value = v;
+          try { input.setSelectionRange(pos, pos); } catch {}
+        }
+      });
     }
 
     function escapeHtml(s) {

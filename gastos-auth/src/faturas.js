@@ -129,3 +129,26 @@ export async function deleteFatura(env, id) {
   await reassignAllFaturas(env);
   return { ok: true };
 }
+
+// "Today" must be São Paulo time — Workers run at UTC so a naive `new Date()`
+// would mis-resolve fatura assignment around midnight local.
+function todayIsoSaoPaulo() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const get = t => parts.find(p => p.type === t).value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+export async function currentFatura(env) {
+  const s = await queryOne(env, 'SELECT current_fatura_override_id FROM settings WHERE id = 1');
+  const overrideId = s && s.current_fatura_override_id;
+  if (overrideId) {
+    const f = await getFatura(env, overrideId);
+    if (f) return { fatura: f, override_set: true, today: todayIsoSaoPaulo() };
+  }
+  const today = todayIsoSaoPaulo();
+  const fatura = await resolveFaturaForDate(env, today);
+  return { fatura, override_set: false, today };
+}

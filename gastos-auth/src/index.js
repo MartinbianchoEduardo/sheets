@@ -30,11 +30,12 @@ import { callAppsScript } from './proxy.js';
 import { queryOne } from './db.js';
 import { ERR } from './errors.js';
 import {
-  listFaturas, createFatura, updateFatura, deleteFatura,
+  listFaturas, createFatura, updateFatura, deleteFatura, currentFatura,
 } from './faturas.js';
 import {
   listTx, createTx, updateTx, softDeleteTx, restoreTx,
 } from './transactions.js';
+import { getSummary } from './summary.js';
 
 export default {
   async fetch(request, env) {
@@ -67,12 +68,15 @@ export default {
           case '/api/faturas/create':    return handleFaturasCreate(request, env);
           case '/api/faturas/update':    return handleFaturasUpdate(request, env);
           case '/api/faturas/delete':    return handleFaturasDelete(request, env);
+          case '/api/faturas/current':   return handleFaturasCurrent(request, env);
 
           case '/api/transactions/list':   return handleTxList(request, env);
           case '/api/transactions/create': return handleTxCreate(request, env);
           case '/api/transactions/update': return handleTxUpdate(request, env);
           case '/api/transactions/delete': return handleTxDelete(request, env);
           case '/api/transactions/restore': return handleTxRestore(request, env);
+
+          case '/api/summary/fatura':    return handleSummaryFatura(request, env);
         }
       }
 
@@ -171,6 +175,35 @@ async function handleFaturasDelete(request, env) {
     return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
   }
   return resultToResponse(env, await deleteFatura(env, body.id));
+}
+
+async function handleFaturasCurrent(request, env) {
+  try {
+    await requireSession(request, env);
+  } catch (err) {
+    return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env);
+  }
+  const result = await currentFatura(env);
+  return jsonResponse({ ok: true, ...result }, {}, env);
+}
+
+// ---------- /api/summary/* ----------
+
+async function handleSummaryFatura(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+
+  let faturaId = body && body.fatura_id;
+  if (faturaId == null) {
+    const cur = await currentFatura(env);
+    faturaId = cur.fatura ? cur.fatura.id : null;
+  } else if (!Number.isInteger(faturaId)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['fatura_id'] }, { status: 400 }, env);
+  }
+
+  const summary = await getSummary(env, faturaId);
+  return jsonResponse({ ok: true, ...summary }, {}, env);
 }
 
 // ---------- /api/transactions/* ----------
