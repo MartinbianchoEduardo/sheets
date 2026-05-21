@@ -685,6 +685,229 @@
 
     .hidden { display: none !important; }
 
+    /* ---------- Painel ---------- */
+    .painel-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+    .painel-card-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+    .painel-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 7px 0;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .painel-line:first-of-type { border-top: none; padding-top: 0; }
+    .painel-line .lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+    }
+    .painel-line .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+    }
+    .painel-line.strong .lbl { color: var(--text); }
+    .painel-line.strong .val { color: var(--text); font-weight: 700; }
+    .painel-line .val.neg { color: var(--danger); }
+    .painel-line .val.pos { color: var(--ok); }
+
+    .painel-big {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .painel-big .stat-card .sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      margin-top: 4px;
+    }
+
+    .reserve-bar {
+      height: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 8px 0 6px;
+    }
+    .reserve-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+      transition: width 0.3s ease;
+    }
+    .reserve-meta {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 11.5px;
+      color: var(--text-dim);
+    }
+    .reserve-spark {
+      width: 100%;
+      height: 70px;
+      margin-top: 12px;
+      display: block;
+    }
+    .reserve-spark path { fill: rgba(212, 255, 60, 0.12); }
+    .reserve-spark polyline { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+
+    /* ---------- Configurações ---------- */
+    .config-section {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .config-section h3 {
+      margin: 0 0 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      font-weight: 400;
+    }
+    .config-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px 14px;
+      align-items: center;
+      padding: 9px 0;
+      border-top: 1px solid var(--border);
+    }
+    .config-row:first-of-type { border-top: none; padding-top: 0; }
+    .config-row .lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+    }
+    .config-row input[type=text],
+    .config-row input[type=number],
+    .config-row input[type=date],
+    .config-row select {
+      padding: 9px 12px;
+      font-size: 14px;
+      width: 140px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+    .config-row .hint {
+      grid-column: 1 / -1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--text-mute);
+      letter-spacing: 0.04em;
+    }
+
+    .fatura-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 12px;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+    }
+    .fatura-row:first-of-type { border-top: none; padding-top: 0; }
+    .fatura-row .nome {
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+    .fatura-row .meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      grid-column: 1;
+    }
+    .fatura-row .actions {
+      grid-row: 1 / span 2;
+      grid-column: 2;
+      align-self: center;
+      display: flex;
+      gap: 12px;
+    }
+    .fatura-row.editing { display: block; }
+    .fatura-edit {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .fatura-edit .field { margin: 0; }
+    .fatura-edit .field.full { grid-column: 1 / -1; }
+    .fatura-edit .field label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .fatura-edit .field .hint {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-mute);
+      margin-top: 4px;
+    }
+    .fatura-edit input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Fraunces', serif;
+      font-size: 15px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .fatura-edit input:focus { outline: none; border-color: var(--accent); }
+
+    .config-btn-row {
+      margin-top: 16px;
+      display: flex;
+      gap: 16px;
+      justify-content: flex-end;
+    }
+    .config-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .config-btn.danger { color: var(--danger); }
+    .config-btn.muted { color: var(--text-mute); }
+    .config-btn:active { transform: scale(0.95); }
+
     /* ---------- Cache freshness badge ---------- */
     .cache-age {
       font-family: 'JetBrains Mono', monospace;
@@ -734,8 +957,10 @@
 
     <div class="tabs">
       <button class="tab active" data-tab="add">+ Novo</button>
-      <button class="tab" data-tab="history">Histórico</button>
+      <button class="tab" data-tab="history">Hist</button>
       <button class="tab" data-tab="summary">Resumo</button>
+      <button class="tab" data-tab="painel">Painel</button>
+      <button class="tab" data-tab="config">Config</button>
     </div>
 
     <div class="deck" id="deck">
@@ -790,6 +1015,25 @@
           <div class="empty">Carregando...</div>
         </div>
       </section>
+
+      <!-- PAINEL VIEW -->
+      <section id="view-painel" class="deck-page">
+        <div class="cache-age" id="painel-age"></div>
+        <div class="summary-picker">
+          <label>Fatura</label>
+          <select id="painel-select"></select>
+        </div>
+        <div id="painel-body">
+          <div class="empty">Carregando...</div>
+        </div>
+      </section>
+
+      <!-- CONFIG VIEW -->
+      <section id="view-config" class="deck-page">
+        <div id="config-body">
+          <div class="empty">Carregando...</div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -839,6 +1083,7 @@
     };
     // Resumo's view-only fatura selection (independent from state.currentFaturaId).
     let summaryViewFaturaId = null;
+    let painelViewFaturaId = null;
 
     // ---------- Session / fetch helpers ----------
     function setJwt(v) {
@@ -915,8 +1160,18 @@
     // Wipe every `summary:fatura:*` cache entry — used on transaction writes,
     // since one tx can affect any fatura (e.g. moving its date across a cycle).
     function cacheInvalidateAllSummaries() {
+      wipeWithPrefix('summary:fatura:');
+    }
+
+    // Same idea for the Painel payload: a tx, settings change, or fatura edit
+    // can shift any fatura's dashboard numbers.
+    function cacheInvalidateAllDashboards() {
+      wipeWithPrefix('dashboard:fatura:');
+    }
+
+    function wipeWithPrefix(suffix) {
       try {
-        const prefix = CACHE_PREFIX + 'summary:fatura:';
+        const prefix = CACHE_PREFIX + suffix;
         const doomed = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
@@ -924,6 +1179,11 @@
         }
         doomed.forEach(k => localStorage.removeItem(k));
       } catch {}
+    }
+
+    function cacheInvalidateAllDerived() {
+      cacheInvalidateAllSummaries();
+      cacheInvalidateAllDashboards();
     }
 
     function formatAge(tsMs) {
@@ -1100,7 +1360,7 @@
     // Tab pill is the source-of-truth for the visible page on tap; scroll
     // position is the source-of-truth on swipe. IntersectionObserver bridges
     // the two: whichever page is >50% in view sets the active pill.
-    const TAB_ORDER = ['add', 'history', 'summary'];
+    const TAB_ORDER = ['add', 'history', 'summary', 'painel', 'config'];
 
     function scrollToTab(name, behavior = 'smooth') {
       const idx = TAB_ORDER.indexOf(name);
@@ -1116,6 +1376,8 @@
       refreshRolloverBanner();
       if (name === 'history') loadHistory();
       if (name === 'summary') loadSummary();
+      if (name === 'painel')  loadPainel();
+      if (name === 'config')  loadConfig();
     }
 
     document.querySelectorAll('.tab').forEach(t => {
@@ -1190,8 +1452,9 @@
         const res = await api('faturas/current', {});
         state.currentFaturaId = res.fatura ? res.fatura.id : null;
         state.faturaOverrideSet = !!res.override_set;
-        // Default Resumo's view to the current fatura.
+        // Default Resumo's and Painel's view to the current fatura.
         if (summaryViewFaturaId == null) summaryViewFaturaId = state.currentFaturaId;
+        if (painelViewFaturaId == null)  painelViewFaturaId  = state.currentFaturaId;
       } catch (err) {
         if (err.message === 'session_expired') return;
       }
@@ -1230,11 +1493,12 @@
       if (!todayFatura) return;
       state.currentFaturaId = todayFatura.id;
       summaryViewFaturaId = todayFatura.id;
+      painelViewFaturaId  = todayFatura.id;
       refreshRolloverBanner();
-      // If the user is on Resumo, reflect the switch immediately.
-      if (document.querySelector('.tab.active')?.dataset.tab === 'summary') {
-        loadSummary();
-      }
+      // If the user is on Resumo or Painel, reflect the switch immediately.
+      const active = document.querySelector('.tab.active')?.dataset.tab;
+      if (active === 'summary') loadSummary();
+      if (active === 'painel')  loadPainel();
     };
 
     function refreshFaturaDisplay() {
@@ -1272,7 +1536,7 @@
           data, descricao, valor_cents, categoria: selectedCategoria,
         });
         cacheInvalidate('transactions');
-        cacheInvalidateAllSummaries();
+        cacheInvalidateAllDerived();
         toast('Lançamento adicionado ✓', 'ok');
         $('f-descricao').value = '';
         $('f-valor').value = '';
@@ -1502,7 +1766,7 @@
             id, descricao, valor_cents, data, categoria,
           });
           cacheInvalidate('transactions');
-          cacheInvalidateAllSummaries();
+          cacheInvalidateAllDerived();
           // Merge the server's updated row back into local state
           const idx = historyRows.findIndex(r => r.id === id);
           if (idx >= 0 && res.transaction) historyRows[idx] = res.transaction;
@@ -1543,7 +1807,7 @@
       try {
         await api('transactions/delete', { id });
         cacheInvalidate('transactions');
-        cacheInvalidateAllSummaries();
+        cacheInvalidateAllDerived();
       } catch (err) {
         if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
         return;
@@ -1555,7 +1819,7 @@
           try {
             const res = await api('transactions/restore', { id });
             cacheInvalidate('transactions');
-          cacheInvalidateAllSummaries();
+            cacheInvalidateAllDerived();
             // Reinsert at correct chronological position (server returns the full row)
             if (res.transaction) {
               historyRows.push(res.transaction);
@@ -1707,6 +1971,384 @@
         if (err.message === 'session_expired') return;
         el.innerHTML = `<div class="empty">Erro: ${escapeHtml(err.message)}</div>`;
       }
+    }
+
+    // ---------- Painel ----------
+    function renderPainelPicker() {
+      const sel = $('painel-select');
+      if (!sel) return;
+      if (!state.faturas.length) {
+        sel.innerHTML = '<option>—</option>';
+        sel.disabled = true;
+        return;
+      }
+      sel.disabled = false;
+      sel.innerHTML = state.faturas.map(f =>
+        `<option value="${f.id}" ${f.id === painelViewFaturaId ? 'selected' : ''}>${escapeHtml(f.nome)}</option>`
+      ).join('');
+    }
+
+    $('painel-select').addEventListener('change', e => {
+      painelViewFaturaId = Number(e.target.value) || null;
+      loadPainel();
+    });
+
+    function renderPainel(payload, forecast) {
+      const el = $('painel-body');
+      if (!payload || !payload.fatura) {
+        el.innerHTML = '<div class="empty">Sem dados ainda.</div>';
+        return;
+      }
+      const d = payload;
+      const diarioTxt = d.days_remaining > 0
+        ? formatBRL(d.disponivel_diario_cents)
+        : 'Fatura fechada';
+      const closingLabel = d.closing_date ? `fecha ${formatDate(d.closing_date)}` : `fecha dia ${d.fechamento_dia}`;
+      const diarioSub = d.days_remaining > 0
+        ? `${d.days_remaining} dias até ${formatDate(d.closing_date)}`
+        : closingLabel;
+
+      const cardHtml = `
+        <div class="painel-card">
+          <div class="painel-card-title">${escapeHtml(d.fatura.nome)}</div>
+          <div class="painel-line"><span class="lbl">Salário</span><span class="val">${escapeHtml(formatBRL(d.salario_cents))}</span></div>
+          <div class="painel-line"><span class="lbl">Gasto fixo</span><span class="val">${escapeHtml(formatBRL(d.gasto_fixo_cents))}</span></div>
+          <div class="painel-line"><span class="lbl">Investimento alvo</span><span class="val">${escapeHtml(formatBRL(d.investimento_alvo_cents))}</span></div>
+          <div class="painel-line"><span class="lbl">Limite da fatura</span><span class="val">${escapeHtml(formatBRL(d.limite_fatura_cents))}</span></div>
+          <div class="painel-line strong"><span class="lbl">Fatura atual</span><span class="val">${escapeHtml(formatBRL(d.fatura_atual_cents))}</span></div>
+        </div>`;
+
+      const mesCls = d.disponivel_mes_cents < 0 ? 'neg' : '';
+      const bigHtml = `
+        <div class="painel-big">
+          <div class="stat-card">
+            <div class="label">Disponível mês</div>
+            <div class="value ${mesCls}">${escapeHtml(formatBRL(d.disponivel_mes_cents))}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Disponível diário</div>
+            <div class="value">${escapeHtml(diarioTxt)}</div>
+            <div class="sub">${escapeHtml(diarioSub)}</div>
+          </div>
+        </div>`;
+
+      const pct = Math.round((d.reserva_pct || 0) * 100);
+      const reserveHtml = `
+        <div class="summary-card">
+          <div class="summary-card-title"><span>Reserva</span><span class="total">${pct}%</span></div>
+          <div class="reserve-bar"><div class="fill" style="width: ${pct}%"></div></div>
+          <div class="reserve-meta">
+            <span>${escapeHtml(formatBRL(d.reserva_atual_cents))}</span>
+            <span>meta · ${escapeHtml(formatBRL(d.reserva_meta_cents))}</span>
+          </div>
+          ${renderReserveSparkline(d.reserva_atual_cents, forecast)}
+        </div>`;
+
+      el.innerHTML = cardHtml + bigHtml + reserveHtml;
+    }
+
+    function renderReserveSparkline(startCents, forecast) {
+      if (!forecast || !forecast.projection || !forecast.projection.length) return '';
+      const balances = [startCents, ...forecast.projection.map(p => p.balance_cents)];
+      const min = Math.min(...balances);
+      const max = Math.max(...balances);
+      const range = Math.max(1, max - min);
+      const w = 100, h = 30;
+      const points = balances.map((b, i) => {
+        const x = (i / (balances.length - 1)) * w;
+        const y = h - ((b - min) / range) * h;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      });
+      const polyline = points.join(' ');
+      const areaPath = `M0,${h} L${points.join(' L')} L${w},${h} Z`;
+      const endLabel = `Em ${balances.length - 1} meses · ${formatBRL(balances[balances.length - 1])}`;
+      return `
+        <svg class="reserve-spark" viewBox="0 0 100 30" preserveAspectRatio="none">
+          <path d="${areaPath}"></path>
+          <polyline points="${polyline}"></polyline>
+        </svg>
+        <div class="reserve-meta"><span>${escapeHtml(endLabel)}</span></div>`;
+    }
+
+    async function loadPainel() {
+      renderPainelPicker();
+      const el = $('painel-body');
+      const faturaId = painelViewFaturaId;
+      const cacheKey = `dashboard:fatura:${faturaId == null ? 'current' : faturaId}`;
+      const cached = cacheGet(cacheKey);
+      if (cached) {
+        renderPainel(cached.payload.dashboard, cached.payload.forecast);
+        setCacheAge('painel-age', cached.ts);
+        return;
+      }
+      $('painel-age').textContent = '';
+      el.innerHTML = '<div class="empty">Carregando...</div>';
+      try {
+        const [dash, forecast] = await Promise.all([
+          api('dashboard', faturaId != null ? { fatura_id: faturaId } : {}),
+          api('reserve/forecast', { months: 24 }),
+        ]);
+        cacheSet(cacheKey, { dashboard: dash, forecast });
+        renderPainel(dash, forecast);
+        setCacheAge('painel-age', Date.now());
+      } catch (err) {
+        if (err.message === 'session_expired') return;
+        el.innerHTML = `<div class="empty">Erro: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    // ---------- Configurações ----------
+    let configState = { settings: null, editingFaturaId: null, addingFatura: false };
+
+    async function loadConfig() {
+      const el = $('config-body');
+      if (!configState.settings) el.innerHTML = '<div class="empty">Carregando...</div>';
+      try {
+        const res = await api('settings/get', {});
+        configState.settings = res.settings;
+        renderConfig();
+      } catch (err) {
+        if (err.message === 'session_expired') return;
+        el.innerHTML = `<div class="empty">Erro: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderConfig() {
+      const el = $('config-body');
+      const s = configState.settings;
+      if (!s) { el.innerHTML = '<div class="empty">Sem configurações.</div>'; return; }
+
+      const overrideOptions = [
+        `<option value="">auto (hoje)</option>`,
+        ...state.faturas.map(f => `<option value="${f.id}" ${s.current_fatura_override_id === f.id ? 'selected' : ''}>${escapeHtml(f.nome)}</option>`),
+      ].join('');
+
+      const settingsHtml = `
+        <div class="config-section">
+          <h3>Geral</h3>
+          <div class="config-row">
+            <span class="lbl">Meta de investimento</span>
+            <input id="cfg-meta" type="number" inputmode="decimal" step="1" min="0" max="100"
+                   value="${Math.round(s.meta_investimento_pct * 100)}" />
+            <span class="hint">% do salário</span>
+          </div>
+          <div class="config-row">
+            <span class="lbl">Reserva atual</span>
+            <input id="cfg-reserva" type="text" inputmode="decimal"
+                   value="${(s.reserva_atual_cents / 100).toFixed(2).replace('.', ',')}" />
+            <span class="hint">em reais</span>
+          </div>
+          <div class="config-row">
+            <span class="lbl">Multiplicador da meta</span>
+            <input id="cfg-meta-mult" type="number" inputmode="decimal" step="0.5" min="0"
+                   value="${s.reserva_meta_multiplier}" />
+            <span class="hint">meta = gasto fixo × multiplicador</span>
+          </div>
+          <div class="config-row">
+            <span class="lbl">Taxa juros mensal</span>
+            <input id="cfg-taxa" type="number" inputmode="decimal" step="0.01"
+                   value="${(s.taxa_juros_mensal_pct * 100).toFixed(2)}" />
+            <span class="hint">% ao mês (para projeção)</span>
+          </div>
+          <div class="config-row">
+            <span class="lbl">Dia de fechamento</span>
+            <input id="cfg-fechamento" type="number" inputmode="numeric" min="1" max="31"
+                   value="${s.fechamento_dia}" />
+            <span class="hint">dia que a fatura fecha</span>
+          </div>
+          <div class="config-row">
+            <span class="lbl">Fatura atual</span>
+            <select id="cfg-override">${overrideOptions}</select>
+            <span class="hint">"auto (hoje)" segue a data</span>
+          </div>
+          <div class="config-btn-row">
+            <button class="config-btn" id="cfg-save">salvar</button>
+          </div>
+        </div>`;
+
+      const faturasHtml = `
+        <div class="config-section">
+          <h3>Faturas</h3>
+          <div id="config-faturas">${state.faturas.map(renderFaturaRow).join('')}</div>
+          ${configState.addingFatura ? renderFaturaForm() : `
+            <div class="config-btn-row" style="justify-content: flex-start;">
+              <button class="config-btn" id="cfg-add-fatura">+ nova fatura</button>
+            </div>`}
+        </div>`;
+
+      el.innerHTML = settingsHtml + faturasHtml;
+      wireConfigInteractions();
+    }
+
+    function renderFaturaRow(f) {
+      if (f.id === configState.editingFaturaId) {
+        const salStr = (f.salario_cents / 100).toFixed(2).replace('.', ',');
+        return `
+          <div class="fatura-row editing" data-id="${f.id}">
+            ${faturaEditFields({ nome: f.nome, start_date: f.start_date, salStr })}
+            <div class="config-btn-row" style="justify-content: flex-start;">
+              <button class="config-btn" data-fatura-action="save">salvar</button>
+              <button class="config-btn danger" data-fatura-action="delete">excluir</button>
+              <button class="config-btn muted" data-fatura-action="cancel">cancelar</button>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="fatura-row" data-id="${f.id}">
+          <div class="nome">${escapeHtml(f.nome)}</div>
+          <div class="actions">
+            <button class="config-btn" data-fatura-action="edit">editar</button>
+          </div>
+          <div class="meta">início ${escapeHtml(formatDate(f.start_date))} · salário ${escapeHtml(formatBRL(f.salario_cents))}</div>
+        </div>`;
+    }
+
+    function renderFaturaForm() {
+      return `
+        <div class="fatura-row editing" data-id="new">
+          ${faturaEditFields({ nome: '', start_date: '', salStr: '' })}
+          <div class="config-btn-row" style="justify-content: flex-start;">
+            <button class="config-btn" data-fatura-action="create">adicionar</button>
+            <button class="config-btn muted" data-fatura-action="cancel-new">cancelar</button>
+          </div>
+        </div>`;
+    }
+
+    function faturaEditFields({ nome, start_date, salStr }) {
+      return `
+        <div class="fatura-edit">
+          <div class="field full">
+            <label>Nome da fatura</label>
+            <input class="f-nome" maxlength="40" placeholder="Ex: Julho 2026" value="${escapeHtml(nome)}" />
+          </div>
+          <div class="field">
+            <label>Início do ciclo</label>
+            <input class="f-start" type="date" value="${escapeHtml(start_date)}" />
+            <span class="hint">primeiro dia da fatura</span>
+          </div>
+          <div class="field">
+            <label>Salário líquido</label>
+            <input class="f-salario" inputmode="decimal" placeholder="0,00" value="${escapeHtml(salStr)}" />
+            <span class="hint">em reais</span>
+          </div>
+        </div>`;
+    }
+
+    function wireConfigInteractions() {
+      const saveBtn = $('cfg-save');
+      if (saveBtn) saveBtn.onclick = saveSettings;
+      const addBtn = $('cfg-add-fatura');
+      if (addBtn) addBtn.onclick = () => { configState.addingFatura = true; renderConfig(); };
+
+      document.querySelectorAll('#config-faturas [data-fatura-action], #config-body .fatura-row[data-id="new"] [data-fatura-action]').forEach(btn => {
+        btn.onclick = () => handleFaturaAction(btn.closest('.fatura-row'), btn.dataset.faturaAction);
+      });
+
+      ['cfg-reserva', 'cfg-meta', 'cfg-meta-mult', 'cfg-taxa', 'cfg-fechamento'].forEach(id => {
+        const inp = $(id);
+        if (inp && (id === 'cfg-reserva')) wireValorMask(inp);
+      });
+
+      document.querySelectorAll('#config-body .f-salario').forEach(inp => wireValorMask(inp));
+    }
+
+    async function saveSettings() {
+      const patch = {};
+      const metaPct = Number($('cfg-meta').value);
+      if (!isNaN(metaPct)) patch.meta_investimento_pct = Math.max(0, Math.min(1, metaPct / 100));
+      const reservaValor = parseValor($('cfg-reserva').value);
+      if (!isNaN(reservaValor)) patch.reserva_atual_cents = Math.round(reservaValor * 100);
+      const mult = Number($('cfg-meta-mult').value);
+      if (!isNaN(mult)) patch.reserva_meta_multiplier = mult;
+      const taxa = Number($('cfg-taxa').value);
+      if (!isNaN(taxa)) patch.taxa_juros_mensal_pct = taxa / 100;
+      const fechamento = parseInt($('cfg-fechamento').value, 10);
+      if (Number.isInteger(fechamento)) patch.fechamento_dia = fechamento;
+      const overrideRaw = $('cfg-override').value;
+      patch.current_fatura_override_id = overrideRaw === '' ? null : Number(overrideRaw);
+
+      const btn = $('cfg-save');
+      btn.disabled = true;
+      btn.textContent = 'salvando...';
+      try {
+        const res = await api('settings/update', patch);
+        configState.settings = res.settings;
+        cacheInvalidateAllDerived();
+        // The override may change which fatura "current" resolves to.
+        await loadCurrentFatura();
+        toast('Configurações salvas ✓', 'ok');
+        renderConfig();
+      } catch (err) {
+        if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'salvar';
+      }
+    }
+
+    async function handleFaturaAction(row, action) {
+      const id = row.dataset.id;
+      if (action === 'edit') {
+        configState.editingFaturaId = Number(id);
+        renderConfig();
+        return;
+      }
+      if (action === 'cancel') {
+        configState.editingFaturaId = null;
+        renderConfig();
+        return;
+      }
+      if (action === 'cancel-new') {
+        configState.addingFatura = false;
+        renderConfig();
+        return;
+      }
+      if (action === 'save' || action === 'create') {
+        const nome = row.querySelector('.f-nome').value.trim();
+        const start_date = row.querySelector('.f-start').value;
+        const salStr = row.querySelector('.f-salario').value.trim();
+        if (!nome) return toast('Informe o nome', 'err');
+        if (!start_date) return toast('Informe a data de início', 'err');
+        const salNum = salStr ? parseValor(salStr) : 0;
+        if (isNaN(salNum)) return toast('Salário inválido', 'err');
+        const salario_cents = Math.round(salNum * 100);
+        try {
+          if (action === 'create') {
+            await api('faturas/create', { nome, start_date, salario_cents });
+            configState.addingFatura = false;
+            toast('Fatura adicionada ✓', 'ok');
+          } else {
+            await api('faturas/update', { id: Number(id), nome, start_date, salario_cents });
+            configState.editingFaturaId = null;
+            toast('Fatura atualizada ✓', 'ok');
+          }
+          await refreshAfterFaturaWrite();
+        } catch (err) {
+          if (err.message === 'duplicate_fatura_name') toast('Nome de fatura já existe', 'err');
+          else if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        }
+        return;
+      }
+      if (action === 'delete') {
+        if (!confirm('Excluir esta fatura?')) return;
+        try {
+          await api('faturas/delete', { id: Number(id) });
+          configState.editingFaturaId = null;
+          toast('Fatura excluída', 'ok');
+          await refreshAfterFaturaWrite();
+        } catch (err) {
+          if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        }
+      }
+    }
+
+    async function refreshAfterFaturaWrite() {
+      cacheInvalidate('faturas');
+      cacheInvalidate('transactions');
+      cacheInvalidateAllDerived();
+      await loadFaturas();
+      await loadCurrentFatura();
+      renderConfig();
     }
 
     // Takes signed integer cents → "R$ 1.234,56" (sign preserved).

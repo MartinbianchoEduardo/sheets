@@ -36,6 +36,8 @@ import {
   listTx, createTx, updateTx, softDeleteTx, restoreTx,
 } from './transactions.js';
 import { getSummary } from './summary.js';
+import { getSettings, updateSettings } from './settings.js';
+import { getDashboard, forecastReserve } from './dashboard.js';
 
 export default {
   async fetch(request, env) {
@@ -77,6 +79,11 @@ export default {
           case '/api/transactions/restore': return handleTxRestore(request, env);
 
           case '/api/summary/fatura':    return handleSummaryFatura(request, env);
+
+          case '/api/dashboard':         return handleDashboard(request, env);
+          case '/api/settings/get':      return handleSettingsGet(request, env);
+          case '/api/settings/update':   return handleSettingsUpdate(request, env);
+          case '/api/reserve/forecast':  return handleReserveForecast(request, env);
         }
       }
 
@@ -204,6 +211,46 @@ async function handleSummaryFatura(request, env) {
 
   const summary = await getSummary(env, faturaId);
   return jsonResponse({ ok: true, ...summary }, {}, env);
+}
+
+// ---------- /api/dashboard, /api/settings/*, /api/reserve/forecast ----------
+
+async function handleDashboard(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+
+  let faturaId = body && body.fatura_id;
+  if (faturaId == null) {
+    faturaId = null;
+  } else if (!Number.isInteger(faturaId)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['fatura_id'] }, { status: 400 }, env);
+  }
+
+  const dashboard = await getDashboard(env, faturaId);
+  return jsonResponse({ ok: true, ...dashboard }, {}, env);
+}
+
+async function handleSettingsGet(request, env) {
+  try { await requireSession(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  const settings = await getSettings(env);
+  return jsonResponse({ ok: true, settings }, {}, env);
+}
+
+async function handleSettingsUpdate(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  return resultToResponse(env, await updateSettings(env, body || {}));
+}
+
+async function handleReserveForecast(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  const result = await forecastReserve(env, body || {});
+  return jsonResponse({ ok: true, ...result }, {}, env);
 }
 
 // ---------- /api/transactions/* ----------
