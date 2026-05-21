@@ -13,7 +13,7 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function now() { return Date.now(); }
 
-function validateIsoDate(s) {
+export function validateIsoDate(s) {
   if (typeof s !== 'string' || !ISO_DATE_RE.test(s)) return false;
   const d = new Date(s + 'T00:00:00Z');
   return !isNaN(d.getTime());
@@ -144,11 +144,26 @@ function todayIsoSaoPaulo() {
 export async function currentFatura(env) {
   const s = await queryOne(env, 'SELECT current_fatura_override_id FROM settings WHERE id = 1');
   const overrideId = s && s.current_fatura_override_id;
+  let fatura, override_set;
   if (overrideId) {
     const f = await getFatura(env, overrideId);
-    if (f) return { fatura: f, override_set: true, today: todayIsoSaoPaulo() };
+    if (f) { fatura = f; override_set = true; }
+  }
+  if (!fatura) {
+    fatura = await resolveFaturaForDate(env, todayIsoSaoPaulo());
+    override_set = false;
   }
   const today = todayIsoSaoPaulo();
-  const fatura = await resolveFaturaForDate(env, today);
-  return { fatura, override_set: false, today };
+  const outro_count = fatura ? await countOutroFor(env, fatura.id) : 0;
+  return { fatura, override_set, today, outro_count };
+}
+
+async function countOutroFor(env, faturaId) {
+  const row = await queryOne(
+    env,
+    `SELECT COUNT(*) AS c FROM transactions
+      WHERE deleted_at IS NULL AND categoria = 'Outro' AND fatura_id = ?`,
+    faturaId,
+  );
+  return row ? row.c : 0;
 }

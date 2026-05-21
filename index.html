@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- maximum-scale + user-scalable disable iOS Safari's auto-zoom on focused
+       inputs (which fires for any field with font-size < 16px). Pinch-zoom is
+       still honored by iOS 10+ regardless of these values. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#0e0e0e" />
   <title>Gastos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -107,7 +110,7 @@
       color: var(--text-dim);
       border-radius: 999px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color 0.25s ease, color 0.25s ease;
       font-family: inherit;
       font-size: inherit;
       letter-spacing: inherit;
@@ -116,6 +119,31 @@
       background: var(--accent);
       color: #0a0a0a;
       font-weight: 700;
+    }
+
+    /* ---------- Outro inbox badge ---------- */
+    .outro-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--accent);
+      color: #0a0a0a;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+    }
+    .outro-badge.visible { display: inline-flex; }
+    .outro-badge:active { transform: scale(0.95); }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     /* ---------- Forms ---------- */
@@ -623,7 +651,9 @@
       border: 1px solid var(--border);
       opacity: 0;
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 50;
+      /* Above the subpage overlay (z 100) so toasts triggered from inside
+         Regras/Importar still float on top. */
+      z-index: 200;
       pointer-events: none;
       max-width: 90vw;
       text-align: center;
@@ -808,7 +838,8 @@
     .config-row input[type=date],
     .config-row select {
       padding: 9px 12px;
-      font-size: 14px;
+      /* 16px keeps iOS Safari from auto-zooming on focus. */
+      font-size: 16px;
       width: 140px;
       background: var(--bg);
       border-radius: 8px;
@@ -881,7 +912,7 @@
       border-radius: 8px;
       color: var(--text);
       font-family: 'Fraunces', serif;
-      font-size: 15px;
+      font-size: 16px;
       -webkit-appearance: none;
       appearance: none;
     }
@@ -907,6 +938,430 @@
     .config-btn.danger { color: var(--danger); }
     .config-btn.muted { color: var(--text-mute); }
     .config-btn:active { transform: scale(0.95); }
+
+    /* ---------- Config action cards (open subpages) ---------- */
+    .config-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .action-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 18px;
+      padding: 20px 22px 20px 26px;
+      background: linear-gradient(135deg, var(--bg-elev) 0%, var(--bg-elev-2) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      overflow: hidden;
+      text-align: left;
+      color: var(--text);
+      font-family: inherit;
+      transition:
+        transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 0.2s ease;
+    }
+    .action-card::before {
+      /* Accent rail on the left edge — small, audacious. */
+      content: '';
+      position: absolute;
+      left: 0; top: 14px; bottom: 14px;
+      width: 3px;
+      background: var(--accent);
+      border-radius: 0 3px 3px 0;
+    }
+    .action-card:active { transform: scale(0.985); border-color: var(--accent); }
+    .action-card .ac-icon {
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: rgba(212, 255, 60, 0.10);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .action-card .ac-icon svg { display: block; }
+    .action-card .ac-body { min-width: 0; }
+    .action-card .ac-title {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .action-card .ac-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-mute);
+      margin-top: 6px;
+    }
+    .action-card .ac-chev {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      color: var(--text-dim);
+      line-height: 1;
+    }
+
+    /* ---------- Subpage overlay ---------- */
+    /* A single fixed-position layer that slides in from the right. Lives above
+       the app and the lock screen. Contents toggle by data-subpage — we never
+       unmount, so re-opening the same kind preserves scroll/state. */
+    .subpage {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      transform: translateX(100%);
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      pointer-events: none;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      display: flex;
+    }
+    .subpage.open {
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+    .subpage.dragging { transition: none; }
+    /* Inner column mirrors .app exactly: same max-width, same outer padding
+       (24px top, 20px sides, 0 bottom), so the back-arrow header lines up
+       with the brand header and the body content lines up with the deck
+       pages on both mobile and desktop. */
+    .subpage-inner {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 20px 0;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      flex: 1;
+    }
+    .subpage-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .subpage-back {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .subpage-back:active { transform: scale(0.92); background: var(--bg-elev-2); }
+    .subpage-header h2 {
+      margin: 0;
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+    .subpage-body {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      /* Inner already provides the 20px sides; body adds bottom space for
+         the iOS keyboard / home-bar gutter, matching .deck-page. */
+      padding: 0 0 120px;
+      min-width: 0;
+    }
+    .subpage-content.hidden { display: none; }
+
+    /* ---------- Regras (merchant rules) ---------- */
+    .regras-list {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 6px 16px;
+      margin-bottom: 16px;
+    }
+    .regra-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+    }
+    .regra-row:first-of-type { border-top: none; }
+    .regra-row .chave {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: 'Fraunces', serif;
+      font-size: 16px;
+      min-width: 0;
+    }
+    .regra-row .chave:focus { outline: none; border-color: var(--accent); }
+    .regra-row .cat {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: 'Fraunces', serif;
+      font-size: 16px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .regra-row .arrows {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .regra-row .arrow-btn,
+    .regra-row .del-btn {
+      background: none;
+      border: none;
+      color: var(--text-mute);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 6px;
+      line-height: 1;
+    }
+    .regra-row .arrow-btn:active,
+    .regra-row .del-btn:active { transform: scale(0.9); }
+    .regra-row .del-btn { color: var(--danger); font-size: 11px; }
+    .regra-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 14px;
+      justify-content: flex-end;
+      margin-top: 2px;
+    }
+    .regra-action {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .regra-action.danger { color: var(--danger); }
+    .regra-action.muted { color: var(--text-mute); }
+    .add-regra-btn {
+      width: 100%;
+      background: none;
+      border: 1px dashed var(--border);
+      color: var(--text-dim);
+      padding: 12px;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      cursor: pointer;
+    }
+    .add-regra-btn:active { transform: scale(0.99); }
+
+    /* ---------- Importar (CSV) ---------- */
+    .import-section {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .import-section h3 {
+      margin: 0 0 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      font-weight: 400;
+    }
+    .import-textarea {
+      width: 100%;
+      min-height: 140px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      resize: vertical;
+      margin: 12px 0;
+    }
+    .import-textarea:focus { outline: none; border-color: var(--accent); }
+    .import-file {
+      display: block;
+      margin-top: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .import-btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .import-btn {
+      flex: 1;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .import-btn.primary {
+      background: var(--accent);
+      color: #0a0a0a;
+      font-weight: 700;
+      border-color: var(--accent);
+    }
+    .import-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .import-btn:active:not(:disabled) { transform: scale(0.99); }
+
+    .preview-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 10px;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+      /* iOS-style swipe-to-dismiss: opt out of native horizontal panning so the
+         deck's tab swipe doesn't fight us inside a row. Vertical scrolling
+         still goes to the page; horizontal motion goes to our JS handler. */
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
+      transition:
+        transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity   0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+        max-height 0.22s ease-out,
+        padding-top 0.22s ease-out,
+        padding-bottom 0.22s ease-out,
+        border-top-width 0.22s ease-out;
+      overflow: hidden;
+    }
+    .preview-row.swiping {
+      /* Finger-following: kill easing so transform sticks to the touch position. */
+      transition: none;
+    }
+    .preview-row:first-of-type { border-top: none; }
+    .preview-row.outro { background: rgba(255, 107, 94, 0.06); margin: 0 -10px; padding: 10px; border-radius: 8px; }
+    .preview-row.outro + .preview-row { border-top-color: transparent; }
+    .preview-row .desc {
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      grid-column: 1;
+    }
+    .preview-row .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      text-align: right;
+      grid-column: 2;
+      align-self: start;
+      font-variant-numeric: tabular-nums;
+    }
+    .preview-row .meta {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+    }
+    .preview-row .cat-sel {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 4px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .preview-row.outro .cat-sel { border-color: var(--danger); }
+    .preview-row .outro-flag {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    .preview-invalid {
+      color: var(--danger);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 8px 0;
+    }
+    .preview-summary {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      margin-bottom: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+    }
+
+    /* ---------- Histórico filter ---------- */
+    .history-filter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .history-filter label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+    .history-filter select {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text);
+      padding: 6px 30px 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%),
+                        linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+      background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
 
     /* ---------- Cache freshness badge ---------- */
     .cache-age {
@@ -947,7 +1402,13 @@
   <div id="app" class="app hidden">
     <header>
       <div class="brand">gastos<em>.</em></div>
-      <div class="status-dot" id="status-dot" title="Status da conexão"></div>
+      <div class="header-right">
+        <button id="outro-badge" class="outro-badge" type="button" title="Lançamentos sem categoria">
+          <span id="outro-count">0</span>
+          <span>outros</span>
+        </button>
+        <div class="status-dot" id="status-dot" title="Status da conexão"></div>
+      </div>
     </header>
 
     <div id="rollover" class="rollover hidden">
@@ -998,6 +1459,12 @@
 
       <!-- HISTORY VIEW -->
       <section id="view-history" class="deck-page">
+        <div class="history-filter">
+          <label for="history-cat">Categoria</label>
+          <select id="history-cat">
+            <option value="">todas</option>
+          </select>
+        </div>
         <div class="cache-age" id="history-age"></div>
         <div id="history-list" class="history-list">
           <div class="empty">Carregando...</div>
@@ -1034,6 +1501,30 @@
           <div class="empty">Carregando...</div>
         </div>
       </section>
+    </div>
+  </div>
+
+  <!-- SUBPAGE: slides in over the app for Regras and Importar. Panel is
+       full-width (the dark bg matches the desktop margins around .app);
+       inner column is constrained to the same max-width as .app. -->
+  <div id="subpage" class="subpage" aria-hidden="true">
+    <div class="subpage-inner">
+      <header class="subpage-header">
+        <button class="subpage-back" id="subpage-back" type="button" aria-label="Voltar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <h2 id="subpage-title">—</h2>
+      </header>
+      <div class="subpage-body">
+        <div id="regras-body" class="subpage-content hidden" data-subpage="regras">
+          <div class="empty">Carregando...</div>
+        </div>
+        <div id="import-body" class="subpage-content hidden" data-subpage="import">
+          <div class="empty">Carregando...</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1080,6 +1571,7 @@
       currentFaturaId: null,
       faturaOverrideSet: false,
       editingId: null,
+      outroCount: 0,
     };
     // Resumo's view-only fatura selection (independent from state.currentFaturaId).
     let summaryViewFaturaId = null;
@@ -1335,6 +1827,7 @@
     }
 
     function showLock() {
+      closeSubpage();
       $('app').classList.add('hidden');
       $('lock').classList.remove('hidden');
     }
@@ -1384,6 +1877,83 @@
       t.onclick = () => scrollToTab(t.dataset.tab);
     });
 
+    // ---------- Subpage (Regras / Importar) ----------
+    // Single fixed overlay that slides in from the right. The subpage hosts
+    // both #regras-body and #import-body — exactly one is visible at a time.
+    // Dismiss via the back button or an iOS-style edge swipe from the left.
+    const SUBPAGE_TITLES = { regras: 'Regras', import: 'Importar' };
+
+    function openSubpage(kind) {
+      if (!SUBPAGE_TITLES[kind]) return;
+      const sub = $('subpage');
+      $('subpage-title').textContent = SUBPAGE_TITLES[kind];
+      document.querySelectorAll('.subpage-content').forEach(el => {
+        el.classList.toggle('hidden', el.dataset.subpage !== kind);
+      });
+      sub.setAttribute('aria-hidden', 'false');
+      sub.classList.add('open');
+      // Lazy-load content on open so coming back to the same kind is instant.
+      if (kind === 'regras') loadRegras();
+      if (kind === 'import') renderImportView();
+    }
+
+    function closeSubpage() {
+      const sub = $('subpage');
+      sub.classList.remove('open');
+      sub.style.transform = '';
+      sub.setAttribute('aria-hidden', 'true');
+    }
+
+    $('subpage-back').onclick = closeSubpage;
+
+    // Edge swipe: only catches touches that start within the leftmost ~20px
+    // (matches iOS UINavigationController). Anywhere else, gestures fall
+    // through to the underlying content — so the preview-row swipe-to-delete
+    // and the textarea cursor placement both keep working untouched.
+    (function wireSubpageEdgeSwipe() {
+      const sub = $('subpage');
+      let startX = 0, currentX = 0;
+      let active = false;
+      const EDGE_PX = 22;
+
+      function onStart(e) {
+        if (!sub.classList.contains('open')) return;
+        const t = e.touches[0];
+        if (t.clientX > EDGE_PX) { active = false; return; }
+        startX = t.clientX;
+        currentX = 0;
+        active = true;
+        sub.classList.add('dragging');
+      }
+
+      function onMove(e) {
+        if (!active) return;
+        const t = e.touches[0];
+        const dx = t.clientX - startX;
+        if (dx < 0) { sub.style.transform = ''; return; }
+        currentX = dx;
+        sub.style.transform = `translateX(${dx}px)`;
+      }
+
+      function onEnd() {
+        if (!active) return;
+        active = false;
+        sub.classList.remove('dragging');
+        if (currentX > sub.offsetWidth * 0.3) {
+          closeSubpage();
+        } else {
+          // Snap back: clear inline transform and let the CSS transition
+          // ease back to translateX(0) — since .open is still set.
+          sub.style.transform = '';
+        }
+      }
+
+      sub.addEventListener('touchstart', onStart, { passive: true });
+      sub.addEventListener('touchmove',  onMove,  { passive: true });
+      sub.addEventListener('touchend',   onEnd);
+      sub.addEventListener('touchcancel', onEnd);
+    })();
+
     // Wire up the observer after init() so it doesn't fire prematurely.
     function wireDeckObserver() {
       const deck = $('deck');
@@ -1429,6 +1999,7 @@
       await loadCurrentFatura();
       refreshFaturaDisplay();
       refreshRolloverBanner();
+      populateHistoryFilter();
       wireDeckObserver();
       // Make sure we start anchored to + Novo (deck.scrollLeft = 0).
       $('deck').scrollLeft = 0;
@@ -1452,9 +2023,11 @@
         const res = await api('faturas/current', {});
         state.currentFaturaId = res.fatura ? res.fatura.id : null;
         state.faturaOverrideSet = !!res.override_set;
+        state.outroCount = Number(res.outro_count || 0);
         // Default Resumo's and Painel's view to the current fatura.
         if (summaryViewFaturaId == null) summaryViewFaturaId = state.currentFaturaId;
         if (painelViewFaturaId == null)  painelViewFaturaId  = state.currentFaturaId;
+        refreshOutroBadge();
       } catch (err) {
         if (err.message === 'session_expired') return;
       }
@@ -1487,7 +2060,7 @@
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     }
 
-    $('rollover-btn').onclick = () => {
+    $('rollover-btn').onclick = async () => {
       const today = isoToday();
       const todayFatura = resolveFaturaForDateClient(today);
       if (!todayFatura) return;
@@ -1495,6 +2068,8 @@
       summaryViewFaturaId = todayFatura.id;
       painelViewFaturaId  = todayFatura.id;
       refreshRolloverBanner();
+      // Re-pull current-fatura state for the new cycle.
+      await loadCurrentFatura();
       // If the user is on Resumo or Painel, reflect the switch immediately.
       const active = document.querySelector('.tab.active')?.dataset.tab;
       if (active === 'summary') loadSummary();
@@ -1537,6 +2112,7 @@
         });
         cacheInvalidate('transactions');
         cacheInvalidateAllDerived();
+        loadCurrentFatura();
         toast('Lançamento adicionado ✓', 'ok');
         $('f-descricao').value = '';
         $('f-valor').value = '';
@@ -1648,19 +2224,27 @@
 
     async function loadHistory() {
       const el = $('history-list');
-      const cached = cacheGet('transactions');
-      if (cached) {
-        renderHistory(cached.payload.transactions);
-        setCacheAge('history-age', cached.ts);
-        return;
+      const filter = historyCategoriaFilter;
+      // Only cache the unfiltered "todas" view — filtered queries are quick
+      // and infrequent enough that paying a network round-trip beats juggling
+      // per-category cache keys.
+      if (!filter) {
+        const cached = cacheGet('transactions');
+        if (cached) {
+          renderHistory(cached.payload.transactions);
+          setCacheAge('history-age', cached.ts);
+          return;
+        }
       }
-      $('history-age').textContent = '';
+      $('history-age').textContent = filter ? `filtro · ${filter.toLowerCase()}` : '';
       el.innerHTML = '<div class="empty">Carregando...</div>';
       try {
-        const fresh = await api('transactions/list', { limit: 50 });
-        cacheSet('transactions', fresh);
+        const payload = { limit: 200 };
+        if (filter) payload.categoria = filter;
+        const fresh = await api('transactions/list', payload);
+        if (!filter) cacheSet('transactions', fresh);
         renderHistory(fresh.transactions);
-        setCacheAge('history-age', Date.now());
+        if (!filter) setCacheAge('history-age', Date.now());
       } catch (err) {
         if (err.message === 'session_expired') return;
         el.innerHTML = `<div class="empty">Erro: ${escapeHtml(err.message)}</div>`;
@@ -1762,6 +2346,7 @@
         const categoria = selected.dataset.cat;
 
         try {
+          const prevCategoria = historyRows.find(r => r.id === id)?.categoria;
           const res = await api('transactions/update', {
             id, descricao, valor_cents, data, categoria,
           });
@@ -1772,7 +2357,12 @@
           if (idx >= 0 && res.transaction) historyRows[idx] = res.transaction;
           state.editingId = null;
           rerenderRow(id);
+          loadCurrentFatura();
           toast('Atualizado ✓', 'ok');
+          // If we just categorized an Outro row, offer to remember it.
+          if (prevCategoria === 'Outro' && categoria !== 'Outro') {
+            maybePromptAddRule(descricao, categoria);
+          }
         } catch (err) {
           if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
         }
@@ -1808,6 +2398,7 @@
         await api('transactions/delete', { id });
         cacheInvalidate('transactions');
         cacheInvalidateAllDerived();
+        loadCurrentFatura();
       } catch (err) {
         if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
         return;
@@ -1820,6 +2411,7 @@
             const res = await api('transactions/restore', { id });
             cacheInvalidate('transactions');
             cacheInvalidateAllDerived();
+            loadCurrentFatura();
             // Reinsert at correct chronological position (server returns the full row)
             if (res.transaction) {
               historyRows.push(res.transaction);
@@ -2123,6 +2715,37 @@
         ...state.faturas.map(f => `<option value="${f.id}" ${s.current_fatura_override_id === f.id ? 'selected' : ''}>${escapeHtml(f.nome)}</option>`),
       ].join('');
 
+      const actionsHtml = `
+        <div class="config-actions">
+          <button type="button" class="action-card" data-open-subpage="import">
+            <div class="ac-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div class="ac-body">
+              <div class="ac-title">Importar</div>
+              <div class="ac-sub">Carregar CSV do cartão</div>
+            </div>
+            <div class="ac-chev">›</div>
+          </button>
+          <button type="button" class="action-card" data-open-subpage="regras">
+            <div class="ac-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                <circle cx="7" cy="7" r="1.4" fill="currentColor" />
+              </svg>
+            </div>
+            <div class="ac-body">
+              <div class="ac-title">Regras</div>
+              <div class="ac-sub">Mapear merchant → categoria</div>
+            </div>
+            <div class="ac-chev">›</div>
+          </button>
+        </div>`;
+
       const settingsHtml = `
         <div class="config-section">
           <h3>Geral</h3>
@@ -2176,7 +2799,7 @@
             </div>`}
         </div>`;
 
-      el.innerHTML = settingsHtml + faturasHtml;
+      el.innerHTML = actionsHtml + settingsHtml + faturasHtml;
       wireConfigInteractions();
     }
 
@@ -2239,6 +2862,10 @@
       if (saveBtn) saveBtn.onclick = saveSettings;
       const addBtn = $('cfg-add-fatura');
       if (addBtn) addBtn.onclick = () => { configState.addingFatura = true; renderConfig(); };
+
+      document.querySelectorAll('#config-body [data-open-subpage]').forEach(btn => {
+        btn.onclick = () => openSubpage(btn.dataset.openSubpage);
+      });
 
       document.querySelectorAll('#config-faturas [data-fatura-action], #config-body .fatura-row[data-id="new"] [data-fatura-action]').forEach(btn => {
         btn.onclick = () => handleFaturaAction(btn.closest('.fatura-row'), btn.dataset.faturaAction);
@@ -2349,6 +2976,524 @@
       await loadFaturas();
       await loadCurrentFatura();
       renderConfig();
+    }
+
+    // ---------- Outro inbox badge ----------
+    // Count comes from /api/faturas/current — refreshed on init, rollover,
+    // settings/fatura writes, and after every transaction or import write.
+    function refreshOutroBadge() {
+      const badge = $('outro-badge');
+      const count = Number(state.outroCount || 0);
+      $('outro-count').textContent = String(count);
+      badge.classList.toggle('visible', count > 0);
+    }
+
+    $('outro-badge').onclick = () => {
+      const sel = $('history-cat');
+      if (sel) sel.value = 'Outro';
+      historyCategoriaFilter = 'Outro';
+      scrollToTab('history');
+      loadHistory();
+    };
+
+    // ---------- Histórico filter ----------
+    let historyCategoriaFilter = '';
+
+    function populateHistoryFilter() {
+      const sel = $('history-cat');
+      if (!sel) return;
+      const current = sel.value;
+      sel.innerHTML = '<option value="">todas</option>' +
+        CATEGORIES.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      sel.value = current;
+    }
+
+    document.addEventListener('change', e => {
+      if (e.target && e.target.id === 'history-cat') {
+        historyCategoriaFilter = e.target.value || '';
+        loadHistory();
+      }
+    });
+
+    // ---------- Regras (merchant rules) ----------
+    let rulesState = { rules: [], addingRule: false };
+
+    async function loadRegras() {
+      const el = $('regras-body');
+      try {
+        const res = await api('rules/list', {});
+        rulesState.rules = res.rules || [];
+        renderRegras();
+      } catch (err) {
+        if (err.message === 'session_expired') return;
+        el.innerHTML = `<div class="empty">Erro: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderRegras() {
+      const el = $('regras-body');
+      const rows = rulesState.rules.map((r, idx) => renderRegraRow(r, idx, rulesState.rules.length)).join('');
+      const listHtml = rulesState.rules.length
+        ? `<div class="regras-list">${rows}</div>`
+        : '<div class="empty">Nenhuma regra ainda.</div>';
+      const addHtml = rulesState.addingRule
+        ? renderAddRegraForm()
+        : `<button class="add-regra-btn" id="add-regra">+ nova regra</button>`;
+      el.innerHTML = listHtml + addHtml;
+      wireRegrasInteractions();
+    }
+
+    function renderRegraRow(r, idx, total) {
+      const opts = CATEGORIES.map(c =>
+        `<option value="${escapeHtml(c)}" ${c === r.categoria ? 'selected' : ''}>${escapeHtml(c)}</option>`
+      ).join('');
+      const upDisabled  = idx === 0 ? 'disabled' : '';
+      const dnDisabled  = idx === total - 1 ? 'disabled' : '';
+      return `
+        <div class="regra-row" data-id="${r.id}">
+          <input class="chave" maxlength="80" value="${escapeHtml(r.chave)}" />
+          <select class="cat">${opts}</select>
+          <div class="arrows">
+            <button class="arrow-btn" data-act="up" ${upDisabled}>▲</button>
+            <button class="arrow-btn" data-act="down" ${dnDisabled}>▼</button>
+          </div>
+          <div class="regra-actions">
+            <button class="regra-action danger" data-act="del">excluir</button>
+          </div>
+        </div>`;
+    }
+
+    function renderAddRegraForm() {
+      const opts = CATEGORIES.map(c =>
+        `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`
+      ).join('');
+      return `
+        <div class="regras-list">
+          <div class="regra-row" data-id="new">
+            <input class="chave" id="new-regra-chave" maxlength="80" placeholder="ex: ifood" />
+            <select class="cat" id="new-regra-cat">${opts}</select>
+            <div class="arrows"></div>
+            <div class="regra-actions">
+              <button class="regra-action" data-act="create">adicionar</button>
+              <button class="regra-action muted" data-act="cancel-new">cancelar</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function wireRegrasInteractions() {
+      const addBtn = $('add-regra');
+      if (addBtn) addBtn.onclick = () => { rulesState.addingRule = true; renderRegras(); setTimeout(() => $('new-regra-chave')?.focus(), 50); };
+
+      // Save on blur for chave / change for select. No save button: keeps UI quiet.
+      document.querySelectorAll('#regras-body .regra-row[data-id]:not([data-id="new"]) .chave').forEach(inp => {
+        inp.addEventListener('blur', () => saveRegraField(inp.closest('.regra-row'), 'chave', inp.value.trim()));
+      });
+      document.querySelectorAll('#regras-body .regra-row[data-id]:not([data-id="new"]) .cat').forEach(sel => {
+        sel.addEventListener('change', () => saveRegraField(sel.closest('.regra-row'), 'categoria', sel.value));
+      });
+
+      document.querySelectorAll('#regras-body .regra-row .arrow-btn').forEach(btn => {
+        btn.onclick = () => handleRegraArrow(btn.closest('.regra-row'), btn.dataset.act);
+      });
+      document.querySelectorAll('#regras-body .regra-row .regra-action').forEach(btn => {
+        btn.onclick = () => handleRegraAction(btn.closest('.regra-row'), btn.dataset.act);
+      });
+    }
+
+    async function saveRegraField(row, field, value) {
+      const id = Number(row.dataset.id);
+      const existing = rulesState.rules.find(r => r.id === id);
+      if (!existing) return;
+      if (existing[field] === value) return;
+      if (field === 'chave' && !value) {
+        row.querySelector('.chave').value = existing.chave;
+        toast('Chave não pode ser vazia', 'err');
+        return;
+      }
+      try {
+        const res = await api('rules/update', { id, [field]: value });
+        if (res.rule) {
+          const idx = rulesState.rules.findIndex(r => r.id === id);
+          if (idx >= 0) rulesState.rules[idx] = res.rule;
+        }
+      } catch (err) {
+        if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        row.querySelector('.' + (field === 'categoria' ? 'cat' : 'chave')).value = existing[field];
+      }
+    }
+
+    async function handleRegraArrow(row, dir) {
+      const id = Number(row.dataset.id);
+      const idx = rulesState.rules.findIndex(r => r.id === id);
+      const swap = dir === 'up' ? idx - 1 : idx + 1;
+      if (idx < 0 || swap < 0 || swap >= rulesState.rules.length) return;
+      const r = rulesState.rules;
+      [r[idx], r[swap]] = [r[swap], r[idx]];
+      renderRegras();
+      try {
+        await api('rules/reorder', { ids: r.map(x => x.id) });
+      } catch (err) {
+        if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        await loadRegras();
+      }
+    }
+
+    async function handleRegraAction(row, act) {
+      if (act === 'cancel-new') {
+        rulesState.addingRule = false;
+        renderRegras();
+        return;
+      }
+      if (act === 'create') {
+        const chave = $('new-regra-chave').value.trim();
+        const categoria = $('new-regra-cat').value;
+        if (!chave) return toast('Informe a chave', 'err');
+        if (!categoria) return toast('Escolha a categoria', 'err');
+        try {
+          const res = await api('rules/create', { chave, categoria });
+          if (res.rule) rulesState.rules.push(res.rule);
+          rulesState.addingRule = false;
+          renderRegras();
+          toast('Regra adicionada ✓', 'ok');
+        } catch (err) {
+          if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        }
+        return;
+      }
+      if (act === 'del') {
+        const id = Number(row.dataset.id);
+        if (!confirm('Excluir esta regra?')) return;
+        try {
+          await api('rules/delete', { id });
+          rulesState.rules = rulesState.rules.filter(r => r.id !== id);
+          renderRegras();
+          toast('Regra excluída', 'ok');
+        } catch (err) {
+          if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+        }
+      }
+    }
+
+    // After categorizing an Outro row, offer to remember the merchant. The
+    // guess is the first token of the descricao split on whitespace/*, which
+    // matches the Nubank shape "IFOOD *RESTAURANT" → "IFOOD".
+    function guessChaveFromDescricao(desc) {
+      const token = String(desc).split(/[\s*]+/).filter(Boolean)[0] || '';
+      return token.toLowerCase();
+    }
+
+    async function maybePromptAddRule(descricao, categoria) {
+      if (!descricao || !categoria || categoria === 'Outro') return;
+      const guess = guessChaveFromDescricao(descricao);
+      if (!guess) return;
+      // Lazy-load rules so the first edit doesn't pay this latency.
+      if (!rulesState.rules.length) {
+        try { rulesState.rules = (await api('rules/list', {})).rules || []; }
+        catch { return; }
+      }
+      // Already covered by an existing rule? Don't nag.
+      if (rulesState.rules.some(r => guess.includes((r.chave || '').toLowerCase()))) return;
+      toast(`Adicionar regra "${guess}" → ${categoria}?`, 'ok', {
+        label: 'sim',
+        onClick: async () => {
+          try {
+            const res = await api('rules/create', { chave: guess, categoria });
+            if (res.rule) rulesState.rules.push(res.rule);
+            toast('Regra adicionada ✓', 'ok');
+          } catch (err) {
+            if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+          }
+        },
+      });
+    }
+
+    // ---------- Importar (CSV) ----------
+    let importState = { rows: [], previewed: false };
+
+    function renderImportView() {
+      const el = $('import-body');
+      el.innerHTML = `
+        <div class="import-section">
+          <h3>Colar CSV (Nubank: date,title,amount)</h3>
+          <textarea id="import-csv" class="import-textarea" placeholder="date,title,amount&#10;2026-05-04,IFOOD *RESTAURANT,42.90"></textarea>
+          <label class="import-file">
+            ou enviar arquivo:
+            <input type="file" id="import-file" accept=".csv,text/csv" />
+          </label>
+          <div class="import-btn-row">
+            <button class="import-btn" id="import-preview">Pré-visualizar</button>
+            <button class="import-btn primary" id="import-confirm" disabled>Confirmar</button>
+            <button class="import-btn" id="import-cancel">Cancelar</button>
+          </div>
+        </div>
+        <div id="import-preview-body"></div>
+      `;
+      wireImportInteractions();
+      // Re-render preview body if previously previewed (e.g., user swiped away and back).
+      if (importState.previewed) renderImportPreview();
+    }
+
+    function wireImportInteractions() {
+      $('import-preview').onclick = doImportPreview;
+      $('import-confirm').onclick = doImportConfirm;
+      $('import-cancel').onclick = doImportCancel;
+      $('import-file').addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        $('import-csv').value = text;
+      });
+    }
+
+    function doImportCancel() {
+      const hadAnything = importState.previewed || $('import-csv').value.trim() || ($('import-file').files && $('import-file').files.length);
+      if (!hadAnything) return;
+      importState = { rows: [], previewed: false };
+      $('import-csv').value = '';
+      $('import-file').value = '';
+      $('import-preview-body').innerHTML = '';
+      $('import-confirm').disabled = true;
+      toast('Importação cancelada', 'ok');
+    }
+
+    async function doImportPreview() {
+      const csv = $('import-csv').value;
+      if (!csv.trim()) return toast('Cole o CSV antes', 'err');
+      const btn = $('import-preview');
+      btn.disabled = true;
+      btn.textContent = 'Processando...';
+      try {
+        const res = await api('import/preview', { csv });
+        importState.rows = (res.rows || []).map(r => ({ ...r, original_categoria: r.categoria }));
+        importState.previewed = true;
+        renderImportPreview();
+      } catch (err) {
+        if (err.message === 'csv_parse_failed') toast('CSV inválido — confira o cabeçalho date,title,amount', 'err');
+        else if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Pré-visualizar';
+      }
+    }
+
+    function renderImportPreview() {
+      const body = $('import-preview-body');
+      const rows = importState.rows;
+      if (!rows.length) { body.innerHTML = ''; return; }
+
+      const valid = rows.filter(r => !r.invalid);
+      const invalid = rows.filter(r => r.invalid);
+      const outroCount = valid.filter(r => r.categoria === 'Outro').length;
+
+      const summaryHtml = `
+        <div class="preview-summary">
+          <span>${valid.length} lançamento${valid.length === 1 ? '' : 's'}</span>
+          <span>${outroCount} sem regra</span>
+        </div>`;
+
+      const rowsHtml = rows.map((r, i) => renderPreviewRow(r, i)).join('');
+
+      const invalidHtml = invalid.length
+        ? `<div class="preview-invalid">${invalid.length} linha(s) inválida(s) — ignoradas no envio</div>`
+        : '';
+
+      body.innerHTML = `
+        <div class="import-section">
+          ${summaryHtml}
+          ${rowsHtml}
+          ${invalidHtml}
+        </div>`;
+
+      $('import-confirm').disabled = valid.length === 0;
+      wirePreviewRowInteractions();
+    }
+
+    function renderPreviewRow(r, i) {
+      if (r.invalid) {
+        return `
+          <div class="preview-row" data-idx="${i}">
+            <div class="desc">${escapeHtml(r.descricao || '(sem descrição)')}</div>
+            <div class="val">${escapeHtml(r.raw_amount || '')}</div>
+            <div class="meta"><span class="outro-flag">inválido: ${escapeHtml(r.reason)}</span></div>
+          </div>`;
+      }
+      const opts = CATEGORIES.map(c =>
+        `<option value="${escapeHtml(c)}" ${c === r.categoria ? 'selected' : ''}>${escapeHtml(c)}</option>`
+      ).join('');
+      const outroCls = r.categoria === 'Outro' ? ' outro' : '';
+      return `
+        <div class="preview-row${outroCls}" data-idx="${i}">
+          <div class="desc">${escapeHtml(r.descricao)}</div>
+          <div class="val">${escapeHtml(formatBRL(r.valor_cents))}</div>
+          <div class="meta">
+            <span>${escapeHtml(formatDate(r.data))}</span>
+            <select class="cat-sel">${opts}</select>
+            <span>${escapeHtml(r.fatura_nome || '—')}</span>
+            ${r.categoria === 'Outro' ? '<span class="outro-flag">Sem regra</span>' : ''}
+          </div>
+        </div>`;
+    }
+
+    function wirePreviewRowInteractions() {
+      document.querySelectorAll('#import-preview-body .preview-row .cat-sel').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const row = sel.closest('.preview-row');
+          const r = importState.rows[Number(row.dataset.idx)];
+          if (!r || r.invalid) return;
+          r.categoria = sel.value;
+          // Toggle Outro state in place — avoids re-rendering the row and
+          // re-attaching listeners on every dropdown change (was O(N²) over
+          // many rows).
+          const isOutro = r.categoria === 'Outro';
+          row.classList.toggle('outro', isOutro);
+          const meta = row.querySelector('.meta');
+          const flag = meta && meta.querySelector('.outro-flag');
+          if (isOutro && !flag) {
+            const span = document.createElement('span');
+            span.className = 'outro-flag';
+            span.textContent = 'Sem regra';
+            meta.appendChild(span);
+          } else if (!isOutro && flag) {
+            flag.remove();
+          }
+        });
+      });
+      document.querySelectorAll('#import-preview-body .preview-row').forEach(wireSwipeToDismiss);
+    }
+
+    // iOS-style swipe-to-dismiss. We lock direction on the first significant
+    // touchmove: if vertical, we hand off to the page's native scrolling and
+    // never touch transform. If horizontal-left, we follow the finger and
+    // dismiss past 40% of the row width. Horizontal-right (would-be
+    // previous-tab gesture) is intentionally swallowed inside rows — the
+    // user can swipe outside any row to change tabs, matching the spec.
+    function wireSwipeToDismiss(rowEl) {
+      let startX = 0, startY = 0, currentX = 0;
+      let direction = null;
+      let active = false;
+
+      const DISMISS_THRESHOLD = 0.4;        // fraction of row width
+      const DIR_LOCK_PX = 8;                // initial movement before locking
+
+      function onStart(e) {
+        const t = e.touches ? e.touches[0] : e;
+        startX = t.clientX;
+        startY = t.clientY;
+        currentX = 0;
+        direction = null;
+        active = true;
+        rowEl.classList.add('swiping');
+      }
+
+      function onMove(e) {
+        if (!active) return;
+        const t = e.touches ? e.touches[0] : e;
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+
+        if (direction === null) {
+          if (Math.abs(dx) < DIR_LOCK_PX && Math.abs(dy) < DIR_LOCK_PX) return;
+          direction = Math.abs(dy) > Math.abs(dx) ? 'vertical' : 'horizontal';
+          if (direction === 'vertical') {
+            // Restore easing so any micro-jitter we introduced settles cleanly.
+            rowEl.classList.remove('swiping');
+            return;
+          }
+        }
+        if (direction !== 'horizontal') return;
+
+        // Left-only: positive dx (right swipe) shouldn't push the row off-screen.
+        const w = rowEl.offsetWidth || 1;
+        const clamped = Math.min(0, Math.max(-w, dx));
+        currentX = clamped;
+        rowEl.style.transform = `translateX(${clamped}px)`;
+        rowEl.style.opacity = String(1 - Math.min(1, Math.abs(clamped) / w) * 0.5);
+      }
+
+      function onEnd() {
+        if (!active) return;
+        active = false;
+        rowEl.classList.remove('swiping');
+        if (direction === 'horizontal' && Math.abs(currentX) > rowEl.offsetWidth * DISMISS_THRESHOLD) {
+          dismissPreviewRow(rowEl);
+        } else {
+          rowEl.style.transform = '';
+          rowEl.style.opacity = '';
+        }
+      }
+
+      rowEl.addEventListener('touchstart', onStart, { passive: true });
+      rowEl.addEventListener('touchmove', onMove, { passive: true });
+      rowEl.addEventListener('touchend', onEnd);
+      rowEl.addEventListener('touchcancel', onEnd);
+    }
+
+    // Slide the row fully off-screen, collapse its vertical footprint, then
+    // splice the underlying state and re-render. Two-stage animation (slide
+    // first, then height collapse) matches the iOS feel where the row leaves
+    // before its neighbours close the gap.
+    function dismissPreviewRow(rowEl) {
+      const idx = Number(rowEl.dataset.idx);
+      const h = rowEl.getBoundingClientRect().height;
+      rowEl.style.maxHeight = h + 'px';
+      // Force layout so the next change actually transitions.
+      rowEl.offsetHeight; // eslint-disable-line no-unused-expressions
+
+      rowEl.style.transform = `translateX(-${rowEl.offsetWidth}px)`;
+      rowEl.style.opacity = '0';
+
+      setTimeout(() => {
+        rowEl.style.maxHeight = '0px';
+        rowEl.style.paddingTop = '0';
+        rowEl.style.paddingBottom = '0';
+        rowEl.style.borderTopWidth = '0';
+      }, 130);
+
+      setTimeout(() => {
+        importState.rows.splice(idx, 1);
+        if (!importState.rows.length) {
+          importState.previewed = false;
+          $('import-preview-body').innerHTML = '';
+          $('import-confirm').disabled = true;
+        } else {
+          renderImportPreview();
+        }
+      }, 360);
+    }
+
+    async function doImportConfirm() {
+      const rows = importState.rows
+        .filter(r => !r.invalid)
+        .map(r => ({
+          data: r.data,
+          descricao: r.descricao,
+          valor_cents: r.valor_cents,
+          categoria: r.categoria,
+          manually_categorized: r.categoria !== r.original_categoria,
+        }));
+      if (!rows.length) return toast('Nada para importar', 'err');
+
+      const btn = $('import-confirm');
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      try {
+        const res = await api('import/confirm', { rows });
+        cacheInvalidate('transactions');
+        cacheInvalidateAllDerived();
+        loadCurrentFatura();
+        toast(`${res.inserted_count} lançamento(s) adicionado(s) ✓`, 'ok');
+        importState = { rows: [], previewed: false };
+        $('import-preview-body').innerHTML = '';
+        $('import-csv').value = '';
+        $('import-file').value = '';
+        scrollToTab('history');
+      } catch (err) {
+        if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirmar';
+      }
     }
 
     // Takes signed integer cents → "R$ 1.234,56" (sign preserved).

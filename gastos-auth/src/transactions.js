@@ -7,17 +7,9 @@
 import { exec, query, queryOne } from './db.js';
 import { ERR } from './errors.js';
 import { isValidCategory } from './categories.js';
-import { resolveFaturaForDate } from './faturas.js';
-
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+import { resolveFaturaForDate, validateIsoDate } from './faturas.js';
 
 function now() { return Date.now(); }
-
-function validateIsoDate(s) {
-  if (typeof s !== 'string' || !ISO_DATE_RE.test(s)) return false;
-  const d = new Date(s + 'T00:00:00Z');
-  return !isNaN(d.getTime());
-}
 
 function validateTxInput(input, { partial = false } = {}) {
   const errs = [];

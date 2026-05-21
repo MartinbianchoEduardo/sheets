@@ -38,6 +38,10 @@ import {
 import { getSummary } from './summary.js';
 import { getSettings, updateSettings } from './settings.js';
 import { getDashboard, forecastReserve } from './dashboard.js';
+import {
+  listRules, createRule, updateRule, deleteRule, reorderRules, categorizeMany,
+} from './rules.js';
+import { parseNubankCsv, previewImport, confirmImport } from './import.js';
 
 export default {
   async fetch(request, env) {
@@ -84,6 +88,16 @@ export default {
           case '/api/settings/get':      return handleSettingsGet(request, env);
           case '/api/settings/update':   return handleSettingsUpdate(request, env);
           case '/api/reserve/forecast':  return handleReserveForecast(request, env);
+
+          case '/api/rules/list':        return handleRulesList(request, env);
+          case '/api/rules/create':      return handleRulesCreate(request, env);
+          case '/api/rules/update':      return handleRulesUpdate(request, env);
+          case '/api/rules/delete':      return handleRulesDelete(request, env);
+          case '/api/rules/reorder':     return handleRulesReorder(request, env);
+          case '/api/categorize':        return handleCategorize(request, env);
+
+          case '/api/import/preview':    return handleImportPreview(request, env);
+          case '/api/import/confirm':    return handleImportConfirm(request, env);
         }
       }
 
@@ -300,6 +314,77 @@ async function handleTxRestore(request, env) {
   }
   return resultToResponse(env, await restoreTx(env, body.id));
 }
+
+// Wraps a handler with the auth+body boilerplate: 401 on bad session, hand
+// the JSON body (or {}) to the inner function. Inner returns a Response.
+function authed(handler) {
+  return async (request, env) => {
+    let body;
+    try { body = await authedJsonBody(request, env); }
+    catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+    return handler(env, body);
+  };
+}
+
+// ---------- /api/rules/* ----------
+
+const handleRulesList = authed(async (env) => {
+  const rules = await listRules(env);
+  return jsonResponse({ ok: true, rules }, {}, env);
+});
+
+const handleRulesCreate = authed(async (env, body) =>
+  resultToResponse(env, await createRule(env, body)),
+);
+
+const handleRulesUpdate = authed(async (env, body) => {
+  const { id, ...patch } = body;
+  if (!Number.isInteger(id)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await updateRule(env, id, patch));
+});
+
+const handleRulesDelete = authed(async (env, body) => {
+  if (!Number.isInteger(body.id)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await deleteRule(env, body.id));
+});
+
+const handleRulesReorder = authed(async (env, body) =>
+  resultToResponse(env, await reorderRules(env, body.ids || [])),
+);
+
+const handleCategorize = authed(async (env, body) => {
+  const descriptions = body.descriptions || [];
+  if (!Array.isArray(descriptions) || !descriptions.every(d => typeof d === 'string')) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['descriptions'] }, { status: 400 }, env);
+  }
+  const assignments = await categorizeMany(env, descriptions);
+  return jsonResponse({ ok: true, assignments }, {}, env);
+});
+
+// ---------- /api/import/* ----------
+
+const handleImportPreview = authed(async (env, body) => {
+  let rows;
+  if (Array.isArray(body.rows)) {
+    rows = body.rows;
+  } else if (typeof body.csv === 'string') {
+    try { rows = parseNubankCsv(body.csv); }
+    catch {
+      return jsonResponse({ ok: false, error: ERR.csv_parse_failed }, { status: 400 }, env);
+    }
+  } else {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['rows or csv'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await previewImport(env, rows));
+});
+
+const handleImportConfirm = authed(async (env, body) =>
+  resultToResponse(env, await confirmImport(env, body.rows || [])),
+);
 
 // ---------- helpers ----------
 
