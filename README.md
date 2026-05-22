@@ -10,30 +10,30 @@ A few decisions worth highlighting:
 
 - **Three independent auth layers.** A passkey signature unlocks a short-lived JWT, which unlocks a server-to-server shared secret with the data layer. Compromising any single layer doesn't get you in.
 - **Stateless WebAuthn challenges.** Challenges are HMAC-signed tokens passed through the client rather than stored in KV — half the round-trips and no replay-by-stale-state risk.
-- **Single static HTML file, no build step.** ES modules from a CDN, vanilla JS. Mobile-first PWA installable to the home screen, with `localStorage` caching and proactive JWT refresh so long-open tabs never dump you back to the lock screen.
+- **Tiny Preact + Vite app, no React/Next bloat.** ~33 kB gzipped. Cross-component state in `@preact/signals`; data layer is stale-while-revalidate via TanStack Query. Mobile-first PWA installable to the home screen, with proactive JWT refresh so long-open tabs never dump you back to the lock screen.
 - **iOS user-activation chain preserved end-to-end.** No `prompt()` / `setTimeout` between a tap and the WebAuthn ceremony — a subtle constraint that silently breaks WebAuthn on iOS Safari if violated.
 
 ## Stack
 
-- **Cloudflare Pages** — static frontend
-- **Cloudflare Workers** — auth gateway and API proxy (WebAuthn, JWT, CORS)
+- **Cloudflare Pages** — Preact + Vite frontend (`web/`)
+- **Cloudflare Workers** — auth gateway and API (WebAuthn, JWT, CORS, all business logic)
+- **Cloudflare D1** — SQLite datastore for transactions, faturas, rules, settings
 - **SimpleWebAuthn** — WebAuthn server primitives
-- **Google Apps Script** — backend, bound to a Google Sheet used as the datastore
-- Vanilla JS + Web Crypto API on the client; no framework, no bundler
+- **Google Apps Script** — legacy backend used during data migration; retired in the cleanup phase
 
 ## Architecture
 
 ```
 ┌──────────────────┐   HTTPS + short-lived JWT   ┌────────────────────────┐
 │ Browser (Face ID)│ ──────────────────────────▶ │ Cloudflare Worker      │
-│ static HTML      │                              │  • WebAuthn ceremonies │
+│ Preact PWA       │                              │  • WebAuthn ceremonies │
 │ no secrets       │                              │  • JWT issuance        │
-└──────────────────┘                              │  • Encrypted secrets   │
+└──────────────────┘                              │  • API + business logic│
                                                   └─────────┬──────────────┘
-                                                            │ server-to-server
+                                                            │ D1 binding
                                                             ▼
                                                   ┌────────────────────────┐
-                                                  │ Apps Script ↔ Sheet    │
+                                                  │ Cloudflare D1 (SQLite) │
                                                   └────────────────────────┘
 ```
 
