@@ -1,6 +1,7 @@
 {
   "name": "gastos",
   "private": true,
+  "type": "module",
   "scripts": {
     "deploy": "npm run deploy:master",
     "deploy:master": "npm --prefix web run build && npm run deploy:worker && npm run deploy:pages",

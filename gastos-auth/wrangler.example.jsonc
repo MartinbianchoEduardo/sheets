@@ -23,8 +23,6 @@
 // Secrets (set via `npx wrangler secret put NAME`, never committed):
 //   - HMAC_SECRET       random 32+ bytes; signs challenge tokens + session JWTs
 //   - BOOTSTRAP_SECRET  random 32+ bytes; gates first-device registration
-//   - APP_SECRET        the Apps Script Script Property of the same name
-//   - APPS_SCRIPT_URL   your Apps Script /exec URL
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "gastos-auth",

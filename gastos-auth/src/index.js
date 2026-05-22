@@ -1,20 +1,8 @@
-// Gastos auth+proxy Worker.
+// Gastos auth + API Worker.
 //
-// Routes:
-//   OPTIONS *                  CORS preflight
-//   POST    /auth/register/options    gated: Bearer JWT OR X-Bootstrap-Secret
-//   POST    /auth/register/verify     same gate
-//   POST    /auth/login/options       public
-//   POST    /auth/login/verify        public
-//   POST    /auth/refresh             Bearer JWT required
-//   POST    /api/list                 Bearer JWT required, forwards to Apps Script
-//   POST    /api/append               same
-//   POST    /api/summary              same
-//   GET     /                         health check
-//
-// Layering: this Worker is the only thing that knows APP_SECRET. The frontend
-// never sees it. Passkey signatures are verified here against KV-stored
-// public keys before any /api/* call is allowed through.
+// Trust boundary: the frontend has zero secrets. Passkey signatures are
+// verified here against KV-stored public keys; only then does a 15-min JWT
+// unlock /api/* routes, which read and write D1 directly.
 
 import {
   registrationOptions,
@@ -26,7 +14,6 @@ import { signChallenge, verifyChallenge, b64uEncode, b64uDecode } from './challe
 import { issueSession, verifySession, readBearer } from './session.js';
 import { getCredential, putCredential, listCredentials } from './kv.js';
 import { corsPreflightResponse, jsonResponse } from './cors.js';
-import { callAppsScript } from './proxy.js';
 import { queryOne } from './db.js';
 import { ERR } from './errors.js';
 import {
@@ -66,9 +53,6 @@ export default {
           case '/auth/login/options':    return handleLoginOptions(request, env);
           case '/auth/login/verify':     return handleLoginVerify(request, env);
           case '/auth/refresh':          return handleRefresh(request, env);
-          case '/api/list':              return handleApi(request, env, 'list');
-          case '/api/append':            return handleApi(request, env, 'append');
-          case '/api/summary':           return handleApi(request, env, 'summary');
 
           case '/api/faturas/list':      return handleFaturasList(request, env);
           case '/api/faturas/create':    return handleFaturasCreate(request, env);
@@ -543,19 +527,3 @@ async function handleRefresh(request, env) {
   return jsonResponse({ ok: true, jwt }, {}, env);
 }
 
-// ---------- /api/* (proxied to Apps Script) ----------
-async function handleApi(request, env, action) {
-  try {
-    await requireSession(request, env);
-  } catch (err) {
-    return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env);
-  }
-  const body = await request.json().catch(() => ({}));
-  const result = await callAppsScript(env, action, body);
-  // Apps Script can't set HTTP status codes via ContentService, so it encodes
-  // intended status in `_status`. Honour it here, then strip from the body
-  // so the frontend sees a clean response.
-  const { _status, ...rest } = result || {};
-  const status = rest.ok === false ? (_status || rest.status || 400) : 200;
-  return jsonResponse(rest, { status }, env);
-}

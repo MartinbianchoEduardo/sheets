@@ -1,6 +1,6 @@
 # Sheets
 
-A mobile-first personal expense tracker. Open the app on your phone, authenticate with Face ID, log an expense — it lands in a Google Sheet a moment later. No passwords, no login form, no usernames.
+A mobile-first personal expense tracker. Open the app on your phone, authenticate with Face ID, log an expense — done. No passwords, no login form, no usernames.
 
 ## What's interesting about it
 
@@ -19,7 +19,6 @@ A few decisions worth highlighting:
 - **Cloudflare Workers** — auth gateway and API (WebAuthn, JWT, CORS, all business logic)
 - **Cloudflare D1** — SQLite datastore for transactions, faturas, rules, settings
 - **SimpleWebAuthn** — WebAuthn server primitives
-- **Google Apps Script** — legacy backend used during data migration; retired in the cleanup phase
 
 ## Architecture
 
@@ -41,7 +40,7 @@ The frontend holds nothing sensitive. The Worker is the trust boundary — it ow
 
 ## Status
 
-This is a personal project — single user, single deployment. The code is here mostly to share the design and serve as a reference for anyone building something similar. The WebAuthn ceremonies, stateless challenge pattern, and "Worker as the only trust boundary" architecture are reusable independently of the Apps Script backend.
+This is a personal project — single user, single deployment. The code is here mostly to share the design and serve as a reference for anyone building something similar. The WebAuthn ceremonies, stateless challenge pattern, and "Worker as the only trust boundary" architecture are reusable.
 
 ## License
 
