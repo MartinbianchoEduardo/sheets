@@ -1,0 +1,29 @@
+/* ---------- Rollover banner ---------- */
+.rollover {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--accent-dim);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.rollover .msg { color: var(--text-dim); }
+.rollover .msg strong { color: var(--text); font-weight: 500; }
+.rollover button {
+  background: var(--accent);
+  color: #0a0a0a;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 700;
+}
+.rollover button:active { transform: scale(0.95); }

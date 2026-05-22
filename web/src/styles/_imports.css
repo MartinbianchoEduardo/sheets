@@ -1,2 +1,14 @@
 @import './base.css';
+@import './layout.css';
+@import './tabs.css';
+@import './forms.css';
+@import './history.css';
+@import './summary.css';
+@import './painel.css';
+@import './config.css';
 @import './lock.css';
+@import './rollover.css';
+@import './subpage.css';
+@import './regras.css';
+@import './import.css';
+@import './toast.css';

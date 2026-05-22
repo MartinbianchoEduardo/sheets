@@ -67,6 +67,13 @@ export function wireValorMask(input) {
   });
 }
 
+// First token of descricao split on whitespace/*, lowercased. Matches the
+// Nubank shape "IFOOD *RESTAURANT" → "ifood" for rule suggestions.
+export function guessChaveFromDescricao(desc) {
+  const token = String(desc).split(/[\s*]+/).filter(Boolean)[0] || '';
+  return token.toLowerCase();
+}
+
 export function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, m => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

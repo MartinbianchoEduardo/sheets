@@ -1,0 +1,207 @@
+/* ---------- Configurações ---------- */
+.config-section {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.config-section h3 {
+  margin: 0 0 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.config-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+}
+.config-row:first-of-type { border-top: none; padding-top: 0; }
+.config-row .lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.config-row input[type=text],
+.config-row input[type=number],
+.config-row input[type=date],
+.config-row select {
+  padding: 9px 12px;
+  /* 16px keeps iOS Safari from auto-zooming on focus. */
+  font-size: 16px;
+  width: 140px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+.config-row .hint {
+  grid-column: 1 / -1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  letter-spacing: 0.04em;
+}
+
+.fatura-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.fatura-row:first-of-type { border-top: none; padding-top: 0; }
+.fatura-row .nome {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.fatura-row .meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  grid-column: 1;
+}
+.fatura-row .actions {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  display: flex;
+  gap: 12px;
+}
+.fatura-row.editing { display: block; }
+.fatura-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.fatura-edit .field { margin: 0; }
+.fatura-edit .field.full { grid-column: 1 / -1; }
+.fatura-edit .field label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.fatura-edit .field .hint {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 4px;
+}
+.fatura-edit input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.fatura-edit input:focus { outline: none; border-color: var(--accent); }
+
+.config-btn-row {
+  margin-top: 16px;
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+.config-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.config-btn.danger { color: var(--danger); }
+.config-btn.muted { color: var(--text-mute); }
+.config-btn:active { transform: scale(0.95); }
+
+/* ---------- Config action cards (open subpages) ---------- */
+.config-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.action-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px 20px 26px;
+  background: linear-gradient(135deg, var(--bg-elev) 0%, var(--bg-elev-2) 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  color: var(--text);
+  font-family: inherit;
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.2s ease;
+}
+.action-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 14px; bottom: 14px;
+  width: 3px;
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+}
+.action-card:active { transform: scale(0.985); border-color: var(--accent); }
+.action-card .ac-icon {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(212, 255, 60, 0.10);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.action-card .ac-icon svg { display: block; }
+.action-card .ac-body { min-width: 0; }
+.action-card .ac-title {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.action-card .ac-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-mute);
+  margin-top: 6px;
+}
+.action-card .ac-chev {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  color: var(--text-dim);
+  line-height: 1;
+}

@@ -1,0 +1,89 @@
+/* ---------- Painel ---------- */
+.painel-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.painel-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.painel-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.painel-line:first-of-type { border-top: none; padding-top: 0; }
+.painel-line .lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.painel-line .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+.painel-line.strong .lbl { color: var(--text); }
+.painel-line.strong .val { color: var(--text); font-weight: 700; }
+.painel-line .val.neg { color: var(--danger); }
+.painel-line .val.pos { color: var(--ok); }
+
+.painel-big {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.painel-big .stat-card .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-top: 4px;
+}
+
+.reserve-bar {
+  height: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 8px 0 6px;
+}
+.reserve-bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+  transition: width 0.3s ease;
+}
+.reserve-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.reserve-spark {
+  width: 100%;
+  height: 70px;
+  margin-top: 12px;
+  display: block;
+}
+.reserve-spark path { fill: rgba(212, 255, 60, 0.12); }
+.reserve-spark polyline { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+
+/* .stat-card .value gets neg/pos color in Painel */
+.stat-card .value.neg { color: var(--danger); }
+.stat-card .value.pos { color: var(--ok); }

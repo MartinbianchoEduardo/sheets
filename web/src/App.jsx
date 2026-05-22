@@ -2,6 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { jwtSignal } from './lib/state.js';
 import { bootRefresh } from './lib/auth.js';
 import { Lock } from './components/Lock.jsx';
+import { Shell } from './components/Shell.jsx';
 
 // Rewrite-only environment badge. Remove at Phase 5 cutover.
 function EnvBadge() {
@@ -29,7 +30,7 @@ export function App() {
   return (
     <>
       <EnvBadge />
-      {jwtSignal.value ? <h1>logged in</h1> : <Lock />}
+      {jwtSignal.value ? <Shell /> : <Lock />}
     </>
   );
 }
