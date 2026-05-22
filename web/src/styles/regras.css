@@ -1,0 +1,92 @@
+/* ---------- Regras (merchant rules) ---------- */
+.regras-list {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 6px 16px;
+  margin-bottom: 16px;
+}
+.regra-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.regra-row:first-of-type { border-top: none; }
+.regra-row .chave {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  min-width: 0;
+}
+.regra-row .chave:focus { outline: none; border-color: var(--accent); }
+.regra-row .cat {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.regra-row .arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.regra-row .arrow-btn,
+.regra-row .del-btn {
+  background: none;
+  border: none;
+  color: var(--text-mute);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+}
+.regra-row .arrow-btn:active,
+.regra-row .del-btn:active { transform: scale(0.9); }
+.regra-row .del-btn { color: var(--danger); font-size: 11px; }
+.regra-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+.regra-action {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.regra-action.danger { color: var(--danger); }
+.regra-action.muted { color: var(--text-mute); }
+.add-regra-btn {
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--text-dim);
+  padding: 12px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+.add-regra-btn:active { transform: scale(0.99); }

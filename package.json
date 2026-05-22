@@ -2,8 +2,9 @@
   "name": "gastos",
   "private": true,
   "scripts": {
-    "deploy": "npm run deploy:worker && npm run deploy:pages",
+    "deploy": "npm run deploy:master",
+    "deploy:master": "npm --prefix web run build && npm run deploy:worker && npm run deploy:pages",
     "deploy:worker": "cd gastos-auth && npx wrangler deploy",
-    "deploy:pages": "npx wrangler pages deploy . --project-name=gastos-4fo --branch=main"
+    "deploy:pages": "npx wrangler pages deploy ./web/dist --project-name=gastos --branch=main"
   }
 }

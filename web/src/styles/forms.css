@@ -1,0 +1,44 @@
+/* ---------- Forms (extras beyond base.css) ---------- */
+
+/* Valor field with R$ prefix */
+.valor-wrap {
+  position: relative;
+}
+.valor-wrap::before {
+  content: 'R$';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-mute);
+  pointer-events: none;
+}
+.valor-wrap input { padding-left: 44px; font-variant-numeric: tabular-nums; }
+
+/* Category chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  transition: all 0.15s;
+}
+.chip:active { transform: scale(0.95); }
+.chip.selected {
+  background: var(--accent);
+  color: #0a0a0a;
+  border-color: var(--accent);
+  font-weight: 700;
+}

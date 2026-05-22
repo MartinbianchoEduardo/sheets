@@ -5,3 +5,5 @@ node_modules/
 .DS_Store
 # Real Wrangler config with KV/D1 resource IDs — use wrangler.example.jsonc as a template.
 wrangler.jsonc
+# Staging Worker config for the frontend rewrite (Phase 0-5).
+wrangler.staging.jsonc

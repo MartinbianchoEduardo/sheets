@@ -5,3 +5,8 @@ CLAUDE.md
 .claude/
 # Local runtime config (Worker URL etc.). Use config.example.js as a template.
 config.local.js
+wrangler.*
+
+# Preact rewrite (Phase 1+). web/public/config.local.js holds the staging Worker URL.
+web/dist/
+web/node_modules/
