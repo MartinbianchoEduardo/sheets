@@ -1,0 +1,118 @@
+/* ---------- Tendências ---------- */
+.trend-hero {
+  width: 100%;
+  height: 110px;
+  display: block;
+  margin: 4px 0 4px;
+}
+.trend-hero path { fill: rgba(212, 255, 60, 0.15); }
+.trend-hero polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.trend-hero-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.trend-hero-meta span:nth-child(2) {
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.trend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.trend-cell {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px 8px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.trend-cell:active { background: var(--bg-elev); }
+.trend-cell-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.trend-cell-name {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trend-cell-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.trend-spark {
+  width: 100%;
+  height: 28px;
+  display: block;
+}
+.trend-spark path { fill: var(--c); fill-opacity: 0.18; }
+.trend-spark polyline {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.trend-cell-foot {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  min-height: 14px;
+}
+.trend-delta.up   { color: var(--danger); }
+.trend-delta.down { color: var(--accent); }
+.trend-delta.flat { color: var(--text-mute); }
+.trend-delta.novo { color: var(--text-mute); }
+
+.trend-drill-group { margin-bottom: 12px; }
+.trend-drill-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 0 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+}
+.trend-drill-total {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}

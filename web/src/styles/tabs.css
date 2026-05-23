@@ -13,7 +13,8 @@
 }
 .tab {
   flex: 1;
-  padding: 10px 12px;
+  min-width: 0;
+  padding: 10px 6px;
   border: none;
   background: transparent;
   color: var(--text-dim);
@@ -23,6 +24,7 @@
   font-family: inherit;
   font-size: inherit;
   letter-spacing: inherit;
+  white-space: nowrap;
 }
 .tab.active {
   background: var(--accent);

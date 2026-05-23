@@ -25,6 +25,7 @@ import {
 import { getSummary } from './summary.js';
 import { getSettings, updateSettings } from './settings.js';
 import { getDashboard, forecastReserve } from './dashboard.js';
+import { getTrends } from './trends.js';
 import {
   listRules, createRule, updateRule, deleteRule, reorderRules, categorizeMany,
 } from './rules.js';
@@ -72,6 +73,7 @@ export default {
           case '/api/settings/get':      return handleSettingsGet(request, env);
           case '/api/settings/update':   return handleSettingsUpdate(request, env);
           case '/api/reserve/forecast':  return handleReserveForecast(request, env);
+          case '/api/trends':            return handleTrends(request, env);
 
           case '/api/rules/list':        return handleRulesList(request, env);
           case '/api/rules/create':      return handleRulesCreate(request, env);
@@ -248,6 +250,14 @@ async function handleReserveForecast(request, env) {
   try { body = await authedJsonBody(request, env); }
   catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
   const result = await forecastReserve(env, body || {});
+  return jsonResponse({ ok: true, ...result }, {}, env);
+}
+
+async function handleTrends(request, env) {
+  let body;
+  try { body = await authedJsonBody(request, env); }
+  catch (err) { return jsonResponse({ ok: false, error: err.message }, { status: 401 }, env); }
+  const result = await getTrends(env, body || {});
   return jsonResponse({ ok: true, ...result }, {}, env);
 }
 

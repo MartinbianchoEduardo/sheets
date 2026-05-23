@@ -5,10 +5,11 @@ export const currentFaturaIdSignal = signal(null);
 export const selectedTabSignal = signal('add');
 export const subpageSignal = signal(null);            // 'regras' | 'import' | null
 export const categoryDrillSignal = signal(null);      // { faturaId, categoria } | null
+export const trendDrillSignal = signal(null);         // { categoria } | null
 export const historyCategoriasSignal = signal([]);    // multi-select filter for History view
 export const toastSignal = signal(null);              // { msg, kind, action } | null
 
-export const TAB_ORDER = ['add', 'history', 'summary', 'painel', 'config'];
+export const TAB_ORDER = ['add', 'history', 'summary', 'painel', 'tendencias', 'config'];
 
 // IO ↔ scrollTo feedback control. setTab() drives an imperative smooth scroll
 // AND mutes the deck's IntersectionObserver for the duration of that scroll —

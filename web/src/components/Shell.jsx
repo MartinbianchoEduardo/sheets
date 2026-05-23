@@ -7,11 +7,13 @@ import { Tabs } from './Tabs.jsx';
 import { Deck } from './Deck.jsx';
 import { Subpage } from './Subpage.jsx';
 import { CategoryDrillSubpage } from './CategoryDrillSubpage.jsx';
+import { CategoryTrendDrillSubpage } from './CategoryTrendDrillSubpage.jsx';
 import { Toast } from './Toast.jsx';
 import { AddView } from '../views/AddView.jsx';
 import { HistoryView } from '../views/HistoryView.jsx';
 import { SummaryView } from '../views/SummaryView.jsx';
 import { PainelView } from '../views/PainelView.jsx';
+import { TendenciasView } from '../views/TendenciasView.jsx';
 import { ConfigView } from '../views/ConfigView.jsx';
 import { RegrasView } from '../views/RegrasView.jsx';
 import { ImportView } from '../views/ImportView.jsx';
@@ -45,11 +47,13 @@ export function Shell() {
           <HistoryView />
           <SummaryView />
           <PainelView />
+          <TendenciasView />
           <ConfigView />
         </Deck>
       </div>
       <Subpage regras={<RegrasView />} importar={<ImportView />} />
       <CategoryDrillSubpage />
+      <CategoryTrendDrillSubpage />
       <Toast />
     </>
   );

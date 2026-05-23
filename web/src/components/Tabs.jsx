@@ -5,6 +5,7 @@ const LABELS = {
   history: 'Hist',
   summary: 'Resumo',
   painel: 'Painel',
+  tendencias: 'Tend',
   config: 'Config',
 };
 

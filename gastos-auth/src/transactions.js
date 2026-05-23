@@ -47,6 +47,14 @@ export async function listTx(env, filter = {}) {
   if (filter.fatura_id != null) { where.push('fatura_id = ?'); params.push(filter.fatura_id); }
   if (filter.categoria != null) { where.push('categoria = ?'); params.push(filter.categoria); }
 
+  if (Array.isArray(filter.fatura_ids) && filter.fatura_ids.length) {
+    const valid = filter.fatura_ids.filter(Number.isInteger);
+    if (valid.length) {
+      where.push(`fatura_id IN (${valid.map(() => '?').join(', ')})`);
+      params.push(...valid);
+    }
+  }
+
   if (Array.isArray(filter.categorias) && filter.categorias.length) {
     const valid = filter.categorias.filter(isValidCategory);
     if (valid.length) {
