@@ -87,3 +87,34 @@
 /* .stat-card .value gets neg/pos color in Painel */
 .stat-card .value.neg { color: var(--danger); }
 .stat-card .value.pos { color: var(--ok); }
+
+.burn-pace { margin-bottom: 16px; }
+.burn-bar {
+  position: relative;
+  height: 14px;
+  background: var(--bg-elev-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 4px 0 8px;
+}
+.burn-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease, background 0.2s ease;
+}
+.burn-fill.over { background: var(--danger); }
+.burn-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--text-dim);
+  transform: translateX(-1px);
+  pointer-events: none;
+}
+.burn-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}

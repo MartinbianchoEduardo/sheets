@@ -110,6 +110,13 @@ export async function getDashboard(env, faturaId) {
     ? Math.round((limite_fatura_cents - fatura_atual_cents) / days_remaining)
     : 0;
 
+  const cycle_total_days = Math.max(1, daysBetweenIso(fatura.start_date, closing_date) + 1);
+  const days_elapsed = Math.max(0, Math.min(cycle_total_days, daysBetweenIso(fatura.start_date, today) + 1));
+  const cycle_elapsed_pct = days_elapsed / cycle_total_days;
+  const limit_used_pct = limite_fatura_cents > 0
+    ? fatura_atual_cents / limite_fatura_cents
+    : (fatura_atual_cents > 0 ? 1 : 0);
+
   const reserva_atual_cents = settings.reserva_atual_cents;
   const reserva_meta_cents = Math.round(gasto_fixo_cents * settings.reserva_meta_multiplier);
   const reserva_pct = Math.min(1, reserva_atual_cents / Math.max(1, reserva_meta_cents));
@@ -130,6 +137,8 @@ export async function getDashboard(env, faturaId) {
     reserva_atual_cents,
     reserva_meta_cents,
     reserva_pct,
+    cycle_elapsed_pct,
+    limit_used_pct,
   };
 }
 

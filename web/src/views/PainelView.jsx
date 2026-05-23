@@ -4,6 +4,7 @@ import { currentFaturaIdSignal } from '../lib/state.js';
 import { useFaturas } from '../hooks/useFaturas.js';
 import { useDashboard } from '../hooks/useDashboard.js';
 import { useReserveForecast } from '../hooks/useReserveForecast.js';
+import { BurnPaceBar } from '../components/BurnPaceBar.jsx';
 
 function ReserveSparkline({ startCents, forecast }) {
   if (!forecast?.projection?.length) return null;
@@ -87,6 +88,13 @@ export function PainelView() {
                 </div>
               </div>
             </div>
+
+            <BurnPaceBar
+              elapsedPct={d.cycle_elapsed_pct || 0}
+              usedPct={d.limit_used_pct || 0}
+              daysRemaining={d.days_remaining || 0}
+              limiteCents={d.limite_fatura_cents || 0}
+            />
 
             <div class="summary-card">
               <div class="summary-card-title">
