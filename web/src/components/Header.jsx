@@ -1,4 +1,4 @@
-import { currentFaturaIdSignal, historyCategoriaSignal, setTab } from '../lib/state.js';
+import { currentFaturaIdSignal, historyCategoriasSignal, setTab } from '../lib/state.js';
 import { useOutroCount } from '../hooks/useOutroCount.js';
 
 export function Header() {
@@ -7,7 +7,7 @@ export function Header() {
   const visible = count > 0;
 
   function onBadge() {
-    historyCategoriaSignal.value = 'Outro';
+    historyCategoriasSignal.value = ['Outro'];
     setTab('history');
   }
 

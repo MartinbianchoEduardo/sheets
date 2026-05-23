@@ -5,7 +5,7 @@ export const currentFaturaIdSignal = signal(null);
 export const selectedTabSignal = signal('add');
 export const subpageSignal = signal(null);            // 'regras' | 'import' | null
 export const categoryDrillSignal = signal(null);      // { faturaId, categoria } | null
-export const historyCategoriaSignal = signal('');     // filter for History view
+export const historyCategoriasSignal = signal([]);    // multi-select filter for History view
 export const toastSignal = signal(null);              // { msg, kind, action } | null
 
 export const TAB_ORDER = ['add', 'history', 'summary', 'painel', 'config'];

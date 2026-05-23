@@ -47,6 +47,22 @@ export async function listTx(env, filter = {}) {
   if (filter.fatura_id != null) { where.push('fatura_id = ?'); params.push(filter.fatura_id); }
   if (filter.categoria != null) { where.push('categoria = ?'); params.push(filter.categoria); }
 
+  if (Array.isArray(filter.categorias) && filter.categorias.length) {
+    const valid = filter.categorias.filter(isValidCategory);
+    if (valid.length) {
+      where.push(`categoria IN (${valid.map(() => '?').join(', ')})`);
+      params.push(...valid);
+    }
+  }
+
+  if (typeof filter.search === 'string') {
+    const s = filter.search.trim();
+    if (s && s.length <= 100) {
+      where.push('LOWER(descricao) LIKE ?');
+      params.push('%' + s.toLowerCase() + '%');
+    }
+  }
+
   const limit = Math.min(Number.isInteger(filter.limit) ? filter.limit : 50, 500);
   const offset = Number.isInteger(filter.offset) ? filter.offset : 0;
 

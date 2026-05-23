@@ -2,12 +2,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 
 export function useTransactions(filter = {}) {
-  const { faturaId, categoria, limit, offset } = filter;
+  const { faturaId, categoria, categorias, search, limit, offset } = filter;
+  const catsKey = Array.isArray(categorias) && categorias.length ? [...categorias].sort().join(',') : null;
+  const searchKey = typeof search === 'string' && search.trim() ? search.trim() : null;
   return useQuery({
-    queryKey: ['transactions', { faturaId: faturaId ?? null, categoria: categoria ?? null, limit: limit ?? null, offset: offset ?? null }],
+    queryKey: ['transactions', {
+      faturaId: faturaId ?? null,
+      categoria: categoria ?? null,
+      categorias: catsKey,
+      search: searchKey,
+      limit: limit ?? null,
+      offset: offset ?? null,
+    }],
     queryFn: () => api('transactions/list', {
       ...(faturaId != null ? { fatura_id: faturaId } : {}),
       ...(categoria ? { categoria } : {}),
+      ...(catsKey ? { categorias } : {}),
+      ...(searchKey ? { search: searchKey } : {}),
       ...(limit != null ? { limit } : {}),
       ...(offset != null ? { offset } : {}),
     }).then(d => d.transactions || []),
