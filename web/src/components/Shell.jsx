@@ -6,6 +6,7 @@ import { RolloverBanner } from './RolloverBanner.jsx';
 import { Tabs } from './Tabs.jsx';
 import { Deck } from './Deck.jsx';
 import { Subpage } from './Subpage.jsx';
+import { CategoryDrillSubpage } from './CategoryDrillSubpage.jsx';
 import { Toast } from './Toast.jsx';
 import { AddView } from '../views/AddView.jsx';
 import { HistoryView } from '../views/HistoryView.jsx';
@@ -48,6 +49,7 @@ export function Shell() {
         </Deck>
       </div>
       <Subpage regras={<RegrasView />} importar={<ImportView />} />
+      <CategoryDrillSubpage />
       <Toast />
     </>
   );

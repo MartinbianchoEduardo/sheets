@@ -9,6 +9,9 @@
   flex: 1;
   min-height: 0;
 }
+@media (min-width: 768px) {
+  .app { max-width: 760px; }
+}
 
 header {
   display: flex;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { CATEGORIES } from '../lib/categories.js';
+import { CATEGORIES, REFUND_CATEGORY } from '../lib/categories.js';
 import { isoToday, parseValor, wireValorMask, resolveFaturaForDateClient } from '../lib/format.js';
 import { useFaturas } from '../hooks/useFaturas.js';
 import { useCreateTransaction } from '../hooks/useTransactions.js';
@@ -29,7 +29,9 @@ export function AddView() {
 
     const v = parseValor(valor);
     if (isNaN(v)) return toast('Valor inválido', 'err');
-    const valor_cents = Math.round(v * 100);
+    const valor_cents = categoria === REFUND_CATEGORY
+      ? -Math.round(Math.abs(v) * 100)
+      : Math.round(v * 100);
 
     try {
       await create.mutateAsync({

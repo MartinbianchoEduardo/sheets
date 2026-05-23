@@ -1,10 +1,17 @@
 import { useState } from 'preact/hooks';
 import { formatBRL, formatDate } from '../lib/format.js';
-import { currentFaturaIdSignal } from '../lib/state.js';
+import { currentFaturaIdSignal, categoryDrillSignal } from '../lib/state.js';
 import { useFaturas } from '../hooks/useFaturas.js';
 import { useSummary } from '../hooks/useSummary.js';
+import { CategoryDot } from '../components/CategoryDot.jsx';
+import { CategoryBars } from '../components/CategoryBars.jsx';
 
-function Panel({ title, total, rows }) {
+function prevByCatMap(previous) {
+  if (!previous?.byCategoria) return null;
+  return Object.fromEntries(previous.byCategoria.map(c => [c.categoria, c.total_cents]));
+}
+
+function Panel({ title, subtitle, total, rows }) {
   if (!rows || !rows.length) return null;
   return (
     <div class="summary-card">
@@ -12,6 +19,7 @@ function Panel({ title, total, rows }) {
         <span>{title}</span>
         <span class="total">{formatBRL(total)}</span>
       </div>
+      <div class="card-subtitle">{subtitle}</div>
       {rows.map(r => (
         <div key={r.id} class="panel-row">
           <span class="desc">{r.descricao}</span>
@@ -31,6 +39,7 @@ function AveragesStrip({ byCategoria, averages }) {
   return (
     <div class="summary-card">
       <div class="summary-card-title"><span>Média histórica</span></div>
+      <div class="card-subtitle">Média por categoria nas faturas anteriores</div>
       {entries.map(([cat, avg]) => {
         const cur = currByCat[cat] || 0;
         const delta = cur - avg;
@@ -42,7 +51,7 @@ function AveragesStrip({ byCategoria, averages }) {
         }
         return (
           <div key={cat} class="averages-row">
-            <span class="cat">{cat}</span>
+            <span class="cat"><CategoryDot category={cat} />{cat}</span>
             <span class="avg">{formatBRL(avg)}</span>
             <span class={'delta ' + cls}>{label}</span>
           </div>
@@ -85,31 +94,38 @@ export function SummaryView() {
               <div class="stat-card fatura">
                 <div class="label">Total da fatura</div>
                 <div class="value">{formatBRL(payload.totals.fatura_cents)}</div>
+                <div class="stat-sub">Mês + Parcelas + Emprestado · Pix excluído</div>
               </div>
               <div class="stat-card">
                 <div class="label">Total do mês</div>
                 <div class="value">{formatBRL(payload.totals.mes_cents)}</div>
+                <div class="stat-sub">Não-Parcela, não-Pix · descontado Emprestado</div>
               </div>
               <div class="stat-card">
                 <div class="label">Parcelas</div>
                 <div class="value">{formatBRL(payload.totals.parcelas_cents)}</div>
+                <div class="stat-sub">Parcelas desta fatura · somam na fatura, não no mês</div>
               </div>
             </div>
 
             {payload.byCategoria?.length > 0 && (
               <div class="summary-card">
                 <div class="summary-card-title"><span>Por categoria</span></div>
-                {payload.byCategoria.map(c => (
-                  <div key={c.categoria} class="summary-bar">
-                    <span class="summary-bar-cat">{c.categoria}<span class="count">{c.count}</span></span>
-                    <span class="summary-bar-val">{formatBRL(c.total_cents)}</span>
-                  </div>
-                ))}
+                <div class="card-subtitle">Soma de cada categoria nesta fatura · toque para detalhar</div>
+                <CategoryBars
+                  rows={payload.byCategoria}
+                  prevByCat={prevByCatMap(payload.previous)}
+                  hasPrev={!!payload.previous}
+                  max={Math.max(...payload.byCategoria.map(c => c.total_cents), 0)}
+                  onTap={(categoria) => {
+                    categoryDrillSignal.value = { faturaId: payload.fatura.id, categoria };
+                  }}
+                />
               </div>
             )}
 
-            <Panel title="Pix do mês" total={payload.totals.pix_cents} rows={payload.pixPanel} />
-            <Panel title="Emprestado" total={payload.totals.emprestado_cents} rows={payload.emprestadoPanel} />
+            <Panel title="Pix do mês" subtitle="Pix excluídos do total do mês" total={payload.totals.pix_cents} rows={payload.pixPanel} />
+            <Panel title="Emprestado" subtitle="Reembolsos a receber · descontam do mês, somam na fatura" total={payload.totals.emprestado_cents} rows={payload.emprestadoPanel} />
             <AveragesStrip byCategoria={payload.byCategoria} averages={payload.averages} />
           </>
         )}

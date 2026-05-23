@@ -74,10 +74,12 @@ export function PainelView() {
               <div class="stat-card">
                 <div class="label">Disponível mês</div>
                 <div class={'value' + (d.disponivel_mes_cents < 0 ? ' neg' : '')}>{formatBRL(d.disponivel_mes_cents)}</div>
+                <div class="stat-sub">Salário − gasto fixo − investimento alvo + emprestado − fatura</div>
               </div>
               <div class="stat-card">
                 <div class="label">Disponível diário</div>
                 <div class="value">{d.days_remaining > 0 ? formatBRL(d.disponivel_diario_cents) : 'Fatura fechada'}</div>
+                <div class="stat-sub">Limite restante ÷ dias restantes no ciclo</div>
                 <div class="sub">
                   {d.days_remaining > 0 && d.closing_date
                     ? `${d.days_remaining} dias até ${formatDate(d.closing_date)}`
@@ -91,6 +93,7 @@ export function PainelView() {
                 <span>Reserva</span>
                 <span class="total">{Math.round((d.reserva_pct || 0) * 100)}%</span>
               </div>
+              <div class="card-subtitle">Saldo investido vs meta (6× gasto fixo)</div>
               <div class="reserve-bar">
                 <div class="fill" style={{ width: Math.round((d.reserva_pct || 0) * 100) + '%' }} />
               </div>
