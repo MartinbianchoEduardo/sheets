@@ -17,7 +17,10 @@ export function RolloverBanner() {
   const todayFatura = resolveFaturaForDateClient(today, faturas);
   if (!todayFatura) return null;
 
+  // Wait for the signal to hydrate from /api/faturas/current; otherwise the
+  // banner flashes on first load before Shell's effect fills it in.
   const currentId = currentFaturaIdSignal.value;
+  if (currentId == null) return null;
   if (currentId === todayFatura.id) return null;
 
   const currentRow = faturas.find(f => f.id === currentId);
