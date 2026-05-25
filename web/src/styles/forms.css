@@ -42,3 +42,7 @@
   border-color: var(--accent);
   font-weight: 700;
 }
+.chip.auto {
+  outline: 1px dotted var(--text-mute);
+  outline-offset: 2px;
+}

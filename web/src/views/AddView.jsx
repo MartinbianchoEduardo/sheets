@@ -1,22 +1,35 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { CATEGORIES, REFUND_CATEGORY } from '../lib/categories.js';
 import { isoToday, parseValor, wireValorMask, resolveFaturaForDateClient } from '../lib/format.js';
+import { matchRule } from '../lib/rules.js';
 import { useFaturas } from '../hooks/useFaturas.js';
+import { useRules } from '../hooks/useRules.js';
 import { useCreateTransaction } from '../hooks/useTransactions.js';
 import { useToast } from '../components/Toast.jsx';
 
 export function AddView() {
   const toast = useToast();
   const { data: faturas = [] } = useFaturas();
+  const { data: rules = [] } = useRules();
   const create = useCreateTransaction();
 
   const [data, setData] = useState(isoToday());
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [manuallyChosen, setManuallyChosen] = useState(false);
   const valorRef = useRef(null);
 
   useEffect(() => { wireValorMask(valorRef.current); }, []);
+
+  useEffect(() => {
+    if (manuallyChosen) return;
+    const t = setTimeout(() => {
+      const suggested = matchRule(descricao, rules) || '';
+      setCategoria(prev => (prev === suggested ? prev : suggested));
+    }, 150);
+    return () => clearTimeout(t);
+  }, [descricao, rules, manuallyChosen]);
 
   const faturaForDate = resolveFaturaForDateClient(data, faturas);
   const faturaNome = faturaForDate ? faturaForDate.nome : '—';
@@ -41,6 +54,7 @@ export function AddView() {
       setDescricao('');
       setValor('');
       setCategoria('');
+      setManuallyChosen(false);
     } catch (err) {
       if (err.message !== 'session_expired') {
         toast('Erro: ' + err.message, 'err');
@@ -85,16 +99,20 @@ export function AddView() {
       <div class="field">
         <label>Categoria</label>
         <div class="chips" id="f-categoria">
-          {CATEGORIES.map(c => (
-            <button
-              key={c}
-              type="button"
-              class={'chip' + (categoria === c ? ' selected' : '')}
-              onClick={() => setCategoria(c)}
-            >
-              {c}
-            </button>
-          ))}
+          {CATEGORIES.map(c => {
+            const isSelected = categoria === c;
+            const isAuto = isSelected && !manuallyChosen;
+            return (
+              <button
+                key={c}
+                type="button"
+                class={'chip' + (isSelected ? ' selected' : '') + (isAuto ? ' auto' : '')}
+                onClick={() => { setManuallyChosen(true); setCategoria(c); }}
+              >
+                {c}
+              </button>
+            );
+          })}
         </div>
       </div>
 
