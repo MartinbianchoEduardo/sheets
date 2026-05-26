@@ -18,7 +18,7 @@ const DAY_FMT = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-dig
 function formatDayHeader(iso) {
   if (!iso) return '';
   const [y, m, d] = iso.split('-').map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
+  const date = new Date(y, m - 1, d);
   return DAY_FMT.format(date).replace('.', '').replace(',', '');
 }
 

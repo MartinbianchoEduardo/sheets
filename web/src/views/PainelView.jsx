@@ -5,6 +5,7 @@ import { useFaturas } from '../hooks/useFaturas.js';
 import { useDashboard } from '../hooks/useDashboard.js';
 import { useReserveForecast } from '../hooks/useReserveForecast.js';
 import { BurnPaceBar } from '../components/BurnPaceBar.jsx';
+import { ForecastCard } from '../components/ForecastCard.jsx';
 
 function ReserveSparkline({ startCents, forecast }) {
   if (!forecast?.projection?.length) return null;
@@ -84,7 +85,7 @@ export function PainelView() {
                 <div class="sub">
                   {d.days_remaining > 0 && d.closing_date
                     ? `${d.days_remaining} dias até ${formatDate(d.closing_date)}`
-                    : (d.closing_date ? `fecha ${formatDate(d.closing_date)}` : `fecha dia ${d.fechamento_dia}`)}
+                    : (d.closing_date ? `fecha ${formatDate(d.closing_date)}` : '—')}
                 </div>
               </div>
             </div>
@@ -94,6 +95,16 @@ export function PainelView() {
               usedPct={d.limit_used_pct || 0}
               daysRemaining={d.days_remaining || 0}
               limiteCents={d.limite_fatura_cents || 0}
+            />
+
+            <ForecastCard
+              forecastCloseCents={d.forecast_close_cents}
+              forecastClosePct={d.forecast_close_pct}
+              limiteCents={d.limite_fatura_cents || 0}
+              faturaAtualCents={d.fatura_atual_cents || 0}
+              daysElapsed={d.days_elapsed || 0}
+              cycleTotalDays={d.cycle_total_days || 0}
+              daysRemaining={d.days_remaining || 0}
             />
 
             <div class="summary-card">

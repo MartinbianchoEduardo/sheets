@@ -10,7 +10,6 @@ const FIELDS = [
   'reserva_atual_cents',
   'reserva_meta_multiplier',
   'taxa_juros_mensal_pct',
-  'fechamento_dia',
   'current_fatura_override_id',
 ];
 
@@ -18,7 +17,7 @@ export async function getSettings(env) {
   const row = await queryOne(
     env,
     `SELECT meta_investimento_pct, reserva_atual_cents, reserva_meta_multiplier,
-            taxa_juros_mensal_pct, fechamento_dia, current_fatura_override_id, updated_at
+            taxa_juros_mensal_pct, current_fatura_override_id, updated_at
        FROM settings WHERE id = 1`,
   );
   return row;
@@ -40,10 +39,6 @@ function validatePatch(patch) {
   if ('taxa_juros_mensal_pct' in patch) {
     const v = patch.taxa_juros_mensal_pct;
     if (typeof v !== 'number' || !isFinite(v) || v < -0.5 || v > 1) errs.push('taxa_juros_mensal_pct');
-  }
-  if ('fechamento_dia' in patch) {
-    const v = patch.fechamento_dia;
-    if (!Number.isInteger(v) || v < 1 || v > 31) errs.push('fechamento_dia');
   }
   if ('current_fatura_override_id' in patch) {
     const v = patch.current_fatura_override_id;

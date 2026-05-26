@@ -118,3 +118,27 @@
   font-size: 11.5px;
   color: var(--text-dim);
 }
+
+.forecast { margin-bottom: 16px; }
+.forecast-bar {
+  position: relative;
+  height: 14px;
+  background: var(--bg-elev-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 4px 0 8px;
+}
+.forecast-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease, background 0.2s ease;
+}
+.forecast-fill.over { background: var(--danger); }
+.forecast-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.forecast-meta.over { color: var(--danger); }
+.forecast-meta.muted { color: var(--text-mute); }

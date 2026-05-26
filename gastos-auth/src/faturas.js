@@ -27,6 +27,9 @@ function validateFaturaInput(input, { partial = false } = {}) {
   if (!partial || 'start_date' in input) {
     if (!validateIsoDate(input.start_date)) errs.push('start_date');
   }
+  if (!partial || 'closing_date' in input) {
+    if (!validateIsoDate(input.closing_date)) errs.push('closing_date');
+  }
   if ('salario_cents' in input && input.salario_cents != null) {
     if (!Number.isInteger(input.salario_cents)) errs.push('salario_cents');
   }
@@ -34,18 +37,18 @@ function validateFaturaInput(input, { partial = false } = {}) {
 }
 
 export async function listFaturas(env) {
-  return query(env, 'SELECT id, nome, start_date, salario_cents FROM faturas ORDER BY start_date DESC');
+  return query(env, 'SELECT id, nome, start_date, closing_date, salario_cents FROM faturas ORDER BY start_date DESC');
 }
 
 export async function getFatura(env, id) {
-  return queryOne(env, 'SELECT id, nome, start_date, salario_cents FROM faturas WHERE id = ?', id);
+  return queryOne(env, 'SELECT id, nome, start_date, closing_date, salario_cents FROM faturas WHERE id = ?', id);
 }
 
 export async function resolveFaturaForDate(env, isoDate) {
   if (!validateIsoDate(isoDate)) return null;
   return queryOne(
     env,
-    'SELECT id, nome, start_date, salario_cents FROM faturas WHERE start_date <= ? ORDER BY start_date DESC LIMIT 1',
+    'SELECT id, nome, start_date, closing_date, salario_cents FROM faturas WHERE start_date <= ? ORDER BY start_date DESC LIMIT 1',
     isoDate,
   );
 }
@@ -73,13 +76,16 @@ export async function createFatura(env, input) {
   if (errs.length) {
     return { error: ERR.validation_failed, fields: errs };
   }
+  if (input.closing_date < input.start_date) {
+    return { error: ERR.validation_failed, fields: ['closing_date'] };
+  }
   const t = now();
   const salario = Number.isInteger(input.salario_cents) ? input.salario_cents : 0;
   try {
     const res = await env.DB.prepare(
-      `INSERT INTO faturas (nome, start_date, salario_cents, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)`
-    ).bind(input.nome.trim(), input.start_date, salario, t, t).run();
+      `INSERT INTO faturas (nome, start_date, closing_date, salario_cents, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(input.nome.trim(), input.start_date, input.closing_date, salario, t, t).run();
     const id = res.meta && res.meta.last_row_id;
     await reassignAllFaturas(env);
     return { fatura: await getFatura(env, id) };
@@ -98,10 +104,17 @@ export async function updateFatura(env, id, input) {
   const errs = validateFaturaInput(input, { partial: true });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
+  const cmpStart = 'start_date' in input ? input.start_date : existing.start_date;
+  const cmpClose = 'closing_date' in input ? input.closing_date : existing.closing_date;
+  if (cmpClose && cmpStart && cmpClose < cmpStart) {
+    return { error: ERR.validation_failed, fields: ['closing_date'] };
+  }
+
   const fields = [];
   const params = [];
   if ('nome' in input)          { fields.push('nome = ?');          params.push(input.nome.trim()); }
   if ('start_date' in input)    { fields.push('start_date = ?');    params.push(input.start_date); }
+  if ('closing_date' in input)  { fields.push('closing_date = ?');  params.push(input.closing_date); }
   if ('salario_cents' in input) { fields.push('salario_cents = ?'); params.push(input.salario_cents); }
   if (!fields.length) return { fatura: existing };
 

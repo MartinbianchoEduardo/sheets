@@ -48,7 +48,6 @@ function SettingsForm({ settings, faturas }) {
   const [reserva, setReserva] = useState(((settings.reserva_atual_cents || 0) / 100).toFixed(2).replace('.', ','));
   const [mult, setMult] = useState(String(settings.reserva_meta_multiplier ?? 0));
   const [taxa, setTaxa] = useState(((settings.taxa_juros_mensal_pct || 0) * 100).toFixed(2));
-  const [fechamento, setFechamento] = useState(String(settings.fechamento_dia ?? 31));
   const [override, setOverride] = useState(settings.current_fatura_override_id ?? '');
 
   useEffect(() => { wireValorMask(reservaRef.current); }, []);
@@ -63,8 +62,6 @@ function SettingsForm({ settings, faturas }) {
     if (!isNaN(m)) patch.reserva_meta_multiplier = m;
     const t = Number(taxa);
     if (!isNaN(t)) patch.taxa_juros_mensal_pct = t / 100;
-    const f = parseInt(fechamento, 10);
-    if (Number.isInteger(f)) patch.fechamento_dia = f;
     patch.current_fatura_override_id = override === '' ? null : Number(override);
 
     try {
@@ -104,12 +101,6 @@ function SettingsForm({ settings, faturas }) {
         <span class="hint">% ao mês (para projeção)</span>
       </div>
       <div class="config-row">
-        <span class="lbl">Dia de fechamento</span>
-        <input id="cfg-fechamento" type="number" inputmode="numeric" min="1" max="31"
-          value={fechamento} onInput={(e) => setFechamento(e.currentTarget.value)} />
-        <span class="hint">dia que a fatura fecha</span>
-      </div>
-      <div class="config-row">
         <span class="lbl">Fatura atual</span>
         <select id="cfg-override"
           value={override}
@@ -128,7 +119,7 @@ function SettingsForm({ settings, faturas }) {
   );
 }
 
-function FaturaEditFields({ nome, setNome, startDate, setStartDate, salStr, setSalStr }) {
+function FaturaEditFields({ nome, setNome, startDate, setStartDate, closingDate, setClosingDate, salStr, setSalStr }) {
   const salRef = useRef(null);
   useEffect(() => { wireValorMask(salRef.current); }, []);
   return (
@@ -143,6 +134,12 @@ function FaturaEditFields({ nome, setNome, startDate, setStartDate, salStr, setS
         <input class="f-start" type="date"
           value={startDate} onInput={(e) => setStartDate(e.currentTarget.value)} />
         <span class="hint">primeiro dia da fatura</span>
+      </div>
+      <div class="field">
+        <label>Fechamento</label>
+        <input class="f-close" type="date"
+          value={closingDate} onInput={(e) => setClosingDate(e.currentTarget.value)} />
+        <span class="hint">último dia da fatura</span>
       </div>
       <div class="field">
         <label>Salário líquido</label>
@@ -162,16 +159,19 @@ function FaturaEditingRow({ fatura, onClose }) {
 
   const [nome, setNome] = useState(fatura.nome);
   const [startDate, setStartDate] = useState(fatura.start_date);
+  const [closingDate, setClosingDate] = useState(fatura.closing_date || '');
   const [salStr, setSalStr] = useState((fatura.salario_cents / 100).toFixed(2).replace('.', ','));
 
   async function onSave() {
     if (!nome.trim()) return toast('Informe o nome', 'err');
     if (!startDate)   return toast('Informe a data de início', 'err');
+    if (!closingDate) return toast('Informe o fechamento', 'err');
+    if (closingDate < startDate) return toast('Fechamento antes do início', 'err');
     const salNum = salStr.trim() ? parseValor(salStr) : 0;
     if (isNaN(salNum)) return toast('Salário inválido', 'err');
     try {
       await update.mutateAsync({
-        id: fatura.id, nome: nome.trim(), start_date: startDate,
+        id: fatura.id, nome: nome.trim(), start_date: startDate, closing_date: closingDate,
         salario_cents: Math.round(salNum * 100),
       });
       onClose();
@@ -198,6 +198,7 @@ function FaturaEditingRow({ fatura, onClose }) {
       <FaturaEditFields
         nome={nome} setNome={setNome}
         startDate={startDate} setStartDate={setStartDate}
+        closingDate={closingDate} setClosingDate={setClosingDate}
         salStr={salStr} setSalStr={setSalStr}
       />
       <div class="config-btn-row" style={{ justifyContent: 'flex-start' }}>
@@ -214,16 +215,19 @@ function FaturaNewRow({ onClose }) {
   const create = useCreateFatura();
   const [nome, setNome] = useState('');
   const [startDate, setStartDate] = useState('');
+  const [closingDate, setClosingDate] = useState('');
   const [salStr, setSalStr] = useState('');
 
   async function onCreate() {
     if (!nome.trim()) return toast('Informe o nome', 'err');
     if (!startDate)   return toast('Informe a data de início', 'err');
+    if (!closingDate) return toast('Informe o fechamento', 'err');
+    if (closingDate < startDate) return toast('Fechamento antes do início', 'err');
     const salNum = salStr.trim() ? parseValor(salStr) : 0;
     if (isNaN(salNum)) return toast('Salário inválido', 'err');
     try {
       await create.mutateAsync({
-        nome: nome.trim(), start_date: startDate,
+        nome: nome.trim(), start_date: startDate, closing_date: closingDate,
         salario_cents: Math.round(salNum * 100),
       });
       onClose();
@@ -239,6 +243,7 @@ function FaturaNewRow({ onClose }) {
       <FaturaEditFields
         nome={nome} setNome={setNome}
         startDate={startDate} setStartDate={setStartDate}
+        closingDate={closingDate} setClosingDate={setClosingDate}
         salStr={salStr} setSalStr={setSalStr}
       />
       <div class="config-btn-row" style={{ justifyContent: 'flex-start' }}>
@@ -266,7 +271,7 @@ function FaturasSection({ faturas }) {
                 <div class="actions">
                   <button class="config-btn" type="button" onClick={() => setEditingId(f.id)}>editar</button>
                 </div>
-                <div class="meta">início {formatDate(f.start_date)} · salário {formatBRL(f.salario_cents)}</div>
+                <div class="meta">início {formatDate(f.start_date)} · fecha {formatDate(f.closing_date)} · salário {formatBRL(f.salario_cents)}</div>
               </div>
             )
         ))}
