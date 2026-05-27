@@ -30,6 +30,7 @@ import {
   listRules, createRule, updateRule, deleteRule, reorderRules, categorizeMany,
 } from './rules.js';
 import { parseNubankCsv, previewImport, confirmImport } from './import.js';
+import { listBudgets, upsertBudget } from './budgets.js';
 
 export default {
   async fetch(request, env) {
@@ -84,6 +85,9 @@ export default {
 
           case '/api/import/preview':    return handleImportPreview(request, env);
           case '/api/import/confirm':    return handleImportConfirm(request, env);
+
+          case '/api/budgets/list':      return handleBudgetsList(request, env);
+          case '/api/budgets/upsert':    return handleBudgetsUpsert(request, env);
         }
       }
 
@@ -378,6 +382,17 @@ const handleImportPreview = authed(async (env, body) => {
 
 const handleImportConfirm = authed(async (env, body) =>
   resultToResponse(env, await confirmImport(env, body.rows || [])),
+);
+
+// ---------- /api/budgets/* ----------
+
+const handleBudgetsList = authed(async (env) => {
+  const budgets = await listBudgets(env);
+  return jsonResponse({ ok: true, budgets }, {}, env);
+});
+
+const handleBudgetsUpsert = authed(async (env, body) =>
+  resultToResponse(env, await upsertBudget(env, body || {})),
 );
 
 // ---------- helpers ----------

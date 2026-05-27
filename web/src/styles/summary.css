@@ -249,6 +249,7 @@
 .cat-bar-delta.flat { color: var(--text-mute); }
 .cat-bar-delta.novo { color: var(--text-mute); }
 .cat-bar-track {
+  position: relative;
   width: 100%;
   height: 6px;
   background: var(--bg-elev-2);
@@ -260,6 +261,25 @@
   background: var(--accent);
   border-radius: 999px;
   transition: width 0.25s ease;
+}
+.cat-bar-fill.over {
+  background: var(--danger);
+}
+.cat-bar-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text-dim);
+  border-radius: 1px;
+  pointer-events: none;
+}
+.cat-bar-delta.budget.up   { color: var(--danger); }
+.cat-bar-delta.budget.down { color: var(--accent); }
+.cat-bar-delta.budget.flat { color: var(--text-mute); }
+.cat-bar-delta.budget {
+  min-width: 92px;
 }
 
 /* ---------- Category drill subpage ---------- */

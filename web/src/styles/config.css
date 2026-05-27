@@ -205,3 +205,34 @@
   color: var(--text-dim);
   line-height: 1;
 }
+
+/* ---------- Budget rows (Orçamento por categoria) ---------- */
+.budget-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+}
+.budget-row:first-of-type { border-top: none; padding-top: 0; }
+.budget-row .budget-cat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+}
+.budget-row input {
+  padding: 9px 12px;
+  font-size: 16px;
+  width: 130px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.budget-row input:focus { outline: none; border-color: var(--accent); }

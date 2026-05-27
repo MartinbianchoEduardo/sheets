@@ -17,13 +17,30 @@ function Delta({ current, previous }) {
   );
 }
 
-export function CategoryBars({ rows, prevByCat, hasPrev, max, onTap }) {
+function BudgetDelta({ current, target }) {
+  if (!target || target <= 0) return null;
+  const pct = Math.round(((current - target) / target) * 100);
+  if (pct <= -2) {
+    return <span class="cat-bar-delta budget down">↓ {Math.abs(pct)}% do alvo</span>;
+  }
+  if (Math.abs(pct) < 2) {
+    return <span class="cat-bar-delta budget flat">· no alvo</span>;
+  }
+  return <span class="cat-bar-delta budget up">↑ {pct}% do alvo</span>;
+}
+
+export function CategoryBars({ rows, prevByCat, hasPrev, max, budgets, onTap }) {
   if (!rows || !rows.length) return null;
   return (
     <div class="cat-bars">
       {rows.map(c => {
         const widthPct = max > 0 ? (c.total_cents / max) * 100 : 0;
         const prev = hasPrev ? (prevByCat?.[c.categoria] ?? 0) : null;
+        const target = budgets?.[c.categoria] || 0;
+        const targetPct = target > 0 && max > 0
+          ? Math.min(100, (target / max) * 100)
+          : null;
+        const overBudget = target > 0 && c.total_cents > target;
         return (
           <button
             key={c.categoria}
@@ -40,10 +57,17 @@ export function CategoryBars({ rows, prevByCat, hasPrev, max, onTap }) {
               <span class="cat-bar-right">
                 <span class="cat-bar-val">{formatBRL(c.total_cents)}</span>
                 <Delta current={c.total_cents} previous={prev} />
+                <BudgetDelta current={c.total_cents} target={target} />
               </span>
             </div>
             <div class="cat-bar-track">
-              <div class="cat-bar-fill" style={{ width: widthPct + '%' }} />
+              <div
+                class={'cat-bar-fill' + (overBudget ? ' over' : '')}
+                style={{ width: widthPct + '%' }}
+              />
+              {targetPct != null && (
+                <div class="cat-bar-tick" style={{ left: targetPct + '%' }} />
+              )}
             </div>
           </button>
         );

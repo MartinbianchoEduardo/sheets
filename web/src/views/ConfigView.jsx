@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { formatBRL, formatDate, parseValor, wireValorMask } from '../lib/format.js';
 import { subpageSignal } from '../lib/state.js';
+import { CATEGORIES } from '../lib/categories.js';
 import { useSettings, useUpdateSettings } from '../hooks/useSettings.js';
 import { useFaturas, useCreateFatura, useUpdateFatura, useDeleteFatura } from '../hooks/useFaturas.js';
+import { useBudgets, useUpsertBudget } from '../hooks/useBudgets.js';
+import { CategoryDot } from '../components/CategoryDot.jsx';
 import { useToast } from '../components/Toast.jsx';
 
 function ActionCards() {
@@ -115,6 +118,67 @@ function SettingsForm({ settings, faturas }) {
           {update.isPending ? 'salvando...' : 'salvar'}
         </button>
       </div>
+    </div>
+  );
+}
+
+function BudgetRow({ categoria, valor_cents }) {
+  const toast = useToast();
+  const upsert = useUpsertBudget();
+  const inputRef = useRef(null);
+  const initial = valor_cents > 0 ? (valor_cents / 100).toFixed(2).replace('.', ',') : '';
+  const [val, setVal] = useState(initial);
+
+  useEffect(() => { wireValorMask(inputRef.current); }, []);
+  useEffect(() => { setVal(initial); }, [valor_cents]);
+
+  async function commit() {
+    const trimmed = val.trim();
+    const next = trimmed === '' ? 0 : Math.round(parseValor(trimmed) * 100);
+    if (trimmed !== '' && isNaN(next)) {
+      toast('Valor inválido', 'err');
+      setVal(initial);
+      return;
+    }
+    if (next === (valor_cents || 0)) return;
+    try {
+      await upsert.mutateAsync({ categoria, valor_cents: next });
+      toast('Orçamento salvo ✓', 'ok');
+    } catch (err) {
+      if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+      setVal(initial);
+    }
+  }
+
+  return (
+    <div class="budget-row">
+      <span class="budget-cat">
+        <CategoryDot category={categoria} />
+        {categoria}
+      </span>
+      <input
+        ref={inputRef}
+        type="text"
+        inputmode="decimal"
+        placeholder="R$ 0,00"
+        value={val}
+        onInput={(e) => setVal(e.currentTarget.value)}
+        onBlur={commit}
+      />
+    </div>
+  );
+}
+
+function BudgetsSection() {
+  const { data: budgets = {}, isLoading } = useBudgets();
+  return (
+    <div class="config-section">
+      <h3>Orçamento por categoria</h3>
+      {isLoading
+        ? <div class="empty">Carregando...</div>
+        : CATEGORIES.map(cat => (
+          <BudgetRow key={cat} categoria={cat} valor_cents={budgets[cat] || 0} />
+        ))}
     </div>
   );
 }
@@ -301,6 +365,7 @@ export function ConfigView() {
         {settings && (
           <>
             <SettingsForm key={settings.updated_at} settings={settings} faturas={faturas} />
+            <BudgetsSection />
             <FaturasSection faturas={faturas} />
           </>
         )}

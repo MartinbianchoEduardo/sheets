@@ -111,11 +111,12 @@ export function SummaryView() {
             {payload.byCategoria?.length > 0 && (
               <div class="summary-card">
                 <div class="summary-card-title"><span>Por categoria</span></div>
-                <div class="card-subtitle">Soma de cada categoria nesta fatura · toque para detalhar</div>
+                <div class="card-subtitle">Soma de cada categoria nesta fatura · marca = orçamento</div>
                 <CategoryBars
                   rows={payload.byCategoria}
                   prevByCat={prevByCatMap(payload.previous)}
                   hasPrev={!!payload.previous}
+                  budgets={payload.budgets}
                   max={Math.max(...payload.byCategoria.map(c => c.total_cents), 0)}
                   onTap={(categoria) => {
                     categoryDrillSignal.value = { faturaId: payload.fatura.id, categoria };

@@ -14,6 +14,7 @@
 
 import { query, queryOne } from './db.js';
 import { getFatura } from './faturas.js';
+import { listBudgets } from './budgets.js';
 
 const HISTORICAL_AVG_CATS = [
   'Comida', 'Carro', 'Mercado', 'Presente', 'Lazer',
@@ -21,7 +22,7 @@ const HISTORICAL_AVG_CATS = [
   'Viagem', 'Educação',
 ];
 
-function emptyPayload(averages) {
+function emptyPayload(averages, budgets) {
   return {
     fatura: null,
     totals: { mes_cents: 0, parcelas_cents: 0, fatura_cents: 0, emprestado_cents: 0, pix_cents: 0 },
@@ -30,6 +31,7 @@ function emptyPayload(averages) {
     emprestadoPanel: [],
     averages,
     previous: null,
+    budgets,
   };
 }
 
@@ -49,10 +51,13 @@ async function getPreviousByCategoria(env, faturaId) {
 }
 
 export async function getSummary(env, faturaId) {
-  const averages = await getHistoricalAverages(env);
+  const [averages, budgets] = await Promise.all([
+    getHistoricalAverages(env),
+    listBudgets(env),
+  ]);
 
   const fatura = faturaId != null ? await getFatura(env, faturaId) : null;
-  if (!fatura) return emptyPayload(averages);
+  if (!fatura) return emptyPayload(averages, budgets);
 
   const [grossRow, emprestadoRow, parcelaRow, pixRow] = await Promise.all([
     queryOne(env,
@@ -105,6 +110,7 @@ export async function getSummary(env, faturaId) {
     emprestadoPanel,
     averages,
     previous,
+    budgets,
   };
 }
 

@@ -17,7 +17,7 @@ async function importHmacKey(secret) {
   );
 }
 
-export async function issueSession(env, ttlSeconds = 900) {
+export async function issueSession(env, ttlSeconds = 60 * 60 * 24 * 30) {
   if (!env.HMAC_SECRET) throw new Error('server_not_configured');
   const now = Math.floor(Date.now() / 1000);
   const payload = { iat: now, exp: now + ttlSeconds };
