@@ -7,6 +7,8 @@ import { useTransactions } from '../hooks/useTransactions.js';
 import { CategoryDot } from '../components/CategoryDot.jsx';
 import { EditingRow } from '../components/EditingRow.jsx';
 
+const COLLAPSED_LIMIT = 20;
+
 function faturaNameById(faturas, id) {
   if (id == null) return '';
   const f = faturas.find(x => x.id === id);
@@ -93,6 +95,8 @@ export function HistoryView() {
   });
   const allRows = query.data || [];
 
+  const [expanded, setExpanded] = useState(false);
+
   const visible = useMemo(() => {
     if (!selectedCats.length) return allRows;
     const set = new Set(selectedCats);
@@ -109,7 +113,7 @@ export function HistoryView() {
       .map(([categoria]) => categoria);
   }, [allRows]);
 
-  const days = useMemo(() => {
+  const allDays = useMemo(() => {
     const groups = new Map();
     for (const r of visible) {
       if (!groups.has(r.data)) groups.set(r.data, []);
@@ -121,6 +125,26 @@ export function HistoryView() {
       total: rows.reduce((s, r) => s + r.valor_cents, 0),
     }));
   }, [visible]);
+
+  const overLimit = visible.length > COLLAPSED_LIMIT;
+  const days = useMemo(() => {
+    if (expanded || !overLimit) return allDays;
+    let remaining = COLLAPSED_LIMIT;
+    const out = [];
+    for (const day of allDays) {
+      if (remaining <= 0) break;
+      if (day.rows.length <= remaining) {
+        out.push(day);
+        remaining -= day.rows.length;
+      } else {
+        const rows = day.rows.slice(0, remaining);
+        out.push({ data: day.data, rows, total: rows.reduce((s, r) => s + r.valor_cents, 0) });
+        remaining = 0;
+      }
+    }
+    return out;
+  }, [allDays, expanded, overLimit]);
+  const hiddenCount = overLimit && !expanded ? visible.length - COLLAPSED_LIMIT : 0;
 
   function togglePill(c) {
     const cur = historyCategoriasSignal.value;
@@ -235,6 +259,18 @@ export function HistoryView() {
             ))}
           </div>
         ))}
+        {(overLimit || expanded) && (
+          <button
+            type="button"
+            class={'history-more-btn' + (expanded ? ' open' : '')}
+            onClick={() => setExpanded(x => !x)}
+          >
+            <span>{expanded ? 'Ver menos' : `Ver mais (${hiddenCount})`}</span>
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        )}
       </div>
     </section>
   );
