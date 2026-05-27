@@ -31,6 +31,9 @@ import {
 } from './rules.js';
 import { parseNubankCsv, previewImport, confirmImport } from './import.js';
 import { listBudgets, upsertBudget } from './budgets.js';
+import {
+  listRecurring, createRecurring, updateRecurring, deleteRecurring, getRecurringStatus,
+} from './recurring.js';
 
 export default {
   async fetch(request, env) {
@@ -88,6 +91,12 @@ export default {
 
           case '/api/budgets/list':      return handleBudgetsList(request, env);
           case '/api/budgets/upsert':    return handleBudgetsUpsert(request, env);
+
+          case '/api/recurring/list':    return handleRecurringList(request, env);
+          case '/api/recurring/create':  return handleRecurringCreate(request, env);
+          case '/api/recurring/update':  return handleRecurringUpdate(request, env);
+          case '/api/recurring/delete':  return handleRecurringDelete(request, env);
+          case '/api/recurring/status':  return handleRecurringStatus(request, env);
         }
       }
 
@@ -393,6 +402,36 @@ const handleBudgetsList = authed(async (env) => {
 
 const handleBudgetsUpsert = authed(async (env, body) =>
   resultToResponse(env, await upsertBudget(env, body || {})),
+);
+
+// ---------- /api/recurring/* ----------
+
+const handleRecurringList = authed(async (env) => {
+  const recurring = await listRecurring(env);
+  return jsonResponse({ ok: true, recurring }, {}, env);
+});
+
+const handleRecurringCreate = authed(async (env, body) =>
+  resultToResponse(env, await createRecurring(env, body || {})),
+);
+
+const handleRecurringUpdate = authed(async (env, body) => {
+  const { id, ...patch } = body || {};
+  if (!Number.isInteger(id)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await updateRecurring(env, id, patch));
+});
+
+const handleRecurringDelete = authed(async (env, body) => {
+  if (!Number.isInteger(body && body.id)) {
+    return jsonResponse({ ok: false, error: ERR.validation_failed, fields: ['id'] }, { status: 400 }, env);
+  }
+  return resultToResponse(env, await deleteRecurring(env, body.id));
+});
+
+const handleRecurringStatus = authed(async (env, body) =>
+  resultToResponse(env, await getRecurringStatus(env, body || {})),
 );
 
 // ---------- helpers ----------

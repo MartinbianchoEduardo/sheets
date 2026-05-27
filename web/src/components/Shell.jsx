@@ -17,6 +17,7 @@ import { TendenciasView } from '../views/TendenciasView.jsx';
 import { ConfigView } from '../views/ConfigView.jsx';
 import { RegrasView } from '../views/RegrasView.jsx';
 import { ImportView } from '../views/ImportView.jsx';
+import { RecurringSubpage } from './RecurringSubpage.jsx';
 
 // Placeholder body for each tab. Real views land in Phases 4c–4f.
 function ViewStub({ id, title }) {
@@ -51,7 +52,7 @@ export function Shell() {
           <ConfigView />
         </Deck>
       </div>
-      <Subpage regras={<RegrasView />} importar={<ImportView />} />
+      <Subpage regras={<RegrasView />} importar={<ImportView />} recorrentes={<RecurringSubpage />} />
       <CategoryDrillSubpage />
       <CategoryTrendDrillSubpage />
       <Toast />

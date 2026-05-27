@@ -8,9 +8,14 @@ export function ForecastCard({
   daysElapsed = 0,
   cycleTotalDays = 0,
   daysRemaining = 0,
+  recurringUnmatchedCents = 0,
 }) {
   const cycleClosed =
     cycleTotalDays > 0 && daysRemaining === 0 && daysElapsed === cycleTotalDays;
+  const baseSubtitle = 'Ao ritmo atual · fatura atual ÷ dias decorridos × dias do ciclo';
+  const subtitle = recurringUnmatchedCents > 0 && !cycleClosed
+    ? baseSubtitle + ' + recorrentes previstos'
+    : baseSubtitle;
 
   if (cycleClosed) {
     const pct = limiteCents > 0 ? faturaAtualCents / limiteCents : null;
@@ -46,7 +51,7 @@ export function ForecastCard({
           <span>Projeção de fechamento</span>
           <span class="total">—</span>
         </div>
-        <div class="card-subtitle">Ao ritmo atual · fatura atual ÷ dias decorridos × dias do ciclo</div>
+        <div class="card-subtitle">{subtitle}</div>
         <div class="forecast-bar">
           <div class="forecast-fill" style={{ width: '0%' }} />
         </div>
@@ -69,7 +74,7 @@ export function ForecastCard({
         <span>Projeção de fechamento</span>
         <span class="total">{formatBRL(forecastCloseCents)}</span>
       </div>
-      <div class="card-subtitle">Ao ritmo atual · fatura atual ÷ dias decorridos × dias do ciclo</div>
+      <div class="card-subtitle">{subtitle}</div>
       <div class="forecast-bar">
         <div class={'forecast-fill' + (over ? ' over' : '')} style={{ width: fillWidth + '%' }} />
       </div>

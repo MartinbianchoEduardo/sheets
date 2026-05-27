@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CATEGORY_COLORS } from '../lib/categories.js';
 import { formatBRL } from '../lib/format.js';
-import { historyCategoriasSignal } from '../lib/state.js';
+import { historyCategoriasSignal, editTxSignal } from '../lib/state.js';
 import { useFaturas } from '../hooks/useFaturas.js';
 import { useTransactions } from '../hooks/useTransactions.js';
 import { CategoryDot } from '../components/CategoryDot.jsx';
@@ -77,6 +77,14 @@ export function HistoryView() {
   const searchRef = useRef(null);
 
   const [editingId, setEditingId] = useState(null);
+
+  const editReq = editTxSignal.value;
+  useEffect(() => {
+    if (!editReq) return;
+    if (editReq.fatura_id != null) setFaturaId(editReq.fatura_id);
+    setEditingId(editReq.tx_id);
+    editTxSignal.value = null;
+  }, [editReq]);
 
   const query = useTransactions({
     faturaId: faturaId ?? undefined,

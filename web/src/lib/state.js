@@ -3,11 +3,13 @@ import { signal } from '@preact/signals';
 export const jwtSignal = signal(localStorage.getItem('gastos_jwt') || '');
 export const currentFaturaIdSignal = signal(null);
 export const selectedTabSignal = signal('add');
-export const subpageSignal = signal(null);            // 'regras' | 'import' | null
+export const subpageSignal = signal(null);            // 'regras' | 'import' | 'recorrentes' | null
 export const categoryDrillSignal = signal(null);      // { faturaId, categoria } | null
 export const trendDrillSignal = signal(null);         // { categoria } | null
 export const historyCategoriasSignal = signal([]);    // multi-select filter for History view
 export const toastSignal = signal(null);              // { msg, kind, action } | null
+export const prefillAddSignal = signal(null);         // { descricao, valor_cents, categoria, data } | null
+export const editTxSignal = signal(null);             // { tx_id, fatura_id } | null
 
 export const TAB_ORDER = ['add', 'history', 'summary', 'painel', 'tendencias', 'config'];
 

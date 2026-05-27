@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { subpageSignal } from '../lib/state.js';
 
-const TITLES = { regras: 'Regras', import: 'Importar' };
+const TITLES = { regras: 'Regras', import: 'Importar', recorrentes: 'Recorrentes' };
 
-// Slides over the app from the right. Hosts both Regras and Importar — exactly
-// one child slot is rendered at a time. iOS-style edge swipe (~22px from the
-// left) dismisses.
-export function Subpage({ regras, importar }) {
+// Slides over the app from the right. Hosts all subpages — exactly one child
+// slot is rendered at a time. iOS-style edge swipe (~22px from the left)
+// dismisses.
+export function Subpage({ regras, importar, recorrentes }) {
   const ref = useRef(null);
   const kind = subpageSignal.value;
   const open = kind != null;
@@ -83,6 +83,9 @@ export function Subpage({ regras, importar }) {
           </div>
           <div id="import-body" class={'subpage-content' + (kind === 'import' ? '' : ' hidden')} data-subpage="import">
             {importar}
+          </div>
+          <div id="recorrentes-body" class={'subpage-content' + (kind === 'recorrentes' ? '' : ' hidden')} data-subpage="recorrentes">
+            {recorrentes}
           </div>
         </div>
       </div>

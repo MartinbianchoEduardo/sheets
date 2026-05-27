@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { CATEGORIES, REFUND_CATEGORY } from '../lib/categories.js';
 import { isoToday, parseValor, wireValorMask, resolveFaturaForDateClient } from '../lib/format.js';
 import { matchRule } from '../lib/rules.js';
+import { prefillAddSignal } from '../lib/state.js';
 import { useFaturas } from '../hooks/useFaturas.js';
 import { useRules } from '../hooks/useRules.js';
 import { useCreateTransaction } from '../hooks/useTransactions.js';
@@ -21,6 +22,21 @@ export function AddView() {
   const valorRef = useRef(null);
 
   useEffect(() => { wireValorMask(valorRef.current); }, []);
+
+  const prefill = prefillAddSignal.value;
+  useEffect(() => {
+    if (!prefill) return;
+    if (prefill.data) setData(prefill.data);
+    if (typeof prefill.descricao === 'string') setDescricao(prefill.descricao);
+    if (Number.isInteger(prefill.valor_cents)) {
+      setValor((Math.abs(prefill.valor_cents) / 100).toFixed(2).replace('.', ','));
+    }
+    if (prefill.categoria) {
+      setCategoria(prefill.categoria);
+      setManuallyChosen(true);
+    }
+    prefillAddSignal.value = null;
+  }, [prefill]);
 
   useEffect(() => {
     if (manuallyChosen) return;

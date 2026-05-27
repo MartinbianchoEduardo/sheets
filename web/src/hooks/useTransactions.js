@@ -34,6 +34,7 @@ function invalidateTxFanout(qc) {
   qc.invalidateQueries({ queryKey: ['summary'] });
   qc.invalidateQueries({ queryKey: ['dashboard'] });
   qc.invalidateQueries({ queryKey: ['outroCount'] });
+  qc.invalidateQueries({ queryKey: ['recurringStatus'] });
 }
 
 export function useCreateTransaction() {

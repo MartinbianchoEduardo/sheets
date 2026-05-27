@@ -7,15 +7,8 @@ import { queryOne } from './db.js';
 import { getSummary } from './summary.js';
 import { getFatura, currentFatura } from './faturas.js';
 import { getSettings } from './settings.js';
-
-function todayIsoSaoPaulo() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(new Date());
-  const get = t => parts.find(p => p.type === t).value;
-  return `${get('year')}-${get('month')}-${get('day')}`;
-}
+import { getRecurringStatus } from './recurring.js';
+import { todayIsoSaoPaulo } from './time.js';
 
 function daysBetweenIso(a, b) {
   const da = new Date(a + 'T00:00:00Z');
@@ -51,15 +44,19 @@ export async function getDashboard(env, faturaId) {
       reserva_atual_cents: settings.reserva_atual_cents,
       reserva_meta_cents: 0,
       reserva_pct: 0,
+      recurring_pendente_cents: 0,
+      recurring_futuro_cents: 0,
+      recurring_unmatched_cents: 0,
     };
   }
 
-  const [summary, recorrenteRow] = await Promise.all([
+  const [summary, recorrenteRow, recurringStatus] = await Promise.all([
     getSummary(env, fatura.id),
     queryOne(env,
       `SELECT COALESCE(SUM(valor_cents), 0) AS s FROM transactions
        WHERE fatura_id = ? AND deleted_at IS NULL AND categoria = 'Recorrente'`,
       fatura.id),
+    getRecurringStatus(env, { fatura_id: fatura.id }),
   ]);
 
   const salario_cents = fatura.salario_cents || 0;
@@ -70,9 +67,17 @@ export async function getDashboard(env, faturaId) {
   const fatura_atual_cents = summary.totals.fatura_cents;
   const emprestado_pendente_cents = summary.totals.emprestado_cents;
 
+  // User-managed recurring rows that haven't matched a tx in this fatura.
+  // Treated as known upcoming charges and folded into every projection metric.
+  const recurringTotals = recurringStatus && !recurringStatus.error ? recurringStatus.totals : null;
+  const recurring_pendente_cents = recurringTotals ? recurringTotals.pendente_cents : 0;
+  const recurring_futuro_cents = recurringTotals ? recurringTotals.futuro_cents : 0;
+  const recurring_unmatched_cents = recurring_pendente_cents + recurring_futuro_cents;
+
   const disponivel_mes_cents =
     (salario_cents - gasto_fixo_cents - investimento_alvo_cents + emprestado_pendente_cents)
-    - fatura_atual_cents;
+    - fatura_atual_cents
+    - recurring_unmatched_cents;
 
   const closing_date = fatura.closing_date;
   const today = todayIsoSaoPaulo();
@@ -83,18 +88,19 @@ export async function getDashboard(env, faturaId) {
     days_remaining = daysBetweenIso(today, closing_date) + 1;
   }
   const disponivel_diario_cents = days_remaining > 0
-    ? Math.round((limite_fatura_cents - fatura_atual_cents) / days_remaining)
+    ? Math.round((limite_fatura_cents - fatura_atual_cents - recurring_unmatched_cents) / days_remaining)
     : 0;
 
   const cycle_total_days = Math.max(1, daysBetweenIso(fatura.start_date, closing_date) + 1);
   const days_elapsed = Math.max(0, Math.min(cycle_total_days, daysBetweenIso(fatura.start_date, today) + 1));
   const cycle_elapsed_pct = days_elapsed / cycle_total_days;
+  const committed_cents = fatura_atual_cents + recurring_unmatched_cents;
   const limit_used_pct = limite_fatura_cents > 0
-    ? fatura_atual_cents / limite_fatura_cents
-    : (fatura_atual_cents > 0 ? 1 : 0);
+    ? committed_cents / limite_fatura_cents
+    : (committed_cents > 0 ? 1 : 0);
 
   const forecast_close_cents = days_elapsed >= 3
-    ? Math.round((fatura_atual_cents / days_elapsed) * cycle_total_days)
+    ? Math.round((fatura_atual_cents / days_elapsed) * cycle_total_days) + recurring_unmatched_cents
     : null;
   const forecast_close_pct = forecast_close_cents != null && limite_fatura_cents > 0
     ? forecast_close_cents / limite_fatura_cents
@@ -129,6 +135,9 @@ export async function getDashboard(env, faturaId) {
     forecast_close_cents,
     forecast_close_pct,
     forecast_over_cents,
+    recurring_pendente_cents,
+    recurring_futuro_cents,
+    recurring_unmatched_cents,
   };
 }
 
