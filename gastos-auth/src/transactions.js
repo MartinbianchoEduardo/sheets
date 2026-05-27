@@ -46,6 +46,10 @@ export async function listTx(env, filter = {}) {
   const params = [];
   if (filter.fatura_id != null) { where.push('fatura_id = ?'); params.push(filter.fatura_id); }
   if (filter.categoria != null) { where.push('categoria = ?'); params.push(filter.categoria); }
+  if (typeof filter.data === 'string' && validateIsoDate(filter.data)) {
+    where.push('data = ?');
+    params.push(filter.data);
+  }
 
   if (Array.isArray(filter.fatura_ids) && filter.fatura_ids.length) {
     const valid = filter.fatura_ids.filter(Number.isInteger);

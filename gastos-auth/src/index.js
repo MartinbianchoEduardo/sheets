@@ -34,6 +34,7 @@ import { listBudgets, upsertBudget } from './budgets.js';
 import {
   listRecurring, createRecurring, updateRecurring, deleteRecurring, getRecurringStatus,
 } from './recurring.js';
+import { getHeatmap } from './heatmap.js';
 
 export default {
   async fetch(request, env) {
@@ -97,6 +98,8 @@ export default {
           case '/api/recurring/update':  return handleRecurringUpdate(request, env);
           case '/api/recurring/delete':  return handleRecurringDelete(request, env);
           case '/api/recurring/status':  return handleRecurringStatus(request, env);
+
+          case '/api/heatmap':           return handleHeatmap(request, env);
         }
       }
 
@@ -433,6 +436,13 @@ const handleRecurringDelete = authed(async (env, body) => {
 const handleRecurringStatus = authed(async (env, body) =>
   resultToResponse(env, await getRecurringStatus(env, body || {})),
 );
+
+// ---------- /api/heatmap ----------
+
+const handleHeatmap = authed(async (env, body) => {
+  const result = await getHeatmap(env, body || {});
+  return jsonResponse({ ok: true, ...result }, {}, env);
+});
 
 // ---------- helpers ----------
 

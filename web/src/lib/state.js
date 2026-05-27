@@ -6,6 +6,7 @@ export const selectedTabSignal = signal('add');
 export const subpageSignal = signal(null);            // 'regras' | 'import' | 'recorrentes' | null
 export const categoryDrillSignal = signal(null);      // { faturaId, categoria } | null
 export const trendDrillSignal = signal(null);         // { categoria } | null
+export const dayDrillSignal = signal(null);           // { data: iso } | null
 export const historyCategoriasSignal = signal([]);    // multi-select filter for History view
 export const toastSignal = signal(null);              // { msg, kind, action } | null
 export const prefillAddSignal = signal(null);         // { descricao, valor_cents, categoria, data } | null

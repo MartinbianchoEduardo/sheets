@@ -3,7 +3,9 @@ import { formatBRL } from '../lib/format.js';
 import { CATEGORY_COLORS } from '../lib/categories.js';
 import { trendDrillSignal } from '../lib/state.js';
 import { useTrends } from '../hooks/useTrends.js';
+import { useHeatmap } from '../hooks/useHeatmap.js';
 import { CategoryDot } from '../components/CategoryDot.jsx';
+import { Heatmap } from '../components/Heatmap.jsx';
 
 const VB_W = 300;
 const VB_H = 80;
@@ -101,6 +103,24 @@ function CategoryCell({ categoria, entries }) {
   );
 }
 
+function HeatmapCard() {
+  const q = useHeatmap(365);
+  const data = q.data;
+  return (
+    <div class="summary-card">
+      <div class="summary-card-title">
+        <span>Calendário de gastos</span>
+      </div>
+      <div class="card-subtitle">Gasto por dia da semana · arraste ou use as setas para navegar</div>
+      {q.isLoading && <div class="empty">Carregando...</div>}
+      {q.isError && <div class="empty">Erro: {String(q.error?.message || q.error)}</div>}
+      {data && (
+        <Heatmap start={data.start} today={data.today} byDay={data.byDay || []} />
+      )}
+    </div>
+  );
+}
+
 export function TendenciasView() {
   const q = useTrends(12);
   const data = q.data;
@@ -118,6 +138,7 @@ export function TendenciasView() {
 
   return (
     <section id="view-tendencias" class="deck-page">
+      <HeatmapCard />
       {q.isLoading && <div class="empty">Carregando...</div>}
       {q.isError && <div class="empty">Erro: {String(q.error?.message || q.error)}</div>}
       {data && !data.faturas?.length && <div class="empty">Sem faturas ainda.</div>}

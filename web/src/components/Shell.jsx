@@ -8,6 +8,7 @@ import { Deck } from './Deck.jsx';
 import { Subpage } from './Subpage.jsx';
 import { CategoryDrillSubpage } from './CategoryDrillSubpage.jsx';
 import { CategoryTrendDrillSubpage } from './CategoryTrendDrillSubpage.jsx';
+import { DayDrillSubpage } from './DayDrillSubpage.jsx';
 import { Toast } from './Toast.jsx';
 import { AddView } from '../views/AddView.jsx';
 import { HistoryView } from '../views/HistoryView.jsx';
@@ -55,6 +56,7 @@ export function Shell() {
       <Subpage regras={<RegrasView />} importar={<ImportView />} recorrentes={<RecurringSubpage />} />
       <CategoryDrillSubpage />
       <CategoryTrendDrillSubpage />
+      <DayDrillSubpage />
       <Toast />
     </>
   );
