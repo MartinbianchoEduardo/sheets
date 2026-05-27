@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Sheets — a passkey-only expense tracker</title>
+  <meta name="description" content="A mobile-first expense tracker built on WebAuthn, Cloudflare Workers, and D1. Face ID in, expense logged, out — no passwords, no usernames, no secrets in the frontend." />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="mask-icon" href="./favicon.svg" color="#d4ff3c" />
+  <meta name="theme-color" content="#0e0e0e" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <style>
+    :root {
+      --bg: #0e0e0e;
+      --bg-elev: #181818;
+      --bg-elev-2: #232323;
+      --border: #2a2a2a;
+      --text: #f4f0e8;
+      --text-dim: #9a958c;
+      --text-mute: #6a665e;
+      --accent: #d4ff3c;
+      --accent-dim: #a3c428;
+      --danger: #ff6b5e;
+      --ok: #6bd99a;
+
+      --cat-mercado:    #7eb04e;
+      --cat-comida:     #d96e6e;
+      --cat-cafe:       #b88860;
+      --cat-lazer:      #d97aaf;
+      --cat-assinatura: #6d8db5;
+      --cat-pix:        #4ebab1;
+      --cat-viagem:     #5fbb95;
+      --cat-presente:   #e0a850;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 17px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    section[id], header.hero[id] {
+      scroll-margin-top: 72px;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--text); }
+
+    .mono {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ---------- Top nav ---------- */
+    nav.top {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(14,14,14,0.72);
+      border-bottom: 1px solid var(--border);
+    }
+    nav.top .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .brand {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .brand em {
+      font-style: italic;
+      color: var(--accent);
+      font-weight: 400;
+    }
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-dim);
+      font-size: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .nav-links a:hover { color: var(--text); }
+    @media (max-width: 720px) {
+      .nav-links { display: none; }
+    }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      position: relative;
+      padding: 120px 0 80px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(212,255,60,0.10), transparent 60%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      bottom: -300px;
+      left: -200px;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(212,255,60,0.05), transparent 60%);
+      pointer-events: none;
+    }
+    .hero .container {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 72px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    @media (max-width: 900px) {
+      .hero { padding: 72px 0 56px; }
+      .hero .container { grid-template-columns: 1fr; gap: 48px; }
+    }
+
+    .hero .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      background: var(--bg-elev);
+    }
+    .hero .eyebrow .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(212,255,60,0.6);
+    }
+    .hero h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-size: clamp(48px, 7vw, 84px);
+      line-height: 0.98;
+      letter-spacing: -0.035em;
+      margin: 0 0 24px;
+    }
+    .hero h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+    .hero p.lead {
+      font-size: 20px;
+      color: var(--text-dim);
+      max-width: 540px;
+      margin: 0 0 36px;
+      line-height: 1.5;
+    }
+    .cta-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .btn-primary, .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 26px;
+      border-radius: 14px;
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s, border-color 0.2s;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0a0a0a;
+    }
+    .btn-primary:hover { background: #e6ff66; color: #0a0a0a; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-secondary {
+      background: var(--bg-elev);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--text-dim); color: var(--text); }
+
+    .hero-meta {
+      margin-top: 40px;
+      display: flex;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+    .hero-meta .stat .num {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .hero-meta .stat .num em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .hero-meta .stat .lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-mute);
+      margin-top: 6px;
+    }
+
+    /* ---------- Phone mockup ---------- */
+    .phone-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1200px;
+    }
+    .phone {
+      width: 320px;
+      height: 640px;
+      background: #050505;
+      border: 1px solid #1a1a1a;
+      border-radius: 48px;
+      padding: 14px;
+      box-shadow:
+        0 40px 80px rgba(0,0,0,0.55),
+        0 8px 24px rgba(0,0,0,0.4),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+      transform: rotate(-2deg);
+      position: relative;
+    }
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 26px;
+      background: #050505;
+      border-radius: 100px;
+      z-index: 3;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border-radius: 36px;
+      overflow: hidden;
+      position: relative;
+      padding: 56px 18px 18px;
+    }
+    .phone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .phone-header .b {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-size: 26px;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .phone-header .b em { font-style: italic; color: var(--accent); font-weight: 400; }
+    .phone-header .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ok);
+    }
+    .phone-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 14px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .phone-tabs span {
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: var(--text-mute);
+    }
+    .phone-tabs span.active {
+      background: var(--accent);
+      color: #0a0a0a;
+    }
+    .phone-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .phone-card .title {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+    .phone-card .title .total { color: var(--accent); }
+    .phone-card .subt {
+      font-size: 10px;
+      color: var(--text-mute);
+      font-style: italic;
+      margin-top: 2px;
+    }
+    .phone-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .phone-row:first-of-type { border-top: 1px solid transparent; }
+    .phone-row .cdot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .phone-row .desc { flex: 1; color: var(--text); }
+    .phone-row .val { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+    .phone-bars { display: flex; gap: 3px; align-items: flex-end; height: 60px; margin-top: 10px; }
+    .phone-bars .bar { flex: 1; border-radius: 2px; min-height: 4px; }
+
+    /* ---------- Section base ---------- */
+    section {
+      padding: 96px 0;
+      position: relative;
+    }
+    section.tight { padding: 64px 0; }
+    .section-head {
+      max-width: 720px;
+      margin: 0 auto 56px;
+      text-align: center;
+    }
+    .section-head .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .section-head h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-size: clamp(34px, 4.5vw, 52px);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      margin: 0 0 18px;
+    }
+    .section-head h2 em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .section-head p {
+      font-size: 19px;
+      color: var(--text-dim);
+      margin: 0;
+    }
+
+    /* ---------- Feature grid ---------- */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    @media (max-width: 900px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } }
+
+    .feature {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature:hover { border-color: #3a3a3a; transform: translateY(-2px); }
+    .feature .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+    .feature h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.015em;
+      margin: 0 0 8px;
+    }
+    .feature p {
+      color: var(--text-dim);
+      font-size: 15px;
+      line-height: 1.55;
+      margin: 0;
+    }
+    .feature .tag {
+      display: inline-block;
+      margin-top: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-mute);
+    }
+
+    /* ---------- Screenshots block ---------- */
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    @media (max-width: 900px) { .shots { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .shots { grid-template-columns: 1fr; } }
+    .shot {
+      aspect-ratio: 9 / 16;
+      background: var(--bg-elev);
+      border: 1px dashed var(--border);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-mute);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      text-align: center;
+      padding: 24px;
+      transition: border-color 0.2s, background 0.2s;
+      overflow: hidden;
+      position: relative;
+    }
+    .shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 22px;
+    }
+    .shot:hover { border-color: var(--text-mute); }
+    .shot .caption {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-dim);
+      background: rgba(14,14,14,0.7);
+      backdrop-filter: blur(8px);
+      padding: 8px 10px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    /* ---------- Security block ---------- */
+    .security {
+      background:
+        radial-gradient(ellipse at top right, rgba(212,255,60,0.06), transparent 50%),
+        var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 56px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      align-items: center;
+    }
+    @media (max-width: 900px) {
+      .security { grid-template-columns: 1fr; padding: 36px; gap: 36px; }
+    }
+    .security h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 900;
+      font-size: clamp(30px, 4vw, 44px);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin: 0 0 18px;
+    }
+    .security h2 em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .security p {
+      color: var(--text-dim);
+      font-size: 17px;
+      margin: 0 0 14px;
+    }
+    .security ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .security li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+    }
+    .security li:first-child { border-top: none; }
+    .security li .marker {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(212,255,60,0.12);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .security li .body strong {
+      display: block;
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+    }
+    .security li .body span {
+      display: block;
+      color: var(--text-dim);
+      font-size: 14px;
+      margin-top: 2px;
+    }
+
+    /* ---------- Stack strip ---------- */
+    .stack {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 720px) { .stack { grid-template-columns: repeat(2, 1fr); } }
+    .stack-item {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      transition: border-color 0.2s;
+    }
+    .stack-item:hover { border-color: #3a3a3a; }
+    .stack-item .k {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-mute);
+      margin-bottom: 10px;
+    }
+    .stack-item .v {
+      font-family: 'Fraunces', serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+    .stack-item .v em { font-style: italic; font-weight: 400; color: var(--accent); }
+    .stack-item .d {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    /* ---------- Architecture ascii ---------- */
+    .ascii {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-dim);
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .ascii .hi { color: var(--accent); }
+    .ascii .em { color: var(--text); }
+
+    /* ---------- Footer ---------- */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 56px 0 64px;
+      margin-top: 64px;
+    }
+    footer .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    footer .brand { font-size: 26px; }
+    footer .meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-mute);
+    }
+    footer .meta a { color: var(--text-dim); }
+    footer .meta a:hover { color: var(--accent); }
+
+    /* ---------- Reveal on scroll ---------- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ---------- Subtle float ---------- */
+    @keyframes float {
+      0%, 100% { transform: rotate(-2deg) translateY(0); }
+      50%      { transform: rotate(-2deg) translateY(-28px); }
+    }
+    .phone { animation: float 5s ease-in-out infinite; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .phone { animation: none; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top">
+    <div class="container">
+      <div class="brand">Sheets<em>.</em></div>
+      <div class="nav-links">
+        <a href="#features">Recursos</a>
+        <a href="#security">Segurança</a>
+        <a href="#stack">Stack</a>
+        <a href="#screens">Telas</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================= HERO ========================= -->
+  <header class="hero">
+    <div class="container">
+      <div>
+        <div class="eyebrow mono">
+          <span class="dot"></span>
+          Personal &middot; iOS-first &middot; Zero-secret frontend
+        </div>
+        <h1>
+          Toque, <em>Face ID</em>,<br/>
+          gasto registrado.
+        </h1>
+        <p class="lead">
+          Sheets é um rastreador de despesas pessoal, mobile-first, sem senhas,
+          sem usernames, sem segredos no frontend. Abre o app, autentica com a
+          passkey, registra o gasto — pronto.
+        </p>
+        <div class="cta-row">
+          <a href="#features" class="btn-primary">
+            Ver recursos
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8m0 0L8 4m4 4l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#security" class="btn-secondary">
+            Como funciona a auth
+          </a>
+        </div>
+        <div class="hero-meta">
+          <div class="stat">
+            <div class="num">~33<em>kB</em></div>
+            <div class="lbl">bundle gzipped</div>
+          </div>
+          <div class="stat">
+            <div class="num">0<em>·</em>secrets</div>
+            <div class="lbl">no frontend</div>
+          </div>
+          <div class="stat">
+            <div class="num">15<em>min</em></div>
+            <div class="lbl">JWT lifetime</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini phone mockup made of pure CSS, matching the app -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="phone-header">
+              <div class="b">Sheets<em>.</em></div>
+              <div class="dot"></div>
+            </div>
+            <div class="phone-tabs">
+              <span>Add</span>
+              <span class="active">Resumo</span>
+              <span>Painel</span>
+              <span>Tend.</span>
+            </div>
+
+            <div class="phone-card">
+              <div class="title"><span>Maiores gastos</span><span class="total">R$ 1.842</span></div>
+              <div class="subt">Top da fatura atual</div>
+              <div class="phone-row">
+                <span class="cdot" style="background: var(--cat-mercado)"></span>
+                <span class="desc">Mercado Pão de Açúcar</span>
+                <span class="val">R$ 487</span>
+              </div>
+              <div class="phone-row">
+                <span class="cdot" style="background: var(--cat-comida)"></span>
+                <span class="desc">Jantar Coco Bambu</span>
+                <span class="val">R$ 312</span>
+              </div>
+              <div class="phone-row">
+                <span class="cdot" style="background: var(--cat-viagem)"></span>
+                <span class="desc">Uber aeroporto</span>
+                <span class="val">R$ 148</span>
+              </div>
+              <div class="phone-row">
+                <span class="cdot" style="background: var(--cat-assinatura)"></span>
+                <span class="desc">Spotify Família</span>
+                <span class="val">R$ 27</span>
+              </div>
+            </div>
+
+            <div class="phone-card">
+              <div class="title"><span>Por categoria</span><span class="total">·</span></div>
+              <div class="subt">Distribuição da fatura</div>
+              <div class="phone-bars">
+                <div class="bar" style="height: 80%; background: var(--cat-mercado)"></div>
+                <div class="bar" style="height: 65%; background: var(--cat-comida)"></div>
+                <div class="bar" style="height: 48%; background: var(--cat-viagem)"></div>
+                <div class="bar" style="height: 38%; background: var(--cat-assinatura)"></div>
+                <div class="bar" style="height: 30%; background: var(--cat-lazer)"></div>
+                <div class="bar" style="height: 22%; background: var(--cat-pix)"></div>
+                <div class="bar" style="height: 18%; background: var(--cat-cafe)"></div>
+                <div class="bar" style="height: 12%; background: var(--cat-presente)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================= FEATURES ========================= -->
+  <section id="features">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="eyebrow">Recursos</div>
+        <h2>Tudo que um <em>controle de gastos</em> precisa ter.<br/>Nada que não precisa.</h2>
+        <p>Cada tela tem um propósito claro. O lance é abrir, registrar, fechar — não navegar.</p>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Add em 3 toques</h3>
+          <p>Valor, descrição, categoria. As regras inteligentes pré-preenchem a categoria automaticamente quando reconhecem o estabelecimento.</p>
+          <div class="tag">Add · Regras automáticas</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Faturas por ciclo</h3>
+          <p>Fechamento configurável por fatura — não preso a um dia fixo do mês. Histórico completo de cada ciclo com totais e categorias.</p>
+          <div class="tag">Faturas · Histórico</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 16V9m4 7v-4m4 4v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Resumo da fatura</h3>
+          <p>Top gastos, distribuição por categoria, comparação com a média histórica e variação contra a fatura anterior — tudo numa tela.</p>
+          <div class="tag">Resumo · Médias</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Painel com projeção</h3>
+          <p>Recorrentes lançam projeções automáticas pro fim do ciclo. Sabe quanto vai gastar antes do fechamento, com os fixos já contados.</p>
+          <div class="tag">Recorrentes · Projeção</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/><rect x="15" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="15" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/><rect x="15" y="15" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+          <h3>Heatmap semanal</h3>
+          <p>Aba Tendências mostra um heatmap animado de gastos por dia da semana com drill-down. Vê padrão de fim de semana num piscar.</p>
+          <div class="tag">Tendências · Drill-down</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Orçamentos por categoria</h3>
+          <p>Defina limites por categoria e veja o consumo do ciclo em tempo real. Estouro vira sinal visual no Painel — sem pop-up, sem fricção.</p>
+          <div class="tag">Orçamentos · Sinais</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Regras de auto-categoria</h3>
+          <p>"Toda vez que aparecer <em>Uber</em>, categoria Carro." Regras simples por substring, ordem importa, e roda na hora de salvar.</p>
+          <div class="tag">Regras · Match por substring</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Import em CSV</h3>
+          <p>Cole o extrato, valida preview, aplica regras, salva em lote. Pra quando você esqueceu de logar e precisa recuperar uma semana inteira.</p>
+          <div class="tag">Import · Bulk</div>
+        </div>
+
+        <div class="feature reveal">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+          <h3>Login só com Face ID</h3>
+          <p>Passkey atrelada ao Secure Enclave. Sem senha pra esquecer, sem MFA pra atrasar. Logado em ~600ms desde o ícone da home.</p>
+          <div class="tag">WebAuthn · Passkey</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= SCREENSHOTS ========================= -->
+  <section id="screens" class="tight">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="eyebrow">Telas</div>
+        <h2>Como ele <em>parece</em> na mão.</h2>
+        <p>Coloque suas capturas reais aqui — substitua cada quadro abaixo por um arquivo em <span class="mono">/landing/shots/</span>.</p>
+      </div>
+
+      <div class="shots">
+        <div class="shot">
+          <span>Add<br/>screenshot 9:16</span>
+        </div>
+        <div class="shot">
+          <span>Resumo<br/>screenshot 9:16</span>
+        </div>
+        <div class="shot">
+          <span>Painel<br/>screenshot 9:16</span>
+        </div>
+        <div class="shot">
+          <span>Tendências<br/>(heatmap) 9:16</span>
+        </div>
+        <div class="shot">
+          <span>Histórico<br/>screenshot 9:16</span>
+        </div>
+        <div class="shot">
+          <span>Regras<br/>screenshot 9:16</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= SECURITY ========================= -->
+  <section id="security">
+    <div class="container">
+      <div class="security reveal">
+        <div>
+          <div class="mono" style="color: var(--accent); margin-bottom: 14px;">Arquitetura</div>
+          <h2>Frontend sem segredo. <em>Worker</em> como único trust boundary.</h2>
+          <p>
+            A página estática é totalmente pública — qualquer pessoa pode ver o
+            código-fonte — e mesmo assim não tem nenhuma credencial explorável.
+            Toda chamada de backend exige uma assinatura WebAuthn da passkey
+            atrelada ao Secure Enclave do dispositivo.
+          </p>
+          <p>
+            O Worker em Cloudflare faz as cerimônias WebAuthn, emite JWTs
+            HS256 de 15 minutos e é a única coisa que enxerga o D1.
+          </p>
+        </div>
+        <ul>
+          <li>
+            <div class="marker">01</div>
+            <div class="body">
+              <strong>Passkey + Secure Enclave</strong>
+              <span>Face ID assina um challenge. Chave privada nunca sai do hardware.</span>
+            </div>
+          </li>
+          <li>
+            <div class="marker">02</div>
+            <div class="body">
+              <strong>Challenge stateless</strong>
+              <span>HMAC-signed token passado pelo cliente. Nada de KV, nada de replay por estado stale.</span>
+            </div>
+          </li>
+          <li>
+            <div class="marker">03</div>
+            <div class="body">
+              <strong>JWT curto</strong>
+              <span>Sessão de 15 minutos, refresh proativo antes do vencimento. Tab aberta nunca cai.</span>
+            </div>
+          </li>
+          <li>
+            <div class="marker">04</div>
+            <div class="body">
+              <strong>D1 isolado</strong>
+              <span>Banco SQLite só acessível via binding do Worker. Frontend não toca no dado.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div style="height: 32px"></div>
+
+      <div class="ascii reveal" aria-hidden="true">
+<span class="em">iPhone Safari</span> (Face ID)
+  sheets.eduardomartinbiancho.com  <span style="color: var(--text-mute)">(Preact, no secrets)</span>
+       │ HTTPS + 15-min JWT
+       ▼
+  sheets-api.eduardomartinbiancho.com  <span class="hi">(Cloudflare Worker)</span>
+  • WebAuthn via @simplewebauthn/server
+  • HMAC-signed challenge tokens (stateless)
+  • Issues 15-min session JWTs (HS256)
+       │ D1 binding
+       ▼
+  <span class="em">Cloudflare D1</span> (SQLite) — transactions, faturas, rules, settings
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= STACK ========================= -->
+  <section id="stack">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="eyebrow">Stack</div>
+        <h2>Pequeno, <em>direto</em>, sem inchaço.</h2>
+        <p>Cada peça escolhida pra resolver uma coisa específica — e nada mais.</p>
+      </div>
+
+      <div class="stack">
+        <div class="stack-item reveal">
+          <div class="k">Frontend</div>
+          <div class="v">Preact<em> + </em>Vite</div>
+          <div class="d">JSX, plain JS, sem TypeScript. State com <span class="mono">@preact/signals</span>.</div>
+        </div>
+        <div class="stack-item reveal">
+          <div class="k">Auth</div>
+          <div class="v">WebAuthn<em> + </em>JWT</div>
+          <div class="d">SimpleWebAuthn no Worker. HS256 com refresh proativo.</div>
+        </div>
+        <div class="stack-item reveal">
+          <div class="k">Backend</div>
+          <div class="v">Cloudflare<em> Workers</em></div>
+          <div class="d">ES modules + Web Crypto. Roteamento próprio, sem framework.</div>
+        </div>
+        <div class="stack-item reveal">
+          <div class="k">Data</div>
+          <div class="v">D1<em> · SQLite</em></div>
+          <div class="d">Schema migrado de Apps Script. Binding direto, sem ORM.</div>
+        </div>
+        <div class="stack-item reveal">
+          <div class="k">Data fetching</div>
+          <div class="v">TanStack<em> Query</em></div>
+          <div class="d">Stale-while-revalidate, um hook por endpoint.</div>
+        </div>
+        <div class="stack-item reveal">
+          <div class="k">Hosting</div>
+          <div class="v">Cloudflare<em> Pages</em></div>
+          <div class="d">Estático, edge-cached, deploy via <span class="mono">wrangler</span>.</div>
+        </div>
+        <div class="stack-item reveal">
+          <div class="k">Idioma</div>
+          <div class="v">pt-BR<em> · </em>BRL</div>
+          <div class="d">Datas dd/mm/yyyy na UI, ISO no DB. Single-user.</div>
+        </div>
+        <div class="stack-item reveal">
+          <div class="k">Tamanho</div>
+          <div class="v">~33<em>kB</em></div>
+          <div class="d">Gzipped. PWA instalável na home screen.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="brand">Sheets<em>.</em></div>
+      <div class="meta">
+        Built by <a href="#">Eduardo</a> &middot; MIT &middot; Preact + Cloudflare
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Reveal on scroll
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      }
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // If a screenshot file exists at /landing/shots/<n>.png, swap the placeholder
+    // Drop your real screenshots in /landing/shots/ named 1.png .. 6.png to use this.
+    document.querySelectorAll('.shot').forEach((el, i) => {
+      const img = new Image();
+      img.onload = () => {
+        el.innerHTML = '';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '22px';
+        el.appendChild(img);
+        el.style.borderStyle = 'solid';
+      };
+      img.src = `./shots/${i + 1}.png`;
+    });
+  </script>
+
+</body>
+</html>
