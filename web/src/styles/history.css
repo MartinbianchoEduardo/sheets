@@ -118,6 +118,7 @@
 
 /* ---------- Histórico filter ---------- */
 .history-filter {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -178,6 +179,78 @@
   appearance: none;
 }
 .history-search-input:focus { outline: none; border-color: var(--accent); }
+
+.history-valor-chip {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-dim);
+  padding: 0 12px;
+  height: 30px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+.history-valor-chip.active {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.history-valor-chip:active { transform: scale(0.96); }
+
+.history-valor-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+.history-valor-input {
+  width: 96px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.history-valor-input:focus { outline: none; border-color: var(--accent); }
+.history-valor-sep {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-mute);
+  font-size: 13px;
+}
+.history-valor-clear {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+.history-valor-clear:active { transform: scale(0.95); }
 
 .cat-pills {
   display: flex;

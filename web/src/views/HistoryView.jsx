@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CATEGORY_COLORS } from '../lib/categories.js';
-import { formatBRL } from '../lib/format.js';
+import { formatBRL, parseValor } from '../lib/format.js';
 import { historyCategoriasSignal, editTxSignal } from '../lib/state.js';
 import { useFaturas } from '../hooks/useFaturas.js';
 import { useTransactions } from '../hooks/useTransactions.js';
@@ -68,6 +68,24 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function valorToCents(raw) {
+  const s = String(raw).trim();
+  if (!s) return null;
+  const n = parseValor(s);
+  return isNaN(n) ? null : Math.round(Math.abs(n) * 100);
+}
+
+function formatChipBRL(cents) {
+  return formatBRL(cents).replace(/,00$/, '');
+}
+
+function rangeChipLabel(minCents, maxCents) {
+  if (minCents != null && maxCents != null) return `${formatChipBRL(minCents)} – ${formatChipBRL(maxCents)}`;
+  if (minCents != null) return `≥ ${formatChipBRL(minCents)}`;
+  if (maxCents != null) return `≤ ${formatChipBRL(maxCents)}`;
+  return 'Valor';
+}
+
 export function HistoryView() {
   const { data: faturas = [] } = useFaturas();
   const selectedCats = historyCategoriasSignal.value;
@@ -79,6 +97,32 @@ export function HistoryView() {
   const searchRef = useRef(null);
 
   const [editingId, setEditingId] = useState(null);
+
+  const [valorOpen, setValorOpen] = useState(false);
+  const [minRaw, setMinRaw] = useState('');
+  const [maxRaw, setMaxRaw] = useState('');
+  const valorChipRef = useRef(null);
+  const valorPopRef = useRef(null);
+  const minInputRef = useRef(null);
+
+  const minCents = useMemo(() => valorToCents(minRaw), [minRaw]);
+  const maxCents = useMemo(() => valorToCents(maxRaw), [maxRaw]);
+
+  useEffect(() => {
+    if (!valorOpen) return;
+    requestAnimationFrame(() => minInputRef.current?.focus());
+    function onDown(e) {
+      if (valorPopRef.current?.contains(e.target)) return;
+      if (valorChipRef.current?.contains(e.target)) return;
+      setValorOpen(false);
+    }
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+    };
+  }, [valorOpen]);
 
   const editReq = editTxSignal.value;
   useEffect(() => {
@@ -98,10 +142,17 @@ export function HistoryView() {
   const [expanded, setExpanded] = useState(false);
 
   const visible = useMemo(() => {
-    if (!selectedCats.length) return allRows;
-    const set = new Set(selectedCats);
-    return allRows.filter(r => set.has(r.categoria));
-  }, [allRows, selectedCats]);
+    const catSet = selectedCats.length ? new Set(selectedCats) : null;
+    if (!catSet && minCents == null && maxCents == null) return allRows;
+    return allRows.filter(r => {
+      if (catSet && !catSet.has(r.categoria)) return false;
+      // Math.abs so reembolsos (negative valor_cents) match the same range as expenses
+      const v = Math.abs(r.valor_cents);
+      if (minCents != null && v < minCents) return false;
+      if (maxCents != null && v > maxCents) return false;
+      return true;
+    });
+  }, [allRows, selectedCats, minCents, maxCents]);
 
   const pills = useMemo(() => {
     const totals = new Map();
@@ -161,7 +212,12 @@ export function HistoryView() {
     if (!searchRaw.trim()) setSearchOpen(false);
   }
 
-  const filterActive = faturaId != null || !!search || selectedCats.length > 0;
+  const filterActive = faturaId != null || !!search || selectedCats.length > 0 || minCents != null || maxCents != null;
+
+  function commitRaw(raw, setter) {
+    const c = valorToCents(raw);
+    if (c != null) setter(formatBRL(c));
+  }
 
   return (
     <section id="view-history" class="deck-page">
@@ -211,6 +267,52 @@ export function HistoryView() {
               aria-label="Fechar busca"
             >×</button>
           </>
+        )}
+        <button
+          type="button"
+          ref={valorChipRef}
+          class={'history-valor-chip' + ((minCents != null || maxCents != null) ? ' active' : '')}
+          onClick={() => setValorOpen(o => !o)}
+        >
+          {rangeChipLabel(minCents, maxCents)}
+        </button>
+        {valorOpen && (
+          <div class="history-valor-popover" ref={valorPopRef}>
+            <input
+              ref={minInputRef}
+              class="history-valor-input"
+              type="text"
+              inputmode="decimal"
+              placeholder="mín"
+              value={minRaw}
+              onInput={(e) => setMinRaw(e.currentTarget.value)}
+              onBlur={() => commitRaw(minRaw, setMinRaw)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { commitRaw(minRaw, setMinRaw); setValorOpen(false); }
+              }}
+            />
+            <span class="history-valor-sep">–</span>
+            <input
+              class="history-valor-input"
+              type="text"
+              inputmode="decimal"
+              placeholder="máx"
+              value={maxRaw}
+              onInput={(e) => setMaxRaw(e.currentTarget.value)}
+              onBlur={() => commitRaw(maxRaw, setMaxRaw)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { commitRaw(maxRaw, setMaxRaw); setValorOpen(false); }
+              }}
+            />
+            {(minRaw || maxRaw) ? (
+              <button
+                type="button"
+                class="history-valor-clear"
+                onClick={() => { setMinRaw(''); setMaxRaw(''); }}
+                aria-label="Limpar"
+              >×</button>
+            ) : null}
+          </div>
         )}
       </div>
 
