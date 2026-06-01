@@ -24,6 +24,11 @@
   font-variant-numeric: tabular-nums;
   font-size: 9px;
   fill: var(--text);
+  paint-order: stroke fill;
+  stroke: var(--bg-elev);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .spark-avg-line {
@@ -38,6 +43,11 @@
   font-variant-numeric: tabular-nums;
   font-size: 9px;
   fill: var(--text-mute);
+  paint-order: stroke fill;
+  stroke: var(--bg-elev);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .spark-milestone-line {
@@ -52,4 +62,9 @@
   font-variant-numeric: tabular-nums;
   font-size: 9px;
   fill: var(--spark-color, var(--accent));
+  paint-order: stroke fill;
+  stroke: var(--bg-elev);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }

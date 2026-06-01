@@ -1,6 +1,5 @@
 import { useMemo } from 'preact/hooks';
 import { formatBRL } from '../lib/format.js';
-import { buildPolyline } from '../lib/spark.js';
 import { CATEGORY_COLORS } from '../lib/categories.js';
 import { trendDrillSignal } from '../lib/state.js';
 import { useTrends } from '../hooks/useTrends.js';
@@ -17,8 +16,23 @@ const GRID_VB_H = 30;
 
 function HeroChart({ faturas }) {
   const values = faturas.map(f => f.total_cents);
-  const { min, max } = buildPolyline(values, VB_W, VB_H);
   const last = faturas[faturas.length - 1];
+
+  let minIdx = 0, maxIdx = 0, minVal = values[0], maxVal = values[0];
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] < minVal) { minVal = values[i]; minIdx = i; }
+    if (values[i] > maxVal) { maxVal = values[i]; maxIdx = i; }
+  }
+  const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+  const currentIdx = values.length - 1;
+
+  const markers = [
+    { kind: 'avg', label: `média ${formatBRL(avg)}` },
+    { kind: 'min', index: minIdx, label: formatBRL(minVal) },
+    { kind: 'max', index: maxIdx, label: formatBRL(maxVal) },
+    { kind: 'current', index: currentIdx, label: formatBRL(values[currentIdx]) },
+  ];
+
   return (
     <div class="summary-card">
       <div class="summary-card-title">
@@ -26,11 +40,11 @@ function HeroChart({ faturas }) {
         <span class="total">{formatBRL(last ? last.total_cents : 0)}</span>
       </div>
       <div class="card-subtitle">Total da fatura nas últimas {faturas.length} faturas</div>
-      <Sparkline className="trend-hero" values={values} width={VB_W} height={VB_H} />
+      <Sparkline className="trend-hero" values={values} width={VB_W} height={VB_H} markers={markers} />
       <div class="trend-hero-meta">
-        <span>mín {formatBRL(min)}</span>
+        <span>mín {formatBRL(minVal)}</span>
         <span>{last ? last.nome : ''}</span>
-        <span>máx {formatBRL(max)}</span>
+        <span>máx {formatBRL(maxVal)}</span>
       </div>
     </div>
   );

@@ -82,7 +82,14 @@
   display: block;
 }
 .reserve-spark path { fill: rgba(212, 255, 60, 0.12); }
-.reserve-spark polyline { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+.reserve-spark polyline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
 
 /* .stat-card .value gets neg/pos color in Painel */
 .stat-card .value.neg { color: var(--danger); }

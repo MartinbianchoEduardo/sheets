@@ -9,14 +9,44 @@ import { ForecastCard } from '../components/ForecastCard.jsx';
 import { RecurringStatusCard } from '../components/RecurringStatusCard.jsx';
 import { Sparkline } from '../components/Sparkline.jsx';
 
-function ReserveSparkline({ startCents, forecast }) {
+function reserveEtaText(currentCents, projection, metaCents) {
+  if (!metaCents) return '—';
+  const fmt = new Intl.DateTimeFormat('pt-BR', { month: 'short', year: 'numeric' });
+  const clean = (s) => s.replace(/\./g, '');
+
+  if (currentCents >= metaCents) {
+    return `meta atingida · ${clean(fmt.format(new Date()))}`;
+  }
+  const idx = projection.findIndex(p => p.balance_cents >= metaCents);
+  if (idx === -1) return 'meta fora do horizonte de 24 meses';
+  const months = idx + 1;
+  const future = new Date();
+  future.setMonth(future.getMonth() + months);
+  return `atinge meta em ~${months} meses · ${clean(fmt.format(future))}`;
+}
+
+function ReserveSparkline({ startCents, forecast, reservaMetaCents }) {
   if (!forecast?.projection?.length) return null;
   const balances = [startCents, ...forecast.projection.map(p => p.balance_cents)];
-  const endLabel = `Em ${balances.length - 1} meses · ${formatBRL(balances[balances.length - 1])}`;
+  const lastIdx = balances.length - 1;
+
+  const markers = [
+    { kind: 'current', index: 0, label: formatBRL(balances[0]) },
+    { kind: 'current', index: lastIdx, label: formatBRL(balances[lastIdx]) },
+  ];
+  if (reservaMetaCents > 0) {
+    const metaIdx = balances.findIndex(b => b >= reservaMetaCents);
+    if (metaIdx > 0 && metaIdx < lastIdx) {
+      markers.push({ kind: 'milestone', index: metaIdx, label: 'meta' });
+    }
+  }
+
+  const etaText = reserveEtaText(startCents, forecast.projection, reservaMetaCents);
+
   return (
     <>
-      <Sparkline className="reserve-spark" values={balances} width={100} height={30} />
-      <div class="reserve-meta"><span>{endLabel}</span></div>
+      <Sparkline className="reserve-spark" values={balances} width={300} height={80} markers={markers} />
+      <div class="reserve-meta"><span>{etaText}</span></div>
     </>
   );
 }
@@ -119,7 +149,11 @@ export function PainelView() {
                 <span>{formatBRL(d.reserva_atual_cents)}</span>
                 <span>meta · {formatBRL(d.reserva_meta_cents)}</span>
               </div>
-              <ReserveSparkline startCents={d.reserva_atual_cents} forecast={forecastQ.data} />
+              <ReserveSparkline
+                startCents={d.reserva_atual_cents}
+                forecast={forecastQ.data}
+                reservaMetaCents={d.reserva_meta_cents}
+              />
             </div>
           </>
         )}

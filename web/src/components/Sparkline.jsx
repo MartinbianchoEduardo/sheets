@@ -22,12 +22,20 @@ export function Sparkline({ values, width, height, color, markers, xLabels, clas
     }
   }
 
+  function edgeAnchor(x) {
+    const pct = x / width;
+    if (pct < 0.1) return { anchor: 'start', x: x + 2 };
+    if (pct > 0.9) return { anchor: 'end', x: x - 2 };
+    return { anchor: 'middle', x };
+  }
+
   const svg = (
     <svg
       class={className}
       style={svgStyle}
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
+      overflow="visible"
     >
       <path d={area} />
       <polyline points={polyline} />
@@ -49,11 +57,12 @@ export function Sparkline({ values, width, height, color, markers, xLabels, clas
           const x = values.length === 1
             ? width / 2
             : (m.index / (values.length - 1)) * width;
+          const { anchor, x: lx } = edgeAnchor(x);
           return (
             <g key={i} class="spark-milestone">
               <line x1={x} y1="0" x2={x} y2={height} class="spark-milestone-line" />
               {m.label && (
-                <text x={x} y="8" class="spark-milestone-label" text-anchor="middle">
+                <text x={lx} y="8" class="spark-milestone-label" text-anchor={anchor}>
                   {m.label}
                 </text>
               )}
@@ -61,11 +70,13 @@ export function Sparkline({ values, width, height, color, markers, xLabels, clas
           );
         }
         const { x, y } = pointXY(values, m.index, width, height, min, range);
+        const { anchor, x: lx } = edgeAnchor(x);
+        const ly = y < 16 ? y + 12 : y - 4;
         return (
           <g key={i} class={`spark-dot spark-dot-${m.kind}`}>
             <circle cx={x} cy={y} r={m.kind === 'current' ? 3 : 2.5} />
             {m.label && (
-              <text x={x} y={y - 4} class="spark-dot-label" text-anchor="middle">
+              <text x={lx} y={ly} class="spark-dot-label" text-anchor={anchor}>
                 {m.label}
               </text>
             )}
