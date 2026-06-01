@@ -7,28 +7,15 @@ import { useReserveForecast } from '../hooks/useReserveForecast.js';
 import { BurnPaceBar } from '../components/BurnPaceBar.jsx';
 import { ForecastCard } from '../components/ForecastCard.jsx';
 import { RecurringStatusCard } from '../components/RecurringStatusCard.jsx';
+import { Sparkline } from '../components/Sparkline.jsx';
 
 function ReserveSparkline({ startCents, forecast }) {
   if (!forecast?.projection?.length) return null;
   const balances = [startCents, ...forecast.projection.map(p => p.balance_cents)];
-  const min = Math.min(...balances);
-  const max = Math.max(...balances);
-  const range = Math.max(1, max - min);
-  const w = 100, h = 30;
-  const points = balances.map((b, i) => {
-    const x = (i / (balances.length - 1)) * w;
-    const y = h - ((b - min) / range) * h;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  const polyline = points.join(' ');
-  const areaPath = `M0,${h} L${points.join(' L')} L${w},${h} Z`;
   const endLabel = `Em ${balances.length - 1} meses · ${formatBRL(balances[balances.length - 1])}`;
   return (
     <>
-      <svg class="reserve-spark" viewBox="0 0 100 30" preserveAspectRatio="none">
-        <path d={areaPath} />
-        <polyline points={polyline} />
-      </svg>
+      <Sparkline className="reserve-spark" values={balances} width={100} height={30} />
       <div class="reserve-meta"><span>{endLabel}</span></div>
     </>
   );

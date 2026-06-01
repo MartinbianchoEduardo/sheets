@@ -1,0 +1,55 @@
+.spark-with-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spark-xlabels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  color: var(--text-mute);
+}
+
+.spark-dot circle {
+  fill: var(--spark-color, var(--accent));
+  stroke: var(--bg);
+  stroke-width: 1;
+}
+
+.spark-dot-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  fill: var(--text);
+}
+
+.spark-avg-line {
+  stroke: var(--text-mute);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 2;
+  fill: none;
+}
+
+.spark-avg-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  fill: var(--text-mute);
+}
+
+.spark-milestone-line {
+  stroke: var(--spark-color, var(--accent));
+  stroke-width: 0.6;
+  stroke-dasharray: 2 2;
+  fill: none;
+}
+
+.spark-milestone-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  fill: var(--spark-color, var(--accent));
+}
