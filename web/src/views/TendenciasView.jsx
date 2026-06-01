@@ -1,50 +1,23 @@
 import { useMemo } from 'preact/hooks';
 import { formatBRL } from '../lib/format.js';
+import { buildPolyline } from '../lib/spark.js';
 import { CATEGORY_COLORS } from '../lib/categories.js';
 import { trendDrillSignal } from '../lib/state.js';
 import { useTrends } from '../hooks/useTrends.js';
 import { useHeatmap } from '../hooks/useHeatmap.js';
 import { CategoryDot } from '../components/CategoryDot.jsx';
 import { Heatmap } from '../components/Heatmap.jsx';
+import { Sparkline } from '../components/Sparkline.jsx';
+import { TrendDelta } from '../components/TrendDelta.jsx';
 
 const VB_W = 300;
 const VB_H = 80;
 const GRID_VB_W = 100;
 const GRID_VB_H = 30;
 
-function buildPolyline(values, w, h) {
-  if (!values.length) return { polyline: '', area: '', min: 0, max: 0 };
-  const min = Math.min(...values, 0);
-  const max = Math.max(...values, 0);
-  const range = Math.max(1, max - min);
-  const points = values.map((v, i) => {
-    const x = values.length === 1 ? w / 2 : (i / (values.length - 1)) * w;
-    const y = h - ((v - min) / range) * h;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
-  const polyline = points.join(' ');
-  const area = `M0,${h} L${points.join(' L')} L${w},${h} Z`;
-  return { polyline, area, min, max };
-}
-
-function Delta({ current, baseline }) {
-  if (baseline == null || baseline === 0) {
-    if (current > 0) return <span class="trend-delta novo">novo</span>;
-    return null;
-  }
-  const pct = Math.round(((current - baseline) / Math.abs(baseline)) * 100);
-  if (Math.abs(pct) < 2) return <span class="trend-delta flat">·</span>;
-  const up = pct > 0;
-  return (
-    <span class={'trend-delta ' + (up ? 'up' : 'down')}>
-      {up ? '↑' : '↓'}{Math.abs(pct)}% vs média
-    </span>
-  );
-}
-
 function HeroChart({ faturas }) {
   const values = faturas.map(f => f.total_cents);
-  const { polyline, area, min, max } = buildPolyline(values, VB_W, VB_H);
+  const { min, max } = buildPolyline(values, VB_W, VB_H);
   const last = faturas[faturas.length - 1];
   return (
     <div class="summary-card">
@@ -53,10 +26,7 @@ function HeroChart({ faturas }) {
         <span class="total">{formatBRL(last ? last.total_cents : 0)}</span>
       </div>
       <div class="card-subtitle">Total da fatura nas últimas {faturas.length} faturas</div>
-      <svg class="trend-hero" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="none">
-        <path d={area} />
-        <polyline points={polyline} />
-      </svg>
+      <Sparkline className="trend-hero" values={values} width={VB_W} height={VB_H} />
       <div class="trend-hero-meta">
         <span>mín {formatBRL(min)}</span>
         <span>{last ? last.nome : ''}</span>
@@ -73,7 +43,6 @@ function CategoryCell({ categoria, entries }) {
   const baseline = prior.length
     ? Math.round(prior.reduce((s, v) => s + v, 0) / prior.length)
     : null;
-  const { polyline, area } = buildPolyline(values, GRID_VB_W, GRID_VB_H);
   const color = CATEGORY_COLORS[categoria] || 'var(--text-mute)';
 
   function open() { trendDrillSignal.value = { categoria }; }
@@ -87,17 +56,15 @@ function CategoryCell({ categoria, entries }) {
         </span>
         <span class="trend-cell-val">{formatBRL(last)}</span>
       </div>
-      <svg
-        class="trend-spark"
-        viewBox={`0 0 ${GRID_VB_W} ${GRID_VB_H}`}
-        preserveAspectRatio="none"
+      <Sparkline
+        className="trend-spark"
+        values={values}
+        width={GRID_VB_W}
+        height={GRID_VB_H}
         style={{ '--c': color }}
-      >
-        <path d={area} />
-        <polyline points={polyline} />
-      </svg>
+      />
       <div class="trend-cell-foot">
-        <Delta current={last} baseline={baseline} />
+        <TrendDelta current={last} baseline={baseline} />
       </div>
     </button>
   );

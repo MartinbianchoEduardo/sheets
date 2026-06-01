@@ -111,10 +111,256 @@
   text-transform: uppercase;
   color: var(--text-dim);
   border-bottom: 1px solid var(--border);
+  width: 100%;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
+  cursor: pointer;
 }
+.trend-drill-header.active { color: var(--accent); border-bottom-color: var(--accent-dim, var(--accent)); }
+.trend-drill-header:active { background: var(--bg-elev-2); }
 .trend-drill-total {
   font-variant-numeric: tabular-nums;
   color: var(--text);
+}
+
+/* ---------- Drill chart + stats ---------- */
+.trend-drill-spark-wrap {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  margin: 8px 0 0;
+  overflow: visible;
+}
+.trend-drill-spark {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.trend-drill-spark path {
+  fill: var(--c, var(--accent));
+  fill-opacity: 0.15;
+}
+.trend-drill-spark polyline {
+  fill: none;
+  stroke: var(--c, var(--accent));
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.trend-drill-spark .spark-dot circle {
+  fill: var(--c, var(--accent));
+  stroke: var(--bg);
+  stroke-width: 1;
+}
+.trend-drill-spark .spark-dot-current circle {
+  r: 3.5;
+}
+.trend-drill-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.trend-drill-projection line {
+  stroke: var(--c, var(--accent));
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+.trend-drill-projection circle {
+  fill: var(--bg);
+  stroke: var(--c, var(--accent));
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.trend-drill-projection text {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  fill: var(--c, var(--accent));
+}
+.trend-drill-active {
+  fill: none;
+  stroke: var(--c, var(--accent));
+  stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.9;
+}
+.trend-drill-hits {
+  position: absolute;
+  inset: 0;
+}
+.trend-drill-hit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  transform: translateX(-50%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.trend-drill-xlabels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 6px;
+}
+.trend-drill-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.trend-drill-stats .stats-text {
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.4;
+}
+.trend-delta.big {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-elev-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---------- Drill budget bar ---------- */
+.trend-drill-budget-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--bg-elev-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.trend-drill-budget-fill {
+  height: 100%;
+  background: var(--c, var(--accent));
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+.trend-drill-budget-fill.over { background: var(--danger); }
+.trend-drill-budget-tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text-dim);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* ---------- Top descrições ---------- */
+.trend-drill-top-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.trend-drill-top-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.trend-drill-top-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.trend-drill-top-desc {
+  font-size: 13px;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.trend-drill-top-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.trend-drill-top-track {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-elev-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.trend-drill-top-fill {
+  height: 100%;
+  background: var(--c, var(--accent));
+  border-radius: 999px;
+}
+
+/* ---------- Dia da semana ---------- */
+.trend-drill-dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.trend-drill-dow-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.trend-drill-dow-bar-wrap {
+  height: 60px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.trend-drill-dow-bar {
+  width: 70%;
+  background: var(--c, var(--accent));
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+}
+.trend-drill-dow-bar.empty {
+  background: var(--bg-elev-2);
+  height: 2px;
+}
+.trend-drill-dow-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-mute);
+}
+.trend-drill-dow-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
 }
 
 /* ---------- Heatmap ---------- */
