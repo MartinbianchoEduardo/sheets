@@ -94,20 +94,12 @@ export function PainelView() {
               <div class="stat-card">
                 <div class="label">Disponível mês</div>
                 <div class={'value' + (d.disponivel_mes_cents < 0 ? ' neg' : '')}>{formatBRL(d.disponivel_mes_cents)}</div>
-                <div class="stat-sub">
-                  {d.recurring_unmatched_cents > 0
-                    ? 'Salário − gasto fixo − investimento alvo + emprestado − fatura − recorrentes previstos'
-                    : 'Salário − gasto fixo − investimento alvo + emprestado − fatura'}
-                </div>
+                <div class="stat-sub">Salário − gasto fixo − investimento alvo − fatura + emprestado</div>
               </div>
               <div class="stat-card">
                 <div class="label">Disponível diário</div>
                 <div class="value">{d.days_remaining > 0 ? formatBRL(d.disponivel_diario_cents) : 'Fatura fechada'}</div>
-                <div class="stat-sub">
-                  {d.recurring_unmatched_cents > 0
-                    ? '(Limite restante − recorrentes previstos) ÷ dias restantes'
-                    : 'Limite restante ÷ dias restantes no ciclo'}
-                </div>
+                <div class="stat-sub">Disponível mês ÷ dias restantes no ciclo</div>
                 <div class="sub">
                   {d.days_remaining > 0 && d.closing_date
                     ? `${d.days_remaining} dias até ${formatDate(d.closing_date)}`
@@ -126,12 +118,11 @@ export function PainelView() {
             <ForecastCard
               forecastCloseCents={d.forecast_close_cents}
               forecastClosePct={d.forecast_close_pct}
-              limiteCents={d.limite_fatura_cents || 0}
+              limiteCents={d.forecast_budget_cents || 0}
               faturaAtualCents={d.fatura_atual_cents || 0}
               daysElapsed={d.days_elapsed || 0}
               cycleTotalDays={d.cycle_total_days || 0}
               daysRemaining={d.days_remaining || 0}
-              recurringUnmatchedCents={d.recurring_unmatched_cents || 0}
             />
 
             <RecurringStatusCard faturaId={effectiveId} />

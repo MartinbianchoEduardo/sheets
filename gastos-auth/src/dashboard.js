@@ -3,7 +3,6 @@
 // Math is the spec §4 / plan §4 calculations. Reuses getSummary so the
 // "Fatura atual" definition stays in sync with Resumo.
 
-import { queryOne } from './db.js';
 import { getSummary } from './summary.js';
 import { getFatura, currentFatura } from './faturas.js';
 import { getSettings } from './settings.js';
@@ -50,34 +49,39 @@ export async function getDashboard(env, faturaId) {
     };
   }
 
-  const [summary, recorrenteRow, recurringStatus] = await Promise.all([
+  const [summary, recurringStatus] = await Promise.all([
     getSummary(env, fatura.id),
-    queryOne(env,
-      `SELECT COALESCE(SUM(valor_cents), 0) AS s FROM transactions
-       WHERE fatura_id = ? AND deleted_at IS NULL AND categoria = 'Recorrente'`,
-      fatura.id),
     getRecurringStatus(env, { fatura_id: fatura.id }),
   ]);
 
-  const salario_cents = fatura.salario_cents || 0;
-  const gasto_fixo_cents = recorrenteRow.s || 0;
-  const investimento_alvo_cents = Math.round(salario_cents * settings.meta_investimento_pct);
-  const limite_fatura_cents = salario_cents - gasto_fixo_cents - investimento_alvo_cents;
-
-  const fatura_atual_cents = summary.totals.fatura_cents;
-  const emprestado_pendente_cents = summary.totals.emprestado_cents;
-
-  // User-managed recurring rows that haven't matched a tx in this fatura.
-  // Treated as known upcoming charges and folded into every projection metric.
   const recurringTotals = recurringStatus && !recurringStatus.error ? recurringStatus.totals : null;
+  const recurring_previsto_cents = recurringTotals ? recurringTotals.previsto_cents : 0;
+  const recurring_registrado_cents = recurringTotals ? recurringTotals.registrado_cents : 0;
   const recurring_pendente_cents = recurringTotals ? recurringTotals.pendente_cents : 0;
   const recurring_futuro_cents = recurringTotals ? recurringTotals.futuro_cents : 0;
   const recurring_unmatched_cents = recurring_pendente_cents + recurring_futuro_cents;
 
-  const disponivel_mes_cents =
-    (salario_cents - gasto_fixo_cents - investimento_alvo_cents + emprestado_pendente_cents)
-    - fatura_atual_cents
-    - recurring_unmatched_cents;
+  const salario_cents = fatura.salario_cents || 0;
+  // gasto_fixo = total of recurring rules expected this cycle (config-driven),
+  // not the SUM of tx with categoria='Recorrente'. Matched portion is already
+  // in fatura_atual; unmatched portion is the remaining future recurring.
+  const gasto_fixo_cents = recurring_previsto_cents;
+  const investimento_alvo_cents = Math.round(salario_cents * settings.meta_investimento_pct);
+
+  const fatura_atual_cents = summary.totals.fatura_cents;
+  const emprestado_pendente_cents = summary.totals.emprestado_cents;
+
+  // Emprestado is cash a friend owes back, so it bumps the free spending
+  // budget. limite_fatura is what's available to spend after reserving
+  // gasto_fixo + investimento, plus emprestado coming back as cash.
+  const limite_fatura_cents = salario_cents - gasto_fixo_cents - investimento_alvo_cents + emprestado_pendente_cents;
+
+  // "Free spending" portion of fatura_atual: subtract recurring rules already
+  // matched (counted in gasto_fixo) and emprestado (friend pays back in cash).
+  const fatura_livre_cents = fatura_atual_cents - recurring_registrado_cents - emprestado_pendente_cents;
+
+  // Disponível: limite (already includes +emprestado) minus what's been spent freely.
+  const disponivel_mes_cents = limite_fatura_cents - fatura_livre_cents;
 
   const closing_date = fatura.closing_date;
   const today = todayIsoSaoPaulo();
@@ -88,25 +92,33 @@ export async function getDashboard(env, faturaId) {
     days_remaining = daysBetweenIso(today, closing_date) + 1;
   }
   const disponivel_diario_cents = days_remaining > 0
-    ? Math.round((limite_fatura_cents - fatura_atual_cents - recurring_unmatched_cents) / days_remaining)
+    ? Math.round(disponivel_mes_cents / days_remaining)
     : 0;
 
   const cycle_total_days = Math.max(1, daysBetweenIso(fatura.start_date, closing_date) + 1);
   const days_elapsed = Math.max(0, Math.min(cycle_total_days, daysBetweenIso(fatura.start_date, today) + 1));
   const cycle_elapsed_pct = days_elapsed / cycle_total_days;
-  const committed_cents = fatura_atual_cents + recurring_unmatched_cents;
+
+  // Ritmo: free spending used vs free spending budget. gasto_fixo + investimento
+  // are already reserved in limite_fatura, so we don't count them again.
+  const committed_cents = fatura_livre_cents;
   const limit_used_pct = limite_fatura_cents > 0
     ? committed_cents / limite_fatura_cents
     : (committed_cents > 0 ? 1 : 0);
 
+  // Projeção de fechamento: project the non-recurring portion linearly by burn
+  // rate, then add the full planned recurring for the cycle. Avoids the old
+  // bug where matched recurring got multiplied by the burn projection.
+  const fatura_non_recurring_cents = fatura_atual_cents - recurring_registrado_cents;
+  const forecast_budget_cents = Math.max(0, salario_cents - investimento_alvo_cents);
   const forecast_close_cents = days_elapsed >= 3
-    ? Math.round((fatura_atual_cents / days_elapsed) * cycle_total_days) + recurring_unmatched_cents
+    ? Math.round((fatura_non_recurring_cents / days_elapsed) * cycle_total_days) + recurring_previsto_cents
     : null;
-  const forecast_close_pct = forecast_close_cents != null && limite_fatura_cents > 0
-    ? forecast_close_cents / limite_fatura_cents
+  const forecast_close_pct = forecast_close_cents != null && forecast_budget_cents > 0
+    ? forecast_close_cents / forecast_budget_cents
     : null;
-  const forecast_over_cents = forecast_close_cents != null && limite_fatura_cents > 0
-    ? forecast_close_cents - limite_fatura_cents
+  const forecast_over_cents = forecast_close_cents != null && forecast_budget_cents > 0
+    ? forecast_close_cents - forecast_budget_cents
     : null;
 
   const reserva_atual_cents = settings.reserva_atual_cents;
@@ -135,6 +147,7 @@ export async function getDashboard(env, faturaId) {
     forecast_close_cents,
     forecast_close_pct,
     forecast_over_cents,
+    forecast_budget_cents,
     recurring_pendente_cents,
     recurring_futuro_cents,
     recurring_unmatched_cents,

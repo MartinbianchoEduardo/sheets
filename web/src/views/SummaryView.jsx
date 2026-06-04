@@ -93,8 +93,13 @@ export function SummaryView() {
             <div class="summary-totals">
               <div class="stat-card fatura">
                 <div class="label">Total da fatura</div>
-                <div class="value">{formatBRL(payload.totals.fatura_cents)}</div>
-                <div class="stat-sub">Mês + Parcelas + Emprestado · Pix excluído</div>
+                <div class="value">
+                  <span>{formatBRL(payload.totals.fatura_cents - payload.totals.emprestado_cents)}</span>
+                  {payload.totals.emprestado_cents > 0 && (
+                    <span class="value-aux">+{formatBRL(payload.totals.emprestado_cents)} emprestado</span>
+                  )}
+                </div>
+                <div class="stat-sub">Total {formatBRL(payload.totals.fatura_cents)}</div>
               </div>
               <div class="stat-card">
                 <div class="label">Total do mês</div>

@@ -8,14 +8,10 @@ export function ForecastCard({
   daysElapsed = 0,
   cycleTotalDays = 0,
   daysRemaining = 0,
-  recurringUnmatchedCents = 0,
 }) {
   const cycleClosed =
     cycleTotalDays > 0 && daysRemaining === 0 && daysElapsed === cycleTotalDays;
-  const baseSubtitle = 'Ao ritmo atual · fatura atual ÷ dias decorridos × dias do ciclo';
-  const subtitle = recurringUnmatchedCents > 0 && !cycleClosed
-    ? baseSubtitle + ' + recorrentes previstos'
-    : baseSubtitle;
+  const subtitle = 'Gastos livres no ritmo atual + recorrentes do ciclo · vs salário − investimento';
 
   if (cycleClosed) {
     const pct = limiteCents > 0 ? faturaAtualCents / limiteCents : null;

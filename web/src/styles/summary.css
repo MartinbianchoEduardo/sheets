@@ -52,7 +52,21 @@
   font-variant-numeric: tabular-nums;
   font-size: 22px;
 }
-.stat-card.fatura .value { font-size: 34px; }
+.stat-card.fatura .value {
+  font-size: 34px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.stat-card .value-aux {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0;
+  color: var(--text-mute);
+  margin-left: auto;
+}
 
 .summary-card {
   background: var(--bg-elev);
