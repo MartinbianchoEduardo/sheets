@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CATEGORY_COLORS } from '../lib/categories.js';
 import { formatBRL, parseValor } from '../lib/format.js';
 import { historyCategoriasSignal, editTxSignal } from '../lib/state.js';
+import { useCurrentFatura } from '../hooks/useCurrentFatura.js';
 import { useFaturas } from '../hooks/useFaturas.js';
 import { useTransactions, useTransactionsPerFatura } from '../hooks/useTransactions.js';
 import { CategoryDot } from '../components/CategoryDot.jsx';
@@ -131,10 +132,15 @@ export function HistoryView() {
     editTxSignal.value = null;
   }, [editReq]);
 
-  // Default browsing loads one fatura at a time (newest first); "Ver mais"
-  // reveals the next. Picking a fatura or searching switches to a single
-  // filtered query over everything, like before.
-  const [faturaCount, setFaturaCount] = useState(1);
+  // Default browsing loads fatura by fatura; "Ver mais" reveals the next.
+  // Starts at the current fatura — faturas[0] can be newer than it (a
+  // pre-created next cycle or an override), so the initial slice runs from the
+  // newest down to and including the current one. Picking a fatura or
+  // searching switches to a single filtered query over everything, like before.
+  const currentFatura = useCurrentFatura();
+  const currentIdx = faturas.findIndex(f => f.id === currentFatura.data?.fatura?.id);
+  const [extraCount, setExtraCount] = useState(0);
+  const faturaCount = (currentIdx >= 0 ? currentIdx + 1 : 1) + extraCount;
   const filterMode = faturaId != null || !!search;
   const perFatura = useTransactionsPerFatura(
     filterMode ? [] : faturas.slice(0, faturaCount).map(f => f.id),
@@ -374,7 +380,7 @@ export function HistoryView() {
             type="button"
             class="history-more-btn"
             disabled={perFatura.isLoading}
-            onClick={() => setFaturaCount(c => c + 1)}
+            onClick={() => setExtraCount(c => c + 1)}
           >
             <span>{perFatura.isLoading ? 'Carregando...' : `Ver mais (${nextFatura.nome})`}</span>
             <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
