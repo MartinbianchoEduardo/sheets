@@ -309,10 +309,31 @@
 }
 .history-more-btn:hover { border-color: var(--text-dim); color: var(--text); }
 .history-more-btn:active { transform: scale(0.98); }
-.history-more-btn svg {
-  transition: transform 0.25s ease;
+.history-more-btn:disabled { opacity: 0.6; cursor: default; }
+
+.history-fatura-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
-.history-more-btn.open svg { transform: rotate(180deg); }
+.history-fatura-divider::before,
+.history-fatura-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+.history-fatura-divider-total {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-mute);
+}
+.history-fatura-divider-total::before { content: '· '; }
 
 .history-day { margin-bottom: 4px; }
 .history-day-header {

@@ -132,6 +132,21 @@ export async function previewImport(env, parsedRows) {
       fatura_nome: fatura ? fatura.nome : null,
     });
   }
+
+  // Flag rows that already exist in the DB (same date, exact description, same
+  // value) so the preview warns about re-imports. Duplicates *within* the batch
+  // are computed client-side, so those flags update live as rows are removed.
+  const valid = out.filter(r => !r.invalid);
+  if (valid.length) {
+    const dates = valid.map(r => r.data).sort();
+    const { results } = await env.DB.prepare(
+      `SELECT data, descricao, valor_cents FROM transactions WHERE data >= ? AND data <= ?`,
+    ).bind(dates[0], dates[dates.length - 1]).all();
+    const existing = new Set(results.map(t => `${t.data}|${t.descricao}|${t.valor_cents}`));
+    for (const r of valid) {
+      if (existing.has(`${r.data}|${r.descricao}|${r.valor_cents}`)) r.ja_existe = true;
+    }
+  }
   return { rows: out };
 }
 

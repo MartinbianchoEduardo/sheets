@@ -65,7 +65,7 @@
 
 .preview-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   gap: 4px 10px;
   padding: 10px 0;
   border-top: 1px solid var(--border);
@@ -126,6 +126,22 @@
   color: var(--danger);
   font-weight: 700;
 }
+.dup-flag {
+  color: var(--warn);
+  font-weight: 700;
+}
+.preview-remove {
+  grid-column: 3;
+  align-self: start;
+  background: none;
+  border: none;
+  padding: 0 0 0 2px;
+  color: var(--text-mute);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.preview-remove:active { transform: scale(0.85); color: var(--danger); }
 .preview-invalid {
   color: var(--danger);
   font-family: 'JetBrains Mono', monospace;

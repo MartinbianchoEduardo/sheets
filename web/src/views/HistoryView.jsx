@@ -3,11 +3,9 @@ import { CATEGORY_COLORS } from '../lib/categories.js';
 import { formatBRL, parseValor } from '../lib/format.js';
 import { historyCategoriasSignal, editTxSignal } from '../lib/state.js';
 import { useFaturas } from '../hooks/useFaturas.js';
-import { useTransactions } from '../hooks/useTransactions.js';
+import { useTransactions, useTransactionsPerFatura } from '../hooks/useTransactions.js';
 import { CategoryDot } from '../components/CategoryDot.jsx';
 import { EditingRow } from '../components/EditingRow.jsx';
-
-const COLLAPSED_LIMIT = 20;
 
 function faturaNameById(faturas, id) {
   if (id == null) return '';
@@ -87,7 +85,8 @@ function rangeChipLabel(minCents, maxCents) {
 }
 
 export function HistoryView() {
-  const { data: faturas = [] } = useFaturas();
+  const faturasQuery = useFaturas();
+  const faturas = faturasQuery.data || [];
   const selectedCats = historyCategoriasSignal.value;
 
   const [faturaId, setFaturaId] = useState(null);
@@ -132,14 +131,22 @@ export function HistoryView() {
     editTxSignal.value = null;
   }, [editReq]);
 
-  const query = useTransactions({
-    faturaId: faturaId ?? undefined,
-    search: search || undefined,
-    limit: 500,
-  });
-  const allRows = query.data || [];
-
-  const [expanded, setExpanded] = useState(false);
+  // Default browsing loads one fatura at a time (newest first); "Ver mais"
+  // reveals the next. Picking a fatura or searching switches to a single
+  // filtered query over everything, like before.
+  const [faturaCount, setFaturaCount] = useState(1);
+  const filterMode = faturaId != null || !!search;
+  const perFatura = useTransactionsPerFatura(
+    filterMode ? [] : faturas.slice(0, faturaCount).map(f => f.id),
+  );
+  const listQuery = useTransactions(
+    { faturaId: faturaId ?? undefined, search: search || undefined, limit: 500 },
+    { enabled: filterMode },
+  );
+  const allRows = filterMode ? (listQuery.data || []) : perFatura.rows;
+  const isLoading = filterMode ? listQuery.isLoading : (faturasQuery.isLoading || perFatura.isLoading);
+  const isError = filterMode ? listQuery.isError : perFatura.isError;
+  const queryError = filterMode ? listQuery.error : perFatura.error;
 
   const visible = useMemo(() => {
     const catSet = selectedCats.length ? new Set(selectedCats) : null;
@@ -164,38 +171,29 @@ export function HistoryView() {
       .map(([categoria]) => categoria);
   }, [allRows]);
 
-  const allDays = useMemo(() => {
-    const groups = new Map();
-    for (const r of visible) {
-      if (!groups.has(r.data)) groups.set(r.data, []);
-      groups.get(r.data).push(r);
-    }
-    return [...groups.entries()].map(([data, rows]) => ({
-      data,
-      rows,
-      total: rows.reduce((s, r) => s + r.valor_cents, 0),
-    }));
-  }, [visible]);
-
-  const overLimit = visible.length > COLLAPSED_LIMIT;
-  const days = useMemo(() => {
-    if (expanded || !overLimit) return allDays;
-    let remaining = COLLAPSED_LIMIT;
+  // Blocks of consecutive rows sharing a fatura, each split into day groups,
+  // so a divider can mark where one fatura ends and the next begins.
+  const blocks = useMemo(() => {
     const out = [];
-    for (const day of allDays) {
-      if (remaining <= 0) break;
-      if (day.rows.length <= remaining) {
-        out.push(day);
-        remaining -= day.rows.length;
-      } else {
-        const rows = day.rows.slice(0, remaining);
-        out.push({ data: day.data, rows, total: rows.reduce((s, r) => s + r.valor_cents, 0) });
-        remaining = 0;
+    for (const r of visible) {
+      let block = out[out.length - 1];
+      if (!block || block.faturaId !== r.fatura_id) {
+        block = { faturaId: r.fatura_id, days: [], total: 0 };
+        out.push(block);
       }
+      let day = block.days[block.days.length - 1];
+      if (!day || day.data !== r.data) {
+        day = { data: r.data, rows: [], total: 0 };
+        block.days.push(day);
+      }
+      day.rows.push(r);
+      day.total += r.valor_cents;
+      block.total += r.valor_cents;
     }
     return out;
-  }, [allDays, expanded, overLimit]);
-  const hiddenCount = overLimit && !expanded ? visible.length - COLLAPSED_LIMIT : 0;
+  }, [visible]);
+
+  const nextFatura = !filterMode && faturaCount < faturas.length ? faturas[faturaCount] : null;
 
   function togglePill(c) {
     const cur = historyCategoriasSignal.value;
@@ -340,34 +338,45 @@ export function HistoryView() {
         </div>
       )}
 
-      {filterActive && !query.isLoading && (
+      {filterActive && !isLoading && (
         <div class="history-status">Mostrando {visible.length} de {allRows.length} lançamentos</div>
       )}
 
       <div id="history-list" class="history-list">
-        {query.isLoading && !allRows.length && <div class="empty">Carregando...</div>}
-        {query.isError && <div class="empty">Erro: {String(query.error?.message || query.error)}</div>}
-        {!query.isLoading && !visible.length && !query.isError && <div class="empty">Nenhum lançamento.</div>}
-        {days.map(({ data, rows, total }) => (
-          <div key={data} class="history-day">
-            <div class="history-day-header">
-              <span>{formatDayHeader(data)}</span>
-              <span class="history-day-total">{formatBRL(total)}</span>
-            </div>
-            {rows.map(r => (
-              editingId === r.id
-                ? <EditingRow key={r.id} row={r} faturas={faturas} onClose={() => setEditingId(null)} />
-                : <DisplayRow key={r.id} row={r} faturas={faturas} onLongPress={() => setEditingId(r.id)} />
+        {isLoading && !allRows.length && <div class="empty">Carregando...</div>}
+        {isError && <div class="empty">Erro: {String(queryError?.message || queryError)}</div>}
+        {!isLoading && !visible.length && !isError && <div class="empty">Nenhum lançamento.</div>}
+        {blocks.map((block, i) => (
+          <div key={`${i}-${block.faturaId}`}>
+            {i > 0 && (
+              <div class="history-fatura-divider">
+                <span>{faturaNameById(faturas, block.faturaId) || 'Sem fatura'}</span>
+                <span class="history-fatura-divider-total">{formatBRL(block.total)}</span>
+              </div>
+            )}
+            {block.days.map(({ data, rows, total }) => (
+              <div key={data} class="history-day">
+                <div class="history-day-header">
+                  <span>{formatDayHeader(data)}</span>
+                  <span class="history-day-total">{formatBRL(total)}</span>
+                </div>
+                {rows.map(r => (
+                  editingId === r.id
+                    ? <EditingRow key={r.id} row={r} faturas={faturas} onClose={() => setEditingId(null)} />
+                    : <DisplayRow key={r.id} row={r} faturas={faturas} onLongPress={() => setEditingId(r.id)} />
+                ))}
+              </div>
             ))}
           </div>
         ))}
-        {(overLimit || expanded) && (
+        {nextFatura && (
           <button
             type="button"
-            class={'history-more-btn' + (expanded ? ' open' : '')}
-            onClick={() => setExpanded(x => !x)}
+            class="history-more-btn"
+            disabled={perFatura.isLoading}
+            onClick={() => setFaturaCount(c => c + 1)}
           >
-            <span>{expanded ? 'Ver menos' : `Ver mais (${hiddenCount})`}</span>
+            <span>{perFatura.isLoading ? 'Carregando...' : `Ver mais (${nextFatura.nome})`}</span>
             <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>

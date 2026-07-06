@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CATEGORIES } from '../lib/categories.js';
 import { formatBRL, formatDate } from '../lib/format.js';
 import { subpageSignal, setTab } from '../lib/state.js';
@@ -73,14 +73,18 @@ function useSwipeToDismiss(ref, onDismiss) {
   }, [onDismiss]);
 }
 
-function PreviewRow({ row, onChangeCategoria, onDismiss }) {
+function PreviewRow({ row, dupCsv, onChangeCategoria, onDismiss }) {
   const ref = useRef(null);
   useSwipeToDismiss(ref, onDismiss);
+  const removeBtn = (
+    <button type="button" class="preview-remove" onClick={onDismiss} aria-label="Remover">×</button>
+  );
   if (row.invalid) {
     return (
       <div class="preview-row" ref={ref}>
         <div class="desc">{row.descricao || '(sem descrição)'}</div>
         <div class="val">{row.raw_amount || ''}</div>
+        {removeBtn}
         <div class="meta"><span class="outro-flag">inválido: {row.reason}</span></div>
       </div>
     );
@@ -90,6 +94,7 @@ function PreviewRow({ row, onChangeCategoria, onDismiss }) {
     <div class={'preview-row' + (outro ? ' outro' : '')} ref={ref}>
       <div class="desc">{row.descricao}</div>
       <div class="val">{formatBRL(row.valor_cents)}</div>
+      {removeBtn}
       <div class="meta">
         <span>{formatDate(row.data)}</span>
         <select class="cat-sel" value={row.categoria} onChange={(e) => onChangeCategoria(e.currentTarget.value)}>
@@ -97,9 +102,15 @@ function PreviewRow({ row, onChangeCategoria, onDismiss }) {
         </select>
         <span>{row.fatura_nome || '—'}</span>
         {outro && <span class="outro-flag">Sem regra</span>}
+        {row.ja_existe && <span class="dup-flag">já existe</span>}
+        {dupCsv && <span class="dup-flag">duplicado no CSV</span>}
       </div>
     </div>
   );
+}
+
+function dupKey(r) {
+  return `${r.data}|${r.descricao}|${r.valor_cents}`;
 }
 
 export function ImportView() {
@@ -165,6 +176,19 @@ export function ImportView() {
   const outroCount = valid.filter(r => r.categoria === 'Outro').length;
   const canConfirm = valid.length > 0 && !confirm.isPending;
 
+  // Keys that appear more than once in the current batch; recomputed as rows
+  // are removed so the flag drops off the survivor.
+  const csvDupKeys = useMemo(() => {
+    const counts = new Map();
+    for (const r of rows) {
+      if (r.invalid) continue;
+      const k = dupKey(r);
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }
+    return new Set([...counts].filter(([, n]) => n > 1).map(([k]) => k));
+  }, [rows]);
+  const dupCount = valid.filter(r => r.ja_existe || csvDupKeys.has(dupKey(r))).length;
+
   return (
     <div>
       <div class="import-section">
@@ -195,12 +219,14 @@ export function ImportView() {
         <div class="import-section">
           <div class="preview-summary">
             <span>{valid.length} lançamento{valid.length === 1 ? '' : 's'}</span>
+            {dupCount > 0 && <span class="dup-flag">{dupCount} duplicado{dupCount === 1 ? '' : 's'}</span>}
             <span>{outroCount} sem regra</span>
           </div>
           {rows.map((r, i) => (
             <PreviewRow
               key={`${i}-${r.data}-${r.descricao}`}
               row={r}
+              dupCsv={!r.invalid && csvDupKeys.has(dupKey(r))}
               onChangeCategoria={(v) => setRows(rs => rs.map((x, j) => j === i ? { ...x, categoria: v } : x))}
               onDismiss={() => setRows(rs => rs.filter((_, j) => j !== i))}
             />
