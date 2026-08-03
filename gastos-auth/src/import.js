@@ -74,14 +74,22 @@ export function parseNubankCsv(text) {
   return out;
 }
 
+// Bank CSVs mix ASCII decimals (42.90) and pt-BR grouping (1.042,90). The
+// rightmost separator is the decimal point — unless it's followed by exactly
+// 3 digits with no other separator role, i.e. "1.042" is 1042 reais, not 1.042.
 function rowToCents(amountStr) {
-  if (typeof amountStr !== 'string' || !amountStr.trim()) return NaN;
-  // Nubank ships ASCII decimals (e.g., 42.90, -15.00). Be defensive against
-  // a stray comma so a re-saved-from-Excel CSV doesn't blow up here.
-  const cleaned = amountStr.trim().replace(/,/g, '.');
-  const n = parseFloat(cleaned);
+  if (typeof amountStr !== 'string') return NaN;
+  let s = amountStr.trim().replace(/[^\d.,\-]/g, '');
+  const sign = s.startsWith('-') ? -1 : 1;
+  s = s.replace(/-/g, '');
+  if (!s) return NaN;
+  const lastSep = Math.max(s.lastIndexOf('.'), s.lastIndexOf(','));
+  const frac = lastSep < 0 ? '' : s.slice(lastSep + 1);
+  const isDecimal = lastSep >= 0 && frac.length >= 1 && frac.length <= 2;
+  const intPart = (isDecimal ? s.slice(0, lastSep) : s).replace(/[.,]/g, '');
+  const n = parseFloat((intPart || '0') + (isDecimal ? '.' + frac : ''));
   if (!isFinite(n)) return NaN;
-  return Math.round(n * 100);
+  return sign * Math.round(n * 100);
 }
 
 // Preview: enrich each parsed row with applied rule, fatura, and a normalized
