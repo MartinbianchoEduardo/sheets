@@ -1,6 +1,8 @@
 // Canonical category list and totals-math attributes. Must stay in sync with
 // the frontend CATEGORIES array (see CLAUDE.md).
 
+import { queryOne } from './db.js';
+
 export const CATEGORIES = [
   'Assinatura',
   'Café',
@@ -46,6 +48,17 @@ export const CATEGORY_ATTRS = {
   Emprestado: { excluded_from_monthly: true,  excluded_from_fatura: false },
 };
 
-export function isValidCategory(name) {
-  return CATEGORIES.includes(name);
+export function isValidCategory(name, custom = []) {
+  return CATEGORIES.includes(name) || custom.includes(name);
+}
+
+// Custom categories live as JSON in settings.custom_categories: [{name, color}].
+export async function customCategoryNames(env) {
+  const row = await queryOne(env, 'SELECT custom_categories FROM settings WHERE id = 1');
+  try {
+    const list = JSON.parse((row && row.custom_categories) || '[]');
+    return Array.isArray(list) ? list.map(c => c.name) : [];
+  } catch {
+    return [];
+  }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { CATEGORIES, REFUND_CATEGORY } from '../lib/categories.js';
+import { allCategoriesSignal, REFUND_CATEGORY } from '../lib/categories.js';
 import { isoToday, parseValor, wireValorMask, resolveFaturaForDateClient } from '../lib/format.js';
 import { matchRule } from '../lib/rules.js';
 import { prefillAddSignal } from '../lib/state.js';
@@ -115,7 +115,7 @@ export function AddView() {
       <div class="field">
         <label>Categoria</label>
         <div class="chips" id="f-categoria">
-          {CATEGORIES.map(c => {
+          {allCategoriesSignal.value.map(c => {
             const isSelected = categoria === c;
             const isAuto = isSelected && !manuallyChosen;
             return (

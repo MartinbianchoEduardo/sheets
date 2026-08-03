@@ -6,13 +6,13 @@
 
 import { exec, query, queryOne } from './db.js';
 import { ERR } from './errors.js';
-import { isValidCategory } from './categories.js';
+import { isValidCategory, customCategoryNames } from './categories.js';
 import { getFatura, currentFatura } from './faturas.js';
 import { todayIsoSaoPaulo } from './time.js';
 
 function now() { return Date.now(); }
 
-function validateRecurringInput(input, { partial = false } = {}) {
+function validateRecurringInput(input, { partial = false, custom = [] } = {}) {
   const errs = [];
   if (!partial || 'descricao' in input) {
     const d = typeof input.descricao === 'string' ? input.descricao.trim() : '';
@@ -22,7 +22,7 @@ function validateRecurringInput(input, { partial = false } = {}) {
     if (!Number.isInteger(input.valor_cents) || input.valor_cents < 0) errs.push('valor_cents');
   }
   if (!partial || 'categoria' in input) {
-    if (!isValidCategory(input.categoria)) errs.push('categoria');
+    if (!isValidCategory(input.categoria, custom)) errs.push('categoria');
   }
   if (!partial || 'dia_do_mes' in input) {
     const d = input.dia_do_mes;
@@ -48,7 +48,7 @@ export async function getRecurring(env, id) {
 }
 
 export async function createRecurring(env, input) {
-  const errs = validateRecurringInput(input);
+  const errs = validateRecurringInput(input, { custom: await customCategoryNames(env) });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   const active = input.active === false || input.active === 0 ? 0 : 1;
@@ -73,7 +73,7 @@ export async function updateRecurring(env, id, input) {
   const existing = await getRecurring(env, id);
   if (!existing) return { error: ERR.not_found };
 
-  const errs = validateRecurringInput(input, { partial: true });
+  const errs = validateRecurringInput(input, { partial: true, custom: await customCategoryNames(env) });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   const fields = [];

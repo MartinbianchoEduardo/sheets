@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { currentFaturaIdSignal } from '../lib/state.js';
 import { useCurrentFatura } from '../hooks/useCurrentFatura.js';
+import { useSettings } from '../hooks/useSettings.js';
 import { Header } from './Header.jsx';
 import { RolloverBanner } from './RolloverBanner.jsx';
 import { Tabs } from './Tabs.jsx';
@@ -30,7 +31,9 @@ function ViewStub({ id, title }) {
 }
 
 export function Shell() {
-  // Hydrate the current-fatura signal on first load.
+  // Hydrate the current-fatura signal on first load. useSettings also feeds
+  // customCategoriesSignal, which every category list/color depends on.
+  useSettings();
   const { data: current } = useCurrentFatura();
   useEffect(() => {
     if (currentFaturaIdSignal.value == null && current?.fatura?.id) {

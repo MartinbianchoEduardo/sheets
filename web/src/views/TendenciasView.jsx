@@ -1,6 +1,6 @@
 import { useMemo } from 'preact/hooks';
 import { formatBRL } from '../lib/format.js';
-import { CATEGORY_COLORS } from '../lib/categories.js';
+import { categoryColor } from '../lib/categories.js';
 import { trendDrillSignal } from '../lib/state.js';
 import { useTrends } from '../hooks/useTrends.js';
 import { useHeatmap } from '../hooks/useHeatmap.js';
@@ -57,7 +57,7 @@ function CategoryCell({ categoria, entries }) {
   const baseline = prior.length
     ? Math.round(prior.reduce((s, v) => s + v, 0) / prior.length)
     : null;
-  const color = CATEGORY_COLORS[categoria] || 'var(--text-mute)';
+  const color = categoryColor(categoria) || 'var(--text-mute)';
 
   function open() { trendDrillSignal.value = { categoria }; }
 

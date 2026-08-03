@@ -1,10 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
+import { customCategoriesSignal } from '../lib/categories.js';
 
 export function useSettings() {
   return useQuery({
     queryKey: ['settings'],
-    queryFn: () => api('settings/get', {}).then(d => d.settings),
+    queryFn: () => api('settings/get', {}).then(d => {
+      customCategoriesSignal.value = d.settings.custom_categories || [];
+      return d.settings;
+    }),
   });
 }
 

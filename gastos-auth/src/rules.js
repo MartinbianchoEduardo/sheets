@@ -7,17 +7,17 @@
 
 import { exec, query, queryOne, batch } from './db.js';
 import { ERR } from './errors.js';
-import { isValidCategory } from './categories.js';
+import { isValidCategory, customCategoryNames } from './categories.js';
 
 function now() { return Date.now(); }
 
-function validateRuleInput(input, { partial = false } = {}) {
+function validateRuleInput(input, { partial = false, custom = [] } = {}) {
   const errs = [];
   if (!partial || 'chave' in input) {
     if (typeof input.chave !== 'string' || !input.chave.trim()) errs.push('chave');
   }
   if (!partial || 'categoria' in input) {
-    if (!isValidCategory(input.categoria)) errs.push('categoria');
+    if (!isValidCategory(input.categoria, custom)) errs.push('categoria');
   }
   if ('position' in input && input.position != null) {
     if (!Number.isInteger(input.position)) errs.push('position');
@@ -55,7 +55,7 @@ export function applyRule(descricao, rules) {
 }
 
 export async function createRule(env, input) {
-  const errs = validateRuleInput(input);
+  const errs = validateRuleInput(input, { custom: await customCategoryNames(env) });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   let position = input.position;
@@ -76,7 +76,7 @@ export async function updateRule(env, id, input) {
   const existing = await getRule(env, id);
   if (!existing) return { error: ERR.not_found };
 
-  const errs = validateRuleInput(input, { partial: true });
+  const errs = validateRuleInput(input, { partial: true, custom: await customCategoryNames(env) });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   const fields = [];

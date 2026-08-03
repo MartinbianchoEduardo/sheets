@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useQueryClient } from '@tanstack/react-query';
-import { CATEGORIES, REFUND_CATEGORY } from '../lib/categories.js';
+import { allCategoriesSignal, REFUND_CATEGORY } from '../lib/categories.js';
 import { parseValor, wireValorMask, resolveFaturaForDateClient, guessChaveFromDescricao } from '../lib/format.js';
 import { api } from '../lib/api.js';
 import {
@@ -135,7 +135,7 @@ export function EditingRow({ row, faturas, onClose }) {
       </div>
       <div class="edit-fatura">{faturaName}</div>
       <div class="edit-chips">
-        {CATEGORIES.map(c => (
+        {allCategoriesSignal.value.map(c => (
           <button
             key={c}
             type="button"

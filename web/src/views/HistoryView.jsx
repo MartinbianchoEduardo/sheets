@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { CATEGORY_COLORS } from '../lib/categories.js';
+import { categoryColor } from '../lib/categories.js';
 import { formatBRL, parseValor } from '../lib/format.js';
 import { historyCategoriasSignal, editTxSignal } from '../lib/state.js';
 import { useCurrentFatura } from '../hooks/useCurrentFatura.js';
@@ -324,7 +324,7 @@ export function HistoryView() {
         <div class="cat-pills">
           {pills.map(c => {
             const on = selectedCats.includes(c);
-            const color = CATEGORY_COLORS[c] || '#888';
+            const color = categoryColor(c) || '#888';
             const style = on
               ? { background: hexToRgba(color, 0.18), borderColor: color }
               : {};

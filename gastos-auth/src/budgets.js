@@ -2,7 +2,7 @@
 
 import { exec, query } from './db.js';
 import { ERR } from './errors.js';
-import { isValidCategory } from './categories.js';
+import { isValidCategory, customCategoryNames } from './categories.js';
 
 export async function listBudgets(env) {
   const rows = await query(env,
@@ -16,7 +16,7 @@ export async function upsertBudget(env, body) {
   const errs = [];
   const categoria = body && body.categoria;
   const valor_cents = body && body.valor_cents;
-  if (typeof categoria !== 'string' || !isValidCategory(categoria)) errs.push('categoria');
+  if (typeof categoria !== 'string' || !isValidCategory(categoria, await customCategoryNames(env))) errs.push('categoria');
   if (!Number.isInteger(valor_cents)) errs.push('valor_cents');
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 

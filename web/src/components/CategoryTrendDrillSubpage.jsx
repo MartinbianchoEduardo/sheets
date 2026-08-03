@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { trendDrillSignal, currentFaturaIdSignal } from '../lib/state.js';
 import { formatBRL, formatDate } from '../lib/format.js';
 import { buildPolyline } from '../lib/spark.js';
-import { CATEGORY_COLORS } from '../lib/categories.js';
+import { categoryColor } from '../lib/categories.js';
 import { useTrends } from '../hooks/useTrends.js';
 import { useTransactions } from '../hooks/useTransactions.js';
 import { useFaturas } from '../hooks/useFaturas.js';
@@ -324,7 +324,7 @@ export function CategoryTrendDrillSubpage() {
 
   const values = entries.map(e => e.total_cents);
   const hasChart = values.length > 0 && faturas.length === values.length;
-  const color = (categoria && CATEGORY_COLORS[categoria]) || 'var(--text-mute)';
+  const color = (categoria && categoryColor(categoria)) || 'var(--text-mute)';
   const currentCents = values.length ? values[values.length - 1] : 0;
   const avgCents = values.length
     ? Math.round(values.reduce((s, v) => s + v, 0) / values.length)

@@ -6,12 +6,12 @@
 
 import { exec, query, queryOne } from './db.js';
 import { ERR } from './errors.js';
-import { isValidCategory } from './categories.js';
+import { isValidCategory, customCategoryNames } from './categories.js';
 import { resolveFaturaForDate, validateIsoDate } from './faturas.js';
 
 function now() { return Date.now(); }
 
-function validateTxInput(input, { partial = false } = {}) {
+function validateTxInput(input, { partial = false, custom = [] } = {}) {
   const errs = [];
   if (!partial || 'data' in input) {
     if (!validateIsoDate(input.data)) errs.push('data');
@@ -24,7 +24,7 @@ function validateTxInput(input, { partial = false } = {}) {
     if (!Number.isInteger(input.valor_cents)) errs.push('valor_cents');
   }
   if (!partial || 'categoria' in input) {
-    if (!isValidCategory(input.categoria)) errs.push('categoria');
+    if (!isValidCategory(input.categoria, custom)) errs.push('categoria');
   }
   if ('notes' in input && input.notes != null) {
     if (typeof input.notes !== 'string' || input.notes.length > 500) errs.push('notes');
@@ -60,7 +60,8 @@ export async function listTx(env, filter = {}) {
   }
 
   if (Array.isArray(filter.categorias) && filter.categorias.length) {
-    const valid = filter.categorias.filter(isValidCategory);
+    const custom = await customCategoryNames(env);
+    const valid = filter.categorias.filter(c => isValidCategory(c, custom));
     if (valid.length) {
       where.push(`categoria IN (${valid.map(() => '?').join(', ')})`);
       params.push(...valid);
@@ -86,7 +87,7 @@ export async function listTx(env, filter = {}) {
 }
 
 export async function createTx(env, input) {
-  const errs = validateTxInput(input);
+  const errs = validateTxInput(input, { custom: await customCategoryNames(env) });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   const fatura = await resolveFaturaForDate(env, input.data);
@@ -117,7 +118,7 @@ export async function updateTx(env, id, input) {
   const existing = await getTx(env, id);
   if (!existing) return { error: ERR.not_found };
 
-  const errs = validateTxInput(input, { partial: true });
+  const errs = validateTxInput(input, { partial: true, custom: await customCategoryNames(env) });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   const fields = [];

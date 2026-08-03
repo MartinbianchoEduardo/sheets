@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { formatBRL, formatDate, parseValor, wireValorMask } from '../lib/format.js';
 import { subpageSignal } from '../lib/state.js';
-import { CATEGORIES } from '../lib/categories.js';
+import { allCategoriesSignal, customCategoriesSignal, CUSTOM_COLOR_POOL } from '../lib/categories.js';
 import { useSettings, useUpdateSettings } from '../hooks/useSettings.js';
 import { useFaturas, useCreateFatura, useUpdateFatura, useDeleteFatura } from '../hooks/useFaturas.js';
 import { useBudgets, useUpsertBudget } from '../hooks/useBudgets.js';
@@ -191,9 +191,76 @@ function BudgetsSection() {
       <h3>Orçamento por categoria</h3>
       {isLoading
         ? <div class="empty">Carregando...</div>
-        : CATEGORIES.map(cat => (
+        : allCategoriesSignal.value.map(cat => (
           <BudgetRow key={cat} categoria={cat} valor_cents={budgets[cat] || 0} />
         ))}
+    </div>
+  );
+}
+
+function CategoriesSection() {
+  const toast = useToast();
+  const update = useUpdateSettings();
+  const [nome, setNome] = useState('');
+  const custom = customCategoriesSignal.value;
+
+  async function save(next) {
+    await update.mutateAsync({ custom_categories: next });
+    customCategoriesSignal.value = next;
+  }
+
+  async function onAdd() {
+    const name = nome.trim();
+    if (!name) return toast('Informe o nome', 'err');
+    if (allCategoriesSignal.value.some(c => c.toLowerCase() === name.toLowerCase())) {
+      return toast('Categoria já existe', 'err');
+    }
+    const used = new Set(custom.map(c => c.color));
+    const color = CUSTOM_COLOR_POOL.find(c => !used.has(c))
+      || CUSTOM_COLOR_POOL[custom.length % CUSTOM_COLOR_POOL.length];
+    try {
+      await save([...custom, { name, color }]);
+      setNome('');
+      toast('Categoria adicionada ✓', 'ok');
+    } catch (err) {
+      if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+    }
+  }
+
+  async function onRemove(name) {
+    if (!window.confirm(`Remover a categoria "${name}"? Lançamentos existentes não mudam.`)) return;
+    try {
+      await save(custom.filter(c => c.name !== name));
+      toast('Categoria removida', 'ok');
+    } catch (err) {
+      if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+    }
+  }
+
+  return (
+    <div class="config-section">
+      <h3>Categorias</h3>
+      {custom.map(c => (
+        <div key={c.name} class="budget-row">
+          <span class="budget-cat">
+            <CategoryDot category={c.name} />
+            {c.name}
+          </span>
+          <button class="config-btn danger" type="button" onClick={() => onRemove(c.name)}>remover</button>
+        </div>
+      ))}
+      <div class="cat-add-row">
+        <input
+          type="text"
+          maxLength={30}
+          placeholder="Nova categoria"
+          value={nome}
+          onInput={(e) => setNome(e.currentTarget.value)}
+        />
+        <button class="config-btn" type="button" disabled={update.isPending} onClick={onAdd}>
+          {update.isPending ? 'salvando...' : 'adicionar'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -380,6 +447,7 @@ export function ConfigView() {
         {settings && (
           <>
             <SettingsForm key={settings.updated_at} settings={settings} faturas={faturas} />
+            <CategoriesSection />
             <BudgetsSection />
             <FaturasSection faturas={faturas} />
           </>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { CATEGORIES } from '../lib/categories.js';
+import { CATEGORIES, allCategoriesSignal } from '../lib/categories.js';
 import { parseValor, wireValorMask } from '../lib/format.js';
 import {
   useRecurring, useCreateRecurring, useUpdateRecurring, useDeleteRecurring,
@@ -92,7 +92,7 @@ function RecurringEditingRow({ row, onClose }) {
       <div class="field">
         <label>Categoria</label>
         <select value={categoria} onChange={(e) => setCategoria(e.currentTarget.value)}>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {allCategoriesSignal.value.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
       <label class="recurring-active">
@@ -183,7 +183,7 @@ function RecurringNewRow({ onClose }) {
       <div class="field">
         <label>Categoria</label>
         <select value={categoria} onChange={(e) => setCategoria(e.currentTarget.value)}>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {allCategoriesSignal.value.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
       <label class="recurring-active">

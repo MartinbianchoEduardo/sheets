@@ -4,7 +4,7 @@
 
 import { batch } from './db.js';
 import { ERR } from './errors.js';
-import { isValidCategory } from './categories.js';
+import { isValidCategory, customCategoryNames } from './categories.js';
 import { listRules, applyRule } from './rules.js';
 import { resolveFaturaForDate, validateIsoDate } from './faturas.js';
 
@@ -160,6 +160,7 @@ export async function confirmImport(env, rows) {
 
   // Validate before any insert; one bad row aborts the whole batch so the user
   // sees a clear failure and can fix the preview rather than a partial import.
+  const custom = await customCategoryNames(env);
   const prepared = [];
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
@@ -167,7 +168,7 @@ export async function confirmImport(env, rows) {
     const descricao = typeof r.descricao === 'string' ? r.descricao.trim() : '';
     if (!descricao || descricao.length > 200) return { error: ERR.validation_failed, fields: [`rows.${i}.descricao`] };
     if (!Number.isInteger(r.valor_cents)) return { error: ERR.validation_failed, fields: [`rows.${i}.valor_cents`] };
-    if (!isValidCategory(r.categoria)) return { error: ERR.validation_failed, fields: [`rows.${i}.categoria`] };
+    if (!isValidCategory(r.categoria, custom)) return { error: ERR.validation_failed, fields: [`rows.${i}.categoria`] };
     prepared.push({
       data: r.data,
       descricao,

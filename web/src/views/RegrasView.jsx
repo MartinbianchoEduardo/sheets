@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { CATEGORIES } from '../lib/categories.js';
+import { CATEGORIES, allCategoriesSignal } from '../lib/categories.js';
 import {
   useRules, useCreateRule, useUpdateRule, useDeleteRule, useReorderRules,
 } from '../hooks/useRules.js';
@@ -56,7 +56,7 @@ function RegraRow({ rule, idx, total, onReorder }) {
         onBlur={commitChave}
       />
       <select class="cat" value={rule.categoria} onChange={commitCategoria}>
-        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        {allCategoriesSignal.value.map(c => <option key={c} value={c}>{c}</option>)}
       </select>
       <div class="arrows">
         <button class="arrow-btn" type="button" disabled={idx === 0} onClick={() => onReorder(idx, -1)}>▲</button>
@@ -100,7 +100,7 @@ function AddRegraForm({ onClose }) {
           onInput={(e) => setChave(e.currentTarget.value)}
         />
         <select class="cat" id="new-regra-cat" value={categoria} onChange={(e) => setCategoria(e.currentTarget.value)}>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {allCategoriesSignal.value.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <div class="arrows" />
         <div class="regra-actions">

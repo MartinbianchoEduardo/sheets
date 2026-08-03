@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { CATEGORIES } from '../lib/categories.js';
+import { allCategoriesSignal } from '../lib/categories.js';
 import { formatBRL, formatDate } from '../lib/format.js';
 import { subpageSignal, setTab } from '../lib/state.js';
 import { useImportPreview, useImportConfirm } from '../hooks/useImport.js';
@@ -98,7 +98,7 @@ function PreviewRow({ row, dupCsv, onChangeCategoria, onDismiss }) {
       <div class="meta">
         <span>{formatDate(row.data)}</span>
         <select class="cat-sel" value={row.categoria} onChange={(e) => onChangeCategoria(e.currentTarget.value)}>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {allCategoriesSignal.value.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <span>{row.fatura_nome || '—'}</span>
         {outro && <span class="outro-flag">Sem regra</span>}
