@@ -5,6 +5,7 @@
 import { batch } from './db.js';
 import { ERR } from './errors.js';
 import { isValidCategory, customCategoryNames } from './categories.js';
+import { cardList, guessCardFromDescricao, isValidCard } from './cards.js';
 import { listRules, applyRule } from './rules.js';
 import { resolveFaturaForDate, validateIsoDate } from './faturas.js';
 
@@ -169,6 +170,9 @@ export async function confirmImport(env, rows) {
   // Validate before any insert; one bad row aborts the whole batch so the user
   // sees a clear failure and can fix the preview rather than a partial import.
   const custom = await customCategoryNames(env);
+  const cards = await cardList(env);
+  const fallbackCard = cards.find(c => typeof c?.name === 'string' && c.name)?.name;
+  if (!fallbackCard) return { error: ERR.validation_failed, fields: ['cards'] };
   const prepared = [];
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
@@ -177,11 +181,13 @@ export async function confirmImport(env, rows) {
     if (!descricao || descricao.length > 200) return { error: ERR.validation_failed, fields: [`rows.${i}.descricao`] };
     if (!Number.isInteger(r.valor_cents)) return { error: ERR.validation_failed, fields: [`rows.${i}.valor_cents`] };
     if (!isValidCategory(r.categoria, custom)) return { error: ERR.validation_failed, fields: [`rows.${i}.categoria`] };
+    const guessedCard = guessCardFromDescricao(descricao);
     prepared.push({
       data: r.data,
       descricao,
       valor_cents: r.valor_cents,
       categoria: r.categoria,
+      cartao: isValidCard(guessedCard, cards) ? guessedCard : fallbackCard,
       manually_categorized: r.manually_categorized ? 1 : 0,
     });
   }
@@ -204,10 +210,10 @@ export async function confirmImport(env, rows) {
     stmts.push(
       env.DB.prepare(
         `INSERT INTO transactions
-           (id, data, descricao, valor_cents, categoria, fatura_id, notes,
+           (id, data, descricao, valor_cents, categoria, cartao, fatura_id, notes,
             manually_categorized, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
-      ).bind(id, r.data, r.descricao, r.valor_cents, r.categoria, fatura_id, r.manually_categorized, t, t),
+         VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
+      ).bind(id, r.data, r.descricao, r.valor_cents, r.categoria, r.cartao, fatura_id, r.manually_categorized, t, t),
     );
   }
   await batch(env, stmts);

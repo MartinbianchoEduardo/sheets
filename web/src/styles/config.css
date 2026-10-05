@@ -256,6 +256,12 @@
   min-width: 0;
 }
 .cat-add-row input:focus { outline: none; border-color: var(--accent); }
+.cat-add-row:has(.card-color-input) { grid-template-columns: auto 1fr auto; }
+.card-color-input {
+  padding: 2px !important;
+  width: 36px;
+  height: 36px;
+}
 
 /* ---------- Recorrentes subpage ---------- */
 .recurring-config-list {

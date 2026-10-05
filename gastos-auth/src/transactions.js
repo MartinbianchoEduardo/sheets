@@ -7,11 +7,12 @@
 import { exec, query, queryOne } from './db.js';
 import { ERR } from './errors.js';
 import { isValidCategory, customCategoryNames } from './categories.js';
+import { isValidCard, cardList } from './cards.js';
 import { resolveFaturaForDate, validateIsoDate } from './faturas.js';
 
 function now() { return Date.now(); }
 
-function validateTxInput(input, { partial = false, custom = [] } = {}) {
+function validateTxInput(input, { partial = false, custom = [], cards = [] } = {}) {
   const errs = [];
   if (!partial || 'data' in input) {
     if (!validateIsoDate(input.data)) errs.push('data');
@@ -26,6 +27,9 @@ function validateTxInput(input, { partial = false, custom = [] } = {}) {
   if (!partial || 'categoria' in input) {
     if (!isValidCategory(input.categoria, custom)) errs.push('categoria');
   }
+  if (!partial || 'cartao' in input) {
+    if (!isValidCard(input.cartao, cards)) errs.push('cartao');
+  }
   if ('notes' in input && input.notes != null) {
     if (typeof input.notes !== 'string' || input.notes.length > 500) errs.push('notes');
   }
@@ -33,7 +37,7 @@ function validateTxInput(input, { partial = false, custom = [] } = {}) {
 }
 
 const SELECT_TX = `
-  SELECT id, data, descricao, valor_cents, categoria, fatura_id, notes,
+  SELECT id, data, descricao, valor_cents, categoria, cartao, fatura_id, notes,
          manually_categorized, created_at, updated_at
     FROM transactions`;
 
@@ -87,7 +91,10 @@ export async function listTx(env, filter = {}) {
 }
 
 export async function createTx(env, input) {
-  const errs = validateTxInput(input, { custom: await customCategoryNames(env) });
+  const errs = validateTxInput(input, {
+    custom: await customCategoryNames(env),
+    cards: await cardList(env),
+  });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   const fatura = await resolveFaturaForDate(env, input.data);
@@ -97,14 +104,15 @@ export async function createTx(env, input) {
   await exec(
     env,
     `INSERT INTO transactions
-       (id, data, descricao, valor_cents, categoria, fatura_id, notes,
+       (id, data, descricao, valor_cents, categoria, cartao, fatura_id, notes,
         manually_categorized, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     id,
     input.data,
     input.descricao.trim(),
     input.valor_cents,
     input.categoria,
+    input.cartao,
     fatura ? fatura.id : null,
     input.notes || null,
     input.manually_categorized ? 1 : 0,
@@ -118,7 +126,11 @@ export async function updateTx(env, id, input) {
   const existing = await getTx(env, id);
   if (!existing) return { error: ERR.not_found };
 
-  const errs = validateTxInput(input, { partial: true, custom: await customCategoryNames(env) });
+  const errs = validateTxInput(input, {
+    partial: true,
+    custom: await customCategoryNames(env),
+    cards: await cardList(env),
+  });
   if (errs.length) return { error: ERR.validation_failed, fields: errs };
 
   const fields = [];
@@ -131,6 +143,7 @@ export async function updateTx(env, id, input) {
     fields.push('categoria = ?', 'manually_categorized = ?');
     params.push(input.categoria, 1);
   }
+  if ('cartao' in input)      { fields.push('cartao = ?');      params.push(input.cartao); }
   if ('notes' in input)       { fields.push('notes = ?');       params.push(input.notes || null); }
 
   if ('data' in input && input.data !== existing.data) {

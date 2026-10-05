@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useQueryClient } from '@tanstack/react-query';
 import { allCategoriesSignal, REFUND_CATEGORY } from '../lib/categories.js';
+import { cardsSignal } from '../lib/cards.js';
 import { parseValor, wireValorMask, resolveFaturaForDateClient, guessChaveFromDescricao } from '../lib/format.js';
 import { api } from '../lib/api.js';
 import {
@@ -48,6 +49,7 @@ export function EditingRow({ row, faturas, onClose }) {
   const [valor, setValor] = useState((initialCents / 100).toFixed(2).replace('.', ','));
   const [data, setData] = useState(row.data);
   const [categoria, setCategoria] = useState(row.categoria);
+  const [cartao, setCartao] = useState(row.cartao || '');
 
   useEffect(() => { wireValorMask(valorRef.current); }, []);
   useEffect(() => {
@@ -70,13 +72,15 @@ export function EditingRow({ row, faturas, onClose }) {
       : Math.round(v * 100);
     const prevCategoria = row.categoria;
     try {
-      await update.mutateAsync({
+      const patch = {
         id: row.id,
         descricao: descricao.trim(),
         valor_cents,
         data,
         categoria,
-      });
+      };
+      if (cartao !== row.cartao) patch.cartao = cartao;
+      await update.mutateAsync(patch);
       onClose();
       toast('Atualizado ✓', 'ok');
       if (prevCategoria === 'Outro' && categoria !== 'Outro') {
@@ -143,6 +147,18 @@ export function EditingRow({ row, faturas, onClose }) {
             onClick={() => setCategoria(c)}
           >
             {c}
+          </button>
+        ))}
+      </div>
+      <div class="edit-chips">
+        {cardsSignal.value.map(c => (
+          <button
+            key={c.name}
+            type="button"
+            class={'chip' + (cartao === c.name ? ' selected' : '')}
+            onClick={() => setCartao(c.name)}
+          >
+            {c.name}
           </button>
         ))}
       </div>

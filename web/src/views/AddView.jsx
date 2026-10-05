@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { allCategoriesSignal, REFUND_CATEGORY } from '../lib/categories.js';
+import { cardsSignal, DEFAULT_CARD } from '../lib/cards.js';
 import { isoToday, parseValor, wireValorMask, resolveFaturaForDateClient } from '../lib/format.js';
 import { matchRule } from '../lib/rules.js';
 import { prefillAddSignal } from '../lib/state.js';
@@ -7,6 +8,10 @@ import { useFaturas } from '../hooks/useFaturas.js';
 import { useRules } from '../hooks/useRules.js';
 import { useCreateTransaction } from '../hooks/useTransactions.js';
 import { useToast } from '../components/Toast.jsx';
+
+function preferredCard(cards) {
+  return cards.find(c => c.name === DEFAULT_CARD)?.name || cards[0]?.name || '';
+}
 
 export function AddView() {
   const toast = useToast();
@@ -19,9 +24,14 @@ export function AddView() {
   const [valor, setValor] = useState('');
   const [categoria, setCategoria] = useState('');
   const [manuallyChosen, setManuallyChosen] = useState(false);
+  const [cartao, setCartao] = useState('');
   const valorRef = useRef(null);
+  const cards = cardsSignal.value;
 
   useEffect(() => { wireValorMask(valorRef.current); }, []);
+  useEffect(() => {
+    setCartao(current => cards.some(c => c.name === current) ? current : preferredCard(cards));
+  }, [cards]);
 
   const prefill = prefillAddSignal.value;
   useEffect(() => {
@@ -55,6 +65,7 @@ export function AddView() {
     if (!descricao.trim()) return toast('Informe a descrição', 'err');
     if (!valor.trim())     return toast('Informe o valor', 'err');
     if (!categoria) return toast('Escolha uma categoria', 'err');
+    if (!cartao) return toast('Escolha um cartão', 'err');
 
     const v = parseValor(valor);
     if (isNaN(v)) return toast('Valor inválido', 'err');
@@ -64,13 +75,14 @@ export function AddView() {
 
     try {
       await create.mutateAsync({
-        data, descricao: descricao.trim(), valor_cents, categoria,
+        data, descricao: descricao.trim(), valor_cents, categoria, cartao,
       });
       toast('Lançamento adicionado ✓', 'ok');
       setDescricao('');
       setValor('');
       setCategoria('');
       setManuallyChosen(false);
+      setCartao(preferredCard(cards));
     } catch (err) {
       if (err.message !== 'session_expired') {
         toast('Erro: ' + err.message, 'err');
@@ -129,6 +141,22 @@ export function AddView() {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cartão</label>
+        <div class="chips" id="f-cartao">
+          {cards.map(c => (
+            <button
+              key={c.name}
+              type="button"
+              class={'chip' + (cartao === c.name ? ' selected' : '')}
+              onClick={() => setCartao(c.name)}
+            >
+              {c.name}
+            </button>
+          ))}
         </div>
       </div>
 

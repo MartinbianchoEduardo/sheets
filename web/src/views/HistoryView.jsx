@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { categoryColor } from '../lib/categories.js';
+import { cardColor } from '../lib/cards.js';
 import { formatBRL, parseValor } from '../lib/format.js';
 import { historyCategoriasSignal, editTxSignal } from '../lib/state.js';
 import { useCurrentFatura } from '../hooks/useCurrentFatura.js';
@@ -44,6 +45,11 @@ function DisplayRow({ row, faturas, onLongPress }) {
       <div class="entry-valor">{formatBRL(row.valor_cents)}</div>
       <div class="entry-meta">
         <span><CategoryDot category={row.categoria} /> {row.categoria}</span>
+        {row.cartao && (
+          <span class="entry-cartao" style={{ borderBottomColor: cardColor(row.cartao) || '#888' }}>
+            {row.cartao}
+          </span>
+        )}
         <span>{faturaNameById(faturas, row.fatura_id)}</span>
       </div>
     </div>

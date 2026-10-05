@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { formatBRL, formatDate, parseValor, wireValorMask } from '../lib/format.js';
 import { subpageSignal } from '../lib/state.js';
 import { allCategoriesSignal, customCategoriesSignal, CUSTOM_COLOR_POOL } from '../lib/categories.js';
+import { cardsSignal } from '../lib/cards.js';
 import { useSettings, useUpdateSettings } from '../hooks/useSettings.js';
 import { useFaturas, useCreateFatura, useUpdateFatura, useDeleteFatura } from '../hooks/useFaturas.js';
 import { useBudgets, useUpsertBudget } from '../hooks/useBudgets.js';
@@ -265,6 +266,77 @@ function CategoriesSection() {
   );
 }
 
+function CardsSection() {
+  const toast = useToast();
+  const update = useUpdateSettings();
+  const [nome, setNome] = useState('');
+  const [color, setColor] = useState('#5f9ea8');
+  const cards = cardsSignal.value;
+
+  async function save(next) {
+    await update.mutateAsync({ cards: next });
+    cardsSignal.value = next;
+  }
+
+  async function onAdd() {
+    const name = nome.trim();
+    if (!name) return toast('Informe o nome', 'err');
+    if (cards.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      return toast('Cartão já existe', 'err');
+    }
+    try {
+      await save([...cards, { name, color }]);
+      setNome('');
+      toast('Cartão adicionado ✓', 'ok');
+    } catch (err) {
+      if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+    }
+  }
+
+  async function onRemove(name) {
+    if (!window.confirm(`Remover o cartão "${name}"? Lançamentos existentes não mudam.`)) return;
+    try {
+      await save(cards.filter(c => c.name !== name));
+      toast('Cartão removido', 'ok');
+    } catch (err) {
+      if (err.message !== 'session_expired') toast('Erro: ' + err.message, 'err');
+    }
+  }
+
+  return (
+    <div class="config-section">
+      <h3>Cartões</h3>
+      {cards.map(c => (
+        <div key={c.name} class="budget-row">
+          <span class="budget-cat">
+            <span class="cat-dot" style={{ background: c.color }} />
+            {c.name}
+          </span>
+          <button class="config-btn danger" type="button" onClick={() => onRemove(c.name)}>remover</button>
+        </div>
+      ))}
+      <div class="cat-add-row">
+        <input
+          type="color"
+          class="card-color-input"
+          value={color}
+          onInput={(e) => setColor(e.currentTarget.value)}
+        />
+        <input
+          type="text"
+          maxLength={30}
+          placeholder="Novo cartão"
+          value={nome}
+          onInput={(e) => setNome(e.currentTarget.value)}
+        />
+        <button class="config-btn" type="button" disabled={update.isPending} onClick={onAdd}>
+          {update.isPending ? 'salvando...' : 'adicionar'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function FaturaEditFields({ nome, setNome, startDate, setStartDate, closingDate, setClosingDate, salStr, setSalStr }) {
   const salRef = useRef(null);
   useEffect(() => { wireValorMask(salRef.current); }, []);
@@ -448,6 +520,7 @@ export function ConfigView() {
           <>
             <SettingsForm key={settings.updated_at} settings={settings} faturas={faturas} />
             <CategoriesSection />
+            <CardsSection />
             <BudgetsSection />
             <FaturasSection faturas={faturas} />
           </>
