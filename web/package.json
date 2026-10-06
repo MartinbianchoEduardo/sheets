@@ -5,12 +5,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:itau-pdf": "node --test src/lib/itauPdf.test.js",
+    "verify:itau-pdf": "node scripts/verify-itau-pdf.mjs"
   },
   "dependencies": {
     "@preact/preset-vite": "^2.10.5",
     "@preact/signals": "^2.9.0",
     "@tanstack/react-query": "^5.100.11",
+    "pdfjs-dist": "6.4.299",
     "preact": "^10.29.2",
     "vite": "^8.0.14"
   }

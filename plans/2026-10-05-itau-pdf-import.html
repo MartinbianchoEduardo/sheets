@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plan — Itaú PDF transaction import</title>
+    <style>
+
+      /* ============================================================
+       * TELUS Digital — plan design system (light / Pearl).
+       * Re-skin of the planf3 plan template onto the OFFICIAL TELUS
+       * Digital tokens. Pearl canvas, Forest primary, TELUS Purple
+       * secondary, HN for TELUS SA Display titles. Same class +
+       * data-* anchor contract the compose script (U5) emits, so
+       * compose / validate are untouched.
+       * Lineage: planf3 (IndyDevDan), MIT — see skills/plan/NOTICE
+       * ============================================================ */
+
+      /* Metric-override fallback faces — Arial re-declared at the BRAND face's
+       * metrics, so this artifact lays out identically whether or not the licensed
+       * face is installed. `src: local("Arial")` needs no asset, so this stays a
+       * single self-contained file. Byte-synced with plugin/lib/telus-tokens.ts
+       * (TELUS_FONT_FALLBACK_FACES) — see there for how each % is derived. */
+      @font-face {
+        font-family: "HN for TELUS SA Display Fallback";
+        src: local("Arial");
+        ascent-override: 111.18%;
+        descent-override: 36.06%;
+        line-gap-override: 0%;
+        size-adjust: 99.84%;
+      }
+      @font-face {
+        font-family: "HN for TELUS Fallback";
+        src: local("Arial");
+        ascent-override: 103.92%;
+        descent-override: 33.7%;
+        line-gap-override: 0%;
+        size-adjust: 106.81%;
+      }
+
+      :root {
+        /* Surfaces */
+        --p-bg: #FCFDFB;            /* #FCFDFB page */
+        --p-surface: #F2F3ED;   /* #F2F3ED subtle fill */
+        --p-card: #ffffff;                  /* raised white card */
+        --p-border: #dee0d9;                /* stroke-1 hairline */
+        --p-border-strong: #c4c7bd;         /* heavier division */
+
+        /* Ink ramp */
+        --p-ink: #222220;                   /* Obsidian */
+        --p-body: #4f4f4b;                  /* body copy (slate, a touch darker for contrast) */
+        --p-dim: #6f6f69;                   /* metadata / captions */
+        --p-faint: #8c8c85;                 /* faintest labels */
+
+        /* Brand accents */
+        --p-forest: #007f4a;
+        --p-forest-deep: #006038;
+        --p-green: #66cc00;
+        --p-purple: #4b286d;
+        --p-orchid: #a020fd;
+
+        /* Per-unit status — accent + soft tint, all brand-derived.
+           failed uses one harmonious red the palette doesn't ship. */
+        --status-pending: #5f5f5a;          --status-pending-tint: #f2f3ed;
+        --status-wip: #4b286d;              --status-wip-tint: #f4ecfc;
+        --status-done: #007f4a;             --status-done-tint: #e9f7e0;
+        --status-failed: #c0392b;           --status-failed-tint: #fbeae6;
+
+        /* Type. The Figma-spec stylistic sets (Ignite 2.0) are enabled once here and
+           inherit to every descendant — never set per-component. Safe to apply this
+           broadly: the mono stack below defines no ss02/ss03, so code ignores it. */
+        font-feature-settings: "ss02" 1, "ss03" 1;
+        --font-display: "HNforTELUSSADisplay", "HN for TELUS SA Display", "HN for TELUS SA Display Fallback", Arial, ui-sans-serif, sans-serif;
+        --font-body: "HNforTELUS", "HN for TELUS", "HN for TELUS Fallback", Arial, ui-sans-serif, sans-serif;
+        --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+        --t-xs: 0.75rem;
+        --t-sm: 0.875rem;
+        --t-base: 1.0625rem;
+        --t-lg: 1.1875rem;
+        --t-xl: 1.4rem;
+        --t-2xl: 1.95rem;
+        --t-3xl: 2.85rem;
+
+        --s-1: 0.25rem;  --s-2: 0.5rem;  --s-3: 0.75rem; --s-4: 1rem;
+        --s-5: 1.25rem;  --s-6: 1.5rem;  --s-8: 2rem;    --s-10: 2.5rem;
+        --s-14: 3.5rem;
+
+        --r-sm: 4px;  --r-md: 8px;  --r-lg: 14px;  --r-pill: 999px;
+        --shadow-soft: 0 6px 35.8px rgba(0, 0, 0, 0.08);
+      }
+
+      /* ---- Obsidian dark mode (official TELUS Digital [data-theme=dark]).
+         Accents shift per brand: green→Juniper, purple→Verbena, on Obsidian.
+         Sanctioned for data / AI / cloud / IT / bot surfaces — apt for a plan. */
+      [data-theme="dark"] {
+        --p-bg: #222220;
+        --p-surface: #2c2e30;
+        --p-card: #2a2c2b;
+        --p-border: rgba(255, 255, 255, 0.12);
+        --p-border-strong: rgba(255, 255, 255, 0.24);
+
+        --p-ink: #fcfdfb;
+        --p-body: #c8c8c2;
+        --p-dim: #a3a39c;
+        --p-faint: #8a8a83;
+
+        --p-forest: #baf29e;       /* Juniper — links/accent in dark */
+        --p-forest-deep: #eaffe0;
+        --p-green: #66cc00;
+        --p-purple: #dfb2ff;       /* Verbena */
+        --p-orchid: #c98dff;
+
+        --status-pending: #a3a39c; --status-pending-tint: rgba(255, 255, 255, 0.05);
+        --status-wip: #dfb2ff;     --status-wip-tint: rgba(223, 178, 255, 0.12);
+        --status-done: #9be84f;    --status-done-tint: rgba(155, 232, 79, 0.13);
+        --status-failed: #ff8d7c;  --status-failed-tint: rgba(255, 141, 124, 0.13);
+      }
+      [data-theme="dark"] body {
+        background:
+          radial-gradient(120% 60% at 50% -10%, rgba(102, 204, 0, 0.16), transparent 60%),
+          radial-gradient(80% 50% at 88% -4%, rgba(160, 32, 253, 0.12), transparent 60%),
+          var(--p-bg);
+        background-repeat: no-repeat;
+      }
+      [data-theme="dark"] .plan-status[data-plan-status="draft"] {
+        color: #2a1640;
+        background-color: var(--p-purple);
+        background-image: repeating-linear-gradient(
+          -45deg, transparent, transparent 6px,
+          rgba(42, 22, 64, 0.16) 6px, rgba(42, 22, 64, 0.16) 12px
+        );
+        box-shadow: 0 0 22px rgba(223, 178, 255, 0.25);
+      }
+      [data-theme="dark"] .north-star {
+        background: linear-gradient(180deg, rgba(186, 242, 158, 0.12) 0%, rgba(255, 255, 255, 0) 100%);
+      }
+      [data-theme="dark"] figure.diagram {
+        background: linear-gradient(165deg, #2a2c2b 0%, #24402a 100%);
+      }
+      [data-theme="dark"] figure.diagram figcaption { color: #a9d9b9; }
+      [data-theme="dark"] figure.diagram::before { color: rgba(255, 255, 255, 0.4); }
+      [data-theme="dark"] code { color: #bdf0a0; }
+      [data-theme="dark"] .ref-chip { background: rgba(186, 242, 158, 0.1); }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      html { background: var(--p-bg); }
+      body {
+        margin: 0;
+        padding: 0 var(--s-6) var(--s-14);
+        background:
+          radial-gradient(120% 60% at 50% -10%, rgba(186, 242, 158, 0.34), transparent 60%),
+          var(--p-bg);
+        background-repeat: no-repeat;
+        color: var(--p-body);
+        font-family: var(--font-body);
+        font-size: var(--t-base);
+        line-height: 1.62;
+        letter-spacing: -0.01em;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      .wrap { max-width: 60rem; margin-inline: auto; }
+
+      /* --- Masthead ---------------------------------------------- */
+      .masthead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-4);
+        padding: var(--s-6) 0 var(--s-5);
+        border-bottom: 1px solid var(--p-border);
+      }
+      .brand { display: flex; align-items: center; gap: var(--s-3); }
+      .logo-img { height: 26px; width: auto; display: block; }
+
+      /* --- Loud lifecycle pill ----------------------------------- */
+      .plan-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5em;
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.45em 0.9em;
+        border-radius: var(--r-pill);
+        white-space: nowrap;
+      }
+      .plan-status::before {
+        content: "";
+        width: 0.5em; height: 0.5em;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      /* Draft: LOUD solid purple + hazard hatch — must never read "done". */
+      .plan-status[data-plan-status="draft"] {
+        color: #ffffff;
+        background-color: var(--p-purple);
+        background-image: repeating-linear-gradient(
+          -45deg, transparent, transparent 6px,
+          rgba(255, 255, 255, 0.14) 6px, rgba(255, 255, 255, 0.14) 12px
+        );
+        box-shadow: 0 0 0 1px rgba(75, 40, 109, 0.25);
+      }
+      .plan-status[data-plan-status="approved"] {
+        color: var(--p-forest);
+        background: var(--status-done-tint);
+        box-shadow: inset 0 0 0 1px var(--p-forest);
+      }
+
+      /* --- Title block ------------------------------------------- */
+      .title-block { padding: var(--s-10) 0 var(--s-6); }
+      .eyebrow {
+        font-family: var(--font-body);
+        font-weight: 700;
+        font-size: var(--t-xs);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: baseline;
+        gap: 1.2em;
+        margin-bottom: var(--s-4);
+      }
+      .eyebrow .num { color: var(--p-purple); }
+      .eyebrow .label { color: var(--p-dim); }
+      h1 {
+        font-family: var(--font-display);
+        font-size: var(--t-3xl);
+        line-height: 1.06;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        color: var(--p-ink);
+        margin: 0 0 var(--s-5);
+        max-width: 20ch;
+      }
+      .lede {
+        font-size: var(--t-lg);
+        line-height: 1.5;
+        color: var(--p-body);
+        margin: 0;
+        max-width: 62ch;
+      }
+      .lede b { color: var(--p-ink); font-weight: 700; }
+
+      /* --- Decisions at a glance --------------------------------- */
+      .decisions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s-2);
+        margin: var(--s-6) 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .decision-chip {
+        font-size: var(--t-sm);
+        font-weight: 500;
+        color: var(--p-ink);
+        background: var(--p-card);
+        border: 1px solid var(--p-border);
+        border-radius: var(--r-pill);
+        padding: 0.3em 0.9em 0.3em 0.7em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55em;
+      }
+      .decision-chip::before {
+        content: "";
+        width: 0.45em; height: 0.45em;
+        border-radius: 50%;
+        background: var(--p-purple);
+      }
+
+      /* --- Collapsible metadata ---------------------------------- */
+      details.metadata {
+        margin-top: var(--s-6);
+        background: var(--p-card);
+        border: 1px solid var(--p-border);
+        border-radius: var(--r-md);
+        box-shadow: var(--shadow-soft);
+      }
+      details.metadata > summary {
+        list-style: none;
+        cursor: pointer;
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--p-dim);
+        padding: var(--s-3) var(--s-4);
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: var(--s-3);
+      }
+      details.metadata > summary::-webkit-details-marker { display: none; }
+      details.metadata > summary::before {
+        content: "▸";
+        color: var(--p-forest);
+        transition: transform 0.15s ease;
+      }
+      details.metadata[open] > summary::before { transform: rotate(90deg); }
+      .meta-grid {
+        margin: 0;
+        padding: var(--s-4);
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: var(--s-2) var(--s-6);
+        font-size: var(--t-sm);
+        border-top: 1px solid var(--p-border);
+      }
+      .meta-grid dt {
+        color: var(--p-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: var(--t-xs);
+        font-weight: 700;
+        align-self: center;
+      }
+      .meta-grid dd { margin: 0; color: var(--p-body); font-family: var(--font-mono); font-size: var(--t-sm); }
+      .ref-chip {
+        display: inline-block;
+        color: var(--p-forest);
+        text-decoration: none;
+        background: #eef3ee;
+        border: 1px solid var(--p-border);
+        border-radius: var(--r-sm);
+        padding: 0 var(--s-2);
+        margin: 0 var(--s-1) var(--s-1) 0;
+        font-family: var(--font-mono);
+        font-size: var(--t-xs);
+      }
+
+      /* --- Section + headings ------------------------------------ */
+      .section { padding-top: var(--s-14); }
+      .section > .eyebrow .num { color: var(--p-purple); }
+      h2 {
+        font-family: var(--font-display);
+        font-size: var(--t-2xl);
+        line-height: 1.12;
+        font-weight: 500;
+        letter-spacing: -0.018em;
+        color: var(--p-ink);
+        margin: 0 0 var(--s-5);
+        max-width: 26ch;
+      }
+      h3 {
+        font-family: var(--font-body);
+        font-size: var(--t-lg);
+        font-weight: 700;
+        color: var(--p-ink);
+        margin: 0 0 var(--s-2);
+        letter-spacing: -0.01em;
+      }
+      p { margin: 0 0 var(--s-4); max-width: 70ch; color: var(--p-body); }
+      p b, .lead { color: var(--p-ink); font-weight: 700; }
+      a { color: var(--p-forest); text-decoration: none; }
+      a:hover { color: var(--p-forest-deep); text-decoration: underline; }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.86em;
+        background: var(--p-surface);
+        border: 1px solid var(--p-border);
+        color: #34543f;
+        padding: 0.08em 0.4em;
+        border-radius: var(--r-sm);
+      }
+
+      /* --- Bullet list ------------------------------------------- */
+      ul.plan-list { list-style: none; padding: 0; margin: 0 0 var(--s-4); max-width: 70ch; }
+      ul.plan-list li {
+        position: relative;
+        padding-left: 1.5em;
+        margin-bottom: var(--s-3);
+        color: var(--p-body);
+      }
+      ul.plan-list li::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0.62em;
+        width: 0.4em; height: 0.4em;
+        border-radius: 50%;
+        background: var(--p-forest);
+      }
+
+      /* --- North-star callout ------------------------------------ */
+      .north-star {
+        margin: var(--s-6) 0;
+        background: linear-gradient(180deg, #eafce0 0%, #fcfdfb 100%);
+        border: 1px solid var(--p-border);
+        border-left: 3px solid var(--p-forest);
+        border-radius: var(--r-md);
+        padding: var(--s-5) var(--s-6);
+      }
+      .north-star .ns-label {
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--p-forest);
+        margin-bottom: var(--s-2);
+      }
+      .north-star .ns-text { font-size: var(--t-lg); color: var(--p-ink); margin: 0; font-weight: 500; }
+
+      /* --- Figure / diagram (image slot) -------------------------
+         Default (pre-image) state is an on-brand hero-gradient panel
+         so an empty figure reads as intentional, not broken. When the
+         degrade chain injects an <img>, it overlays the panel. */
+      figure.diagram {
+        margin: var(--s-8) 0 var(--s-6);
+        background: linear-gradient(165deg, #f2f3ed 0%, #d4eeb9 100%);
+        border: 1px solid var(--p-border);
+        border-radius: var(--r-lg);
+        padding: var(--s-6);
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        position: relative;
+        overflow: hidden;
+      }
+      figure.diagram::before {
+        content: "Visual";
+        position: absolute;
+        top: var(--s-5); left: var(--s-6);
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(34, 34, 32, 0.45);
+      }
+      figure.diagram img {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin: 0;
+      }
+      figure.diagram figcaption {
+        font-size: var(--t-sm);
+        font-style: italic;
+        color: #3c5a48;
+        max-width: 60ch;
+      }
+      /* Once a real <img> is injected, drop the placeholder chrome (the
+         "Visual" label, the inset padding, and the light gradient ground) so
+         the image fills the frame edge-to-edge — the figure's overflow:hidden
+         + border-radius clip its corners. The chrome exists for the empty
+         slot only, so an unfilled figure still reads as intentional. The
+         :has() selector scopes this with no JS-added class. */
+      figure.diagram:has(img) {
+        padding: 0;
+        background: none;
+      }
+      figure.diagram:has(img)::before { content: none; }
+      /* The image now fills the frame, so the caption supplies its own
+         padding since the figure's is zero. */
+      figure.diagram:has(img) figcaption {
+        padding: var(--s-4) var(--s-6) var(--s-5);
+      }
+
+      /* --- Phase rail / unit cards ------------------------------- */
+      [data-status="pending"] { --unit-accent: var(--status-pending); --unit-tint: var(--status-pending-tint); }
+      [data-status="wip"]     { --unit-accent: var(--status-wip);     --unit-tint: var(--status-wip-tint); }
+      [data-status="done"]    { --unit-accent: var(--status-done);    --unit-tint: var(--status-done-tint); }
+      [data-status="failed"]  { --unit-accent: var(--status-failed);  --unit-tint: var(--status-failed-tint); }
+
+      .phase-rail { display: flex; flex-direction: column; gap: var(--s-8); margin-top: var(--s-2); }
+      .phase { border-left: 2px solid var(--p-border-strong); padding-left: var(--s-5); }
+      .phase-label {
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--p-dim);
+        margin-bottom: var(--s-4);
+      }
+      .phase-units {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+        gap: var(--s-3);
+      }
+      .unit-card {
+        background: var(--p-card);
+        border: 1px solid var(--p-border);
+        border-left: 3px solid var(--unit-accent, var(--p-border-strong));
+        border-radius: var(--r-md);
+        padding: var(--s-4);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+      }
+      .unit-card:hover { box-shadow: var(--shadow-soft); transform: translateY(-2px); }
+      .unit-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+      .unit-uid {
+        font-family: var(--font-mono);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        color: var(--p-ink);
+        letter-spacing: 0.02em;
+      }
+      .status-pill {
+        font-family: var(--font-body);
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        padding: 0.2em 0.7em;
+        border-radius: var(--r-pill);
+        color: var(--unit-accent, var(--p-ink));
+        background: var(--unit-tint, var(--p-surface));
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--unit-accent, var(--p-border)) 35%, transparent);
+        white-space: nowrap;
+      }
+      .unit-title { color: var(--p-ink); font-weight: 500; margin: var(--s-3) 0 var(--s-3); line-height: 1.35; }
+      .dep-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: var(--t-xs);
+        color: var(--p-dim);
+        background: var(--p-surface);
+        border: 1px dashed var(--p-border-strong);
+        border-radius: var(--r-sm);
+        padding: 0.1em var(--s-2);
+      }
+      /* The delegation chip: this unit's body now lives in a tracker ticket. Its own
+         rule set rather than a shared selector list with .dep-badge — every composed
+         plan freezes a copy of this stylesheet, so folding them together would rewrite
+         the badge's bytes in every future plan. It is an <a>, so it degrades to a plain
+         link against an older plan's stylesheet, which still says where the body went. */
+      .ticket-chip {
+        display: inline-block;
+        margin-top: var(--s-3);
+        font-family: var(--font-mono);
+        font-size: var(--t-xs);
+        color: var(--p-forest);
+        background: var(--p-surface);
+        border: 1px solid var(--p-border-strong);
+        border-radius: var(--r-sm);
+        padding: 0.1em var(--s-2);
+        text-decoration: none;
+      }
+
+      /* --- Unit spec body: the eight-field disclosure ------------- */
+      /* A SEPARATE rule set from details.metadata above, deliberately: folding
+         the two into one selector list would rewrite the metadata rules' bytes,
+         and every composed plan carries its own frozen copy of this stylesheet.
+         The disclosure also degrades on purpose — a <details> collapses with no
+         CSS at all, so a spec rendered against an older plan's stylesheet is
+         still closed and still openable. */
+      details.unit-body {
+        margin-top: var(--s-3);
+        border-top: 1px solid var(--p-border);
+        padding-top: var(--s-3);
+      }
+      details.unit-body > summary {
+        list-style: none;
+        cursor: pointer;
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--p-dim);
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: var(--s-2);
+      }
+      details.unit-body > summary::-webkit-details-marker { display: none; }
+      details.unit-body > summary::before {
+        content: "▸";
+        color: var(--p-forest);
+        transition: transform 0.15s ease;
+      }
+      details.unit-body[open] > summary::before { transform: rotate(90deg); }
+      .unit-field { margin-top: var(--s-3); }
+      .unit-field-label {
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--p-faint);
+      }
+      .unit-field p { margin: var(--s-1) 0 0; font-size: var(--t-sm); color: var(--p-body); }
+      /* An OPEN spec needs prose width the 16rem rail column cannot give, so the
+         card spans the whole grid while it is open. :has() scopes this with no
+         JS-added class — the same technique figure.diagram:has(img) uses above.
+         Per-card rather than per-phase: widening .phase-units would collapse a
+         whole phase's rail the moment any one card opens. */
+      .unit-card:has(details.unit-body[open]) { grid-column: 1 / -1; }
+
+      /* --- Questionables: CSS-only tri-state --------------------- */
+      .questionable-card {
+        background: var(--p-card);
+        border: 1px solid var(--p-border);
+        border-radius: var(--r-md);
+        padding: var(--s-5);
+        margin-bottom: var(--s-3);
+        box-shadow: var(--shadow-soft);
+      }
+      .questionable-card fieldset { border: none; margin: 0; padding: var(--s-3) 0 0; }
+      .questionable-card legend {
+        font-family: var(--font-body);
+        font-size: var(--t-xs);
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--p-dim);
+        padding: 0;
+        margin-bottom: var(--s-2);
+      }
+      .q-label { margin-right: var(--s-4); color: var(--p-body); cursor: pointer; font-weight: 500; }
+      .q-label input { accent-color: var(--p-forest); margin-right: var(--s-1); }
+      .q-reveal { display: none; }
+      .q-pick-resolve:checked ~ .q-reveal-resolve,
+      .q-pick-accept:checked ~ .q-reveal-accept,
+      .q-pick-defer:checked ~ .q-reveal-defer {
+        display: block;
+        margin-top: var(--s-3);
+        padding: var(--s-3) var(--s-4);
+        border-left: 2px solid var(--p-forest);
+        background: var(--status-done-tint);
+        border-radius: 0 var(--r-sm) var(--r-sm) 0;
+        color: var(--p-ink);
+      }
+
+      /* --- Amendments -------------------------------------------- */
+      .amendment {
+        font-size: var(--t-sm);
+        color: var(--p-body);
+        padding: var(--s-3) 0;
+        border-bottom: 1px solid var(--p-border);
+        display: flex;
+        gap: var(--s-3);
+      }
+      .amendment .a-date { font-family: var(--font-mono); color: var(--p-faint); white-space: nowrap; }
+
+      .append-note {
+        font-size: var(--t-xs);
+        color: var(--p-faint);
+        font-style: italic;
+        margin-bottom: var(--s-3);
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Frozen plan skeleton: the durable structure with slot markers the
+      compose script (U5) substitutes. The <head>/<style> above is the official
+      TELUS Digital design system (Obsidian dark default via [data-theme="dark"];
+      light via [data-theme="light"]). Brand fonts use a system-fallback stack
+      (no embedded OTFs) and the logo is a base64 SVG <img>, so the artifact is
+      fully self-contained — no http(s)/link/script/external refs.
+      Design lineage: planf3 (IndyDevDan), MIT — see skills/plan/NOTICE
+    -->
+    <div class="wrap">
+      <header class="masthead">
+        <div class="brand">
+          <img class="logo-img" alt="TELUS Digital" src="data:image/svg+xml;base64,PHN2ZyBjbGFzcz0ibG9nby1pbWciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDM5Ny41NSAxMDkuOTQiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iVEVMVVMgRGlnaXRhbCI+CiAgICAgICAgICAgIDxwYXRoIGZpbGw9IiNmY2ZkZmIiIGQ9Ik01My4yNCwzNS4yMWMxMi4xNi0zLjE3LDIzLjI2LTUuMjQsMzEuMjgtNy4xNy4zOS0uMDkuMy0uNjctLjEtLjY0LTEwLjQ1LjU2LTQxLjcsMi4yMi00MS43LDIuMjItMTcuOTcsMS40NC0yMS4yNiw4LjQ5LTE3LjM1LDEzLjk1bDcuMDYsOS44OGMuMjEuMjkuNjYuMTQuNjctLjIxLjA2LTcuNTUsNC42NC0xMy45OSwyMC4xNC0xOC4wM2gwWiI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBmaWxsPSIjZmNmZGZiIiBkPSJNNDcuNjIsNzQuODNjLjI3LjQuODEuMjYuNzQtLjI3LS44MS01LjExLjU2LTE4LjUzLDcuNDEtMjUuMTUsMTAuMTQtOS43OSwyMy4wOC0xMy42NSwzNS4yLTIwLjEuMzMtLjE4LjE0LS42Ny0uMjItLjU4LTguNDQsMi4xMS0zMC41MSw3Ljk2LTM3Ljk1LDExLTguNjUsMy41NC0yMC4yMywxNC4zOC05LjU1LDI5LjM0bDQuMzcsNS43N2gwWiI+PC9wYXRoPgogICAgICAgICAgICA8ZyBmaWxsPSIjZmNmZGZiIj4KICAgICAgICAgICAgICA8cGF0aCBkPSJNMjQ4LjAyLDQ3LjFjMS41NSwwLDIuODUsMS4yMywyLjg1LDIuODNzLTEuMywyLjg2LTIuODUsMi44Ni0yLjg4LTEuMjMtMi44OC0yLjg2LDEuMzEtMi44MywyLjg4LTIuODNaTTI0OC4wMiw1Mi4zOGMxLjMyLDAsMi4zNC0xLjA1LDIuMzQtMi40NXMtMS4wMi0yLjQxLTIuMzQtMi40MS0yLjM1LDEuMDUtMi4zNSwyLjQxLDEuMDIsMi40NSwyLjM1LDIuNDVaTTI0Ni45LDQ4LjI3aDEuMjljLjc5LDAsMS4xNi4zMSwxLjE2Ljk1LDAsLjYtLjM4Ljg1LS44OC45bC45NiwxLjQ3aC0uNTZsLS45LTEuNDNoLS41NXYxLjQzaC0uNTF2LTMuMzNoLS4wMVpNMjQ3LjQyLDQ5Ljc1aC41NGMuNDUsMCwuODgtLjAyLjg4LS41NSwwLS40NC0uMzgtLjUxLS43NC0uNTFoLS42OHYxLjA2WiI+PC9wYXRoPgogICAgICAgICAgICAgIDxwYXRoIGQ9Ik0yNjcuNjIsNDcuMWg5Ljc4YzguNTgsMCwxMy41OSw1LjI0LDEzLjU5LDEzLjcxcy01LjAxLDEzLjcxLTEzLjU5LDEzLjcxaC05Ljc4di0yNy40MVpNMjc3LjM2LDcwLjljNi4wNCwwLDkuMzItMy42OSw5LjMyLTEwLjFzLTMuMjctMTAuMDgtOS4zMi0xMC4wOGgtNS42MnYyMC4xOGg1LjYyWiI+PC9wYXRoPgogICAgICAgICAgICAgIDxwYXRoIGQ9Ik0yOTMuOTYsNDkuNjhjMC0xLjI3LDEuMDQtMi4zNSwyLjM1LTIuMzVzMi4zNSwxLjA0LDIuMzUsMi4zNS0xLjA0LDIuMzUtMi4zNSwyLjM1LTIuMzUtMS4wNC0yLjM1LTIuMzVaTTI5NC4zOCw1NC42NGgzLjg1djE5Ljg4aC0zLjg1di0xOS44OFoiPjwvcGF0aD4KICAgICAgICAgICAgICA8cGF0aCBkPSJNMzAyLjc0LDc1LjloMy44NWMuMywyLjM1LDIuMDUsMy41MSw0Ljk2LDMuNTEsMy42MiwwLDUuNTgtMS44OSw1LjU4LTUuNTR2LTIuMTljLTEuNDMsMS45Ni0zLjU4LDMuMDktNi4zOSwzLjA5LTUuNTEsMC05LjEzLTQuMDgtOS4xMy0xMC4yOHMzLjU4LTEwLjI4LDkuMDktMTAuMjhjMi45MywwLDUuMTYsMS4yMyw2LjU5LDMuMjd2LTIuODFoMy42OXYxOS4xNGMwLDUuMTktMy4xMiw4Ljc0LTkuNDgsOC43NC01LjM5LDAtOC40LTIuNjUtOC43OC02LjYyaC4wMVpNMzE3LjI2LDY0LjQ3YzAtNC40My0yLjI4LTYuOTctNS44MS02Ljk3cy01LjgxLDIuNy01LjgxLDYuOTcsMi4yOCw2Ljk3LDUuODEsNi45Nyw1LjgxLTIuNTQsNS44MS02Ljk3WiI+PC9wYXRoPgogICAgICAgICAgICAgIDxwYXRoIGQ9Ik0zMjQuOTMsNDkuNjhjMC0xLjI3LDEuMDQtMi4zNSwyLjM1LTIuMzVzMi4zNSwxLjA0LDIuMzUsMi4zNS0xLjA0LDIuMzUtMi4zNSwyLjM1LTIuMzUtMS4wNC0yLjM1LTIuMzVaTTMyNS4zNSw1NC42NGgzLjg1djE5Ljg4aC0zLjg1di0xOS44OFoiPjwvcGF0aD4KICAgICAgICAgICAgICA8cGF0aCBkPSJNMzM1LjEsNzAuMDl2LTEyLjI5aC0zLjJ2LTMuMTZoMy4ydi01LjdoMy44NXY1LjdoNC4wMXYzLjE2aC00LjAxdjExLjk0YzAsMS4xNS41OCwxLjcsMi4yOCwxLjdoMS43M3YzLjA5Yy0uODUuMDctMS42Ni4xMi0yLjM1LjEyLTMuNTgsMC01LjUxLTEuMjMtNS41MS00LjU1WiI+PC9wYXRoPgogICAgICAgICAgICAgIDxwYXRoIGQ9Ik0zNTguMzIsNzEuODJjLTEuMzQsMi4wOC0zLjU4LDMuMTYtNi40OCwzLjE2LTQuMjcsMC03LjA4LTIuMDgtNy4wOC01LjksMC0zLjIsMS45Mi01LjYyLDcuNDctNi4xNmwyLjkzLS4zYzEuOTItLjIzLDIuOTctLjg4LDIuOTctMi41LDAtMS44NS0uOTctMi44NS00LjA4LTIuODVzLTQuNDMuODgtNC42MiwzLjU4aC0zLjgxYy4yMy00LjAxLDIuNDctNi42Niw4LjQ0LTYuNjZzNy44NiwyLjM5LDcuODYsNS44NnYxMC41MWMwLC42Mi4zLDEsMS4wOCwxaDEuMDh2Mi45N2MtLjU4LjA3LTEuMjcuMTItMS44OS4xMi0yLjQ3LDAtMy41OC0uODgtMy44NS0yLjgxaC0uMDJaTTM1Mi40Myw3MS45OGMyLjgxLDAsNS43LTEuNTcsNS43LTUuMzF2LTIuMDhjLS41OC40Ni0xLjM5LjY5LTIuNDcuODFsLTIuNzcuM2MtMy4yLjM5LTQuMTUsMS41LTQuMTUsMy4yN3MxLjIsMywzLjY5LDNaIj48L3BhdGg+CiAgICAgICAgICAgICAgPHBhdGggZD0iTTM2Ni40NCw3MC4wOXYtMjIuOTloMy44NXYyMi42NWMwLDEuMTUuNSwxLjcsMS45MiwxLjdoMS40M3YzLjA5Yy0uNzcuMDctMS41NC4xMi0yLjE1LjEyLTMuMjcsMC01LjA1LTEuMjMtNS4wNS00LjU1WiI+PC9wYXRoPgogICAgICAgICAgICAgIDxwYXRoIGQ9Ik0xMzguNjMsNTIuNDJ2LTUuMzNoLTE5djI3LjQyaDE5di01LjU2aC0xMS4zdi02LjA4aDkuNHYtNS4zM2gtOS40di01LjEyaDExLjNaIj48L3BhdGg+CiAgICAgICAgICAgICAgPHBhdGggZD0iTTE3Mi4xNyw2OS4wOWgtMTEuODh2LTIyLjAxaC03Ljh2MjcuNDJoMTkuNjh2LTUuNDFaIj48L3BhdGg+CiAgICAgICAgICAgICAgPHBhdGggZD0iTTIzNC45Miw1Ny41NGMtNS4yNi0xLjE5LTcuMDktMS4zMi03LjA5LTMuNDEsMC0xLjk0LDIuNi0yLjU1LDQuMS0yLjU1LDIuNDMsMCw1LjI5LjU3LDguMTksMi4wN2wyLjEyLTUuMDVjLTIuOTgtMS42NC02LjgyLTIuMzEtMTAuNTEtMi4zMS03LjI1LDAtMTIuMTIsMi45NC0xMi4zMiw4LjY4LS4yMSw1LjIzLDQuMDQsNy4xOSw3Ljk2LDgsMy43Ny43OCw3LjU5LDEuNDUsNy42NywzLjY4LjA3LDIuMDctMS43OCwyLjk1LTUuMjksMi45NS0zLjI0LDAtNi4yNi0xLjA0LTkuMzUtMi4zM2wtMS43OSw1LjQ4YzMuNTQsMS41MSw3LjE0LDIuMzQsMTAuODUsMi4zNCw1LjE1LDAsOC45MS0uOCwxMS42OC0zLjQsMS45Mi0xLjc4LDIuNTUtMy45NCwyLjU1LTUuOTktLjAxLTQuMzQtMi43MS02Ljc5LTguNzYtOC4xNVoiPjwvcGF0aD4KICAgICAgICAgICAgICA8cGF0aCBkPSJNMTA4LjU3LDUyLjQ5di01LjRoLTIzLjkydjUuNGg4LjA4djIyLjAyaDcuNzR2LTIyLjAyaDguMDlaIj48L3BhdGg+CiAgICAgICAgICAgICAgPHBhdGggZD0iTTE5OC43NSw0Ny4wOXYxNy40MmMwLDEuMzYsMCwxLjc0LS4wOCwyLjI4LS4yNCwxLjY2LTEuODYsMi42Mi00LjQzLDIuNjUtMS45LS4wMy0zLjI5LS41OS0zLjk1LTEuNTgtLjMzLS41MS0uNDgtMS40My0uNDgtMi45di0xNy44N2gtOC4wOHYxOC45YzAsMi42Mi4zNSwzLjgsMS41Myw1LjI5LDEuOTUsMi40NSw1Ljc1LDMuNzMsMTEsMy43M2guMjhjNy4wMSwwLDEwLjYzLTIuNzQsMTEuNjgtNS4zLjUyLTEuMjQuNTctMS44My41Ny00LjMzdi0xOC4yOGgtOC4wNFoiPjwvcGF0aD4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgPC9zdmc+" />
+        </div>
+        <span class="plan-status" data-plan-status="approved">Approved</span>
+      </header>
+
+      <div class="title-block">
+        <div class="eyebrow"><span class="num">Implementation plan</span></div>
+        <h1>Itaú PDF transaction import</h1>
+        <p class="lede">Add an Itaú PDF adapter that feeds the existing import flow without changing its transaction model.</p>
+        <ul class="decisions">
+          <li class="decision-chip">Parse PDF text in the browser. The raw invoice never leaves the device.</li>
+        <li class="decision-chip">Emit the existing date, title, and amount row contract. Keep CSV behavior unchanged.</li>
+        <li class="decision-chip">Import current domestic purchases and products or services. Ignore international and future installments.</li>
+        <li class="decision-chip">Use only the first merchant line and stop when a selected section total does not match.</li>
+        </ul>
+        <details class="metadata" data-section="metadata-header">
+          <summary>Plan metadata</summary>
+          <!-- append-only: append new entries; never rewrite prior ones -->
+      <dl class="meta-grid">
+        <dt>Altitude</dt>
+        <dd>spec — each unit contains an executable work contract</dd>
+        <dt>Date</dt>
+        <dd>2026-10-05</dd>
+        <dt>Discovery</dt>
+        <dd>two real invoices, import-flow review, and architecture review</dd>
+        <dt>Operator familiarity</dt>
+        <dd>high — the operator defined the exact source columns and output contract</dd>
+        <dt>Grounding</dt>
+        <dd data-grounding-refs><span class="ref-chip">web/src/views/ImportView.jsx — existing CSV selection, preview, editing, and confirmation flow</span><span class="ref-chip">gastos-auth/src/import.js — CSV row normalization, category matching, duplicates, cards, and database insertion</span><span class="ref-chip">gastos-auth/src/index.js — preview route already accepts normalized rows</span><span class="ref-chip">Fatura_Itau_Out26.pdf and Fatura_Itau_Set26.pdf — private local samples, never committed</span></dd>
+        <dt>Review</dt>
+        <dd>cold-reader pass 2026-10-05 — revise; five advisory repairs applied</dd>
+        <dt>Review</dt>
+        <dd>cold-reader follow-up 2026-10-05 — two remaining advisories repaired</dd>
+      </dl>
+        </details>
+      </div>
+
+      <section class="section" data-section="purpose">
+        <div class="eyebrow"><span class="num">01</span><span class="label">Purpose</span></div>
+        <h2>Why we're doing this</h2>
+        <p>Itaú no longer supplies the needed invoice as CSV. The app needs a reliable PDF source for the same current transactions.</p>
+        <div class="north-star">
+        <div class="ns-label">★ North-star requirement</div>
+        <p class="ns-text">Within the approved current-year window, a PDF import must match the selected section totals and must never import a partial selected table.</p>
+      </div>
+        
+      </section>
+
+      <section class="section" data-section="problem">
+        <div class="eyebrow"><span class="num">02</span><span class="label">Problem</span></div>
+        <h2>The problem we're solving</h2>
+        <p>The invoices contain positioned text instead of a table data format. Two PDF generators split dates, amounts, and merchant text differently.</p>
+        <ul class="plan-list">
+        <li>The merchant cell includes a first merchant line and a second category and location line.</li>
+        <li>The September invoice splits words, dates, and values into separate text items.</li>
+        <li>International charges and future installments appear near current transactions but are outside this feature.</li>
+        <li>A loose text parser can silently omit or merge rows while still producing valid-looking values.</li>
+      </ul>
+        
+      </section>
+
+      <section class="section" data-section="solution">
+        <div class="eyebrow"><span class="num">03</span><span class="label">Solution</span></div>
+        <h2>The shape of the solution</h2>
+        <p>Use a pinned, lazy PDF.js package in the frontend. A focused Itaú parser rebuilds selected tables from text coordinates and emits the current raw import row shape.</p>
+        <ul class="plan-list">
+        <li>Ignore page one. Scan later pages for supported section headings.</li>
+        <li>Read only Lançamentos: compras e saques and Lançamentos: produtos e serviços.</li>
+        <li>Use the current calendar year, the first merchant line, and the printed BRL value.</li>
+        <li>Discard the category and location line. Verify required private merchant titles through environment input without storing them in Git.</li>
+        <li>Compare each selected section sum with its printed section total before preview.</li>
+        <li>Send normalized rows to the existing preview route. Apply one selected configured card at confirmation.</li>
+      </ul>
+        <figure class="diagram">
+        
+        <figcaption>The browser converts the private PDF into the same rows that the current import flow accepts.</figcaption>
+      </figure>
+      </section>
+
+      <section class="section" data-section="requirements-scope">
+        <div class="eyebrow"><span class="num">04</span><span class="label">Requirements &amp; scope boundaries</span></div>
+        <h2>What's in, what's out</h2>
+        <p>In scope: unencrypted text-based Itaú PDFs, the two selected current-transaction sections, current-year dates, first-line merchant titles, BRL values, a PDF card selector, section reconciliation, and the existing preview and confirmation flow. Approval includes a direct push to master and production Worker and Pages deployments after every required check passes. Out of scope: page-one data, international purchases, future installments, scanned PDFs, encrypted PDFs, OCR, external parsing services, database changes, and changes to CSV behavior. Duplicate rows keep the current warning behavior because this feature preserves the existing import method.</p>
+      </section>
+
+      <section class="section" data-section="implementation-units">
+        <div class="eyebrow"><span class="num">05</span><span class="label">Implementation units</span></div>
+        <h2>The build, phase by phase</h2>
+        <div class="phase-rail">
+        <div class="phase">
+          <div class="phase-label">Prove extraction</div>
+          <div class="phase-units">
+            <article class="unit-card" data-uid="U1" data-status="done">
+              <div class="unit-head">
+                <span class="unit-uid">U1</span>
+                <span class="status-pill" title="Done" aria-label="Done">done</span>
+              </div>
+              <div class="unit-title">Pin PDF.js and prove both private samples</div>
+              <details class="unit-body" data-unit-body="U1">
+                <summary>Unit spec</summary>
+                <div class="unit-field" data-unit-field="goal">
+                  <div class="unit-field-label">Goal</div>
+                  <p>The selected PDF.js build exposes stable text items for both supplied invoices in the command-line probe.</p>
+                </div>
+                <div class="unit-field" data-unit-field="requirements">
+                  <div class="unit-field-label">Requirements</div>
+                  <p>Pin pdfjs-dist; never commit either PDF or raw extracted text; record page, x, y, width, height, text, and line-break evidence for the parser contract.</p>
+                </div>
+                <div class="unit-field" data-unit-field="dependencies">
+                  <div class="unit-field-label">Dependencies</div>
+                  <p>The two private PDFs at their current Downloads paths; current macOS Safari and iPhone Safari for the final manual check.</p>
+                </div>
+                <div class="unit-field" data-unit-field="files">
+                  <div class="unit-field-label">Files</div>
+                  <p>web/package.json; web/package-lock.json; web/scripts/verify-itau-pdf.mjs</p>
+                </div>
+                <div class="unit-field" data-unit-field="approach">
+                  <div class="unit-field-label">Approach</div>
+                  <p>Install one exact pdfjs-dist version; create a command-line probe that accepts PDF paths; inspect both generators; prove that coordinate items isolate dates, first merchant lines, metadata lines, and BRL values.</p>
+                </div>
+                <div class="unit-field" data-unit-field="patterns-to-follow">
+                  <div class="unit-field-label">Patterns to follow</div>
+                  <p>web/src/lib/auth.js for a pinned browser dependency policy; web/package.json for frontend dependencies and scripts.</p>
+                </div>
+                <div class="unit-field" data-unit-field="test-scenarios">
+                  <div class="unit-field-label">Test scenarios</div>
+                  <p>Open both three-page PDFs; reject an unrelated file; make sure that the probe prints no personal data by default.</p>
+                </div>
+                <div class="unit-field" data-unit-field="verification">
+                  <div class="unit-field-label">Verification</div>
+                  <p>npm --prefix web run build; ITAU_PDF_EXPECT_TITLES_JSON=&#39;&lt;private local value&gt;&#39; npm --prefix web run verify:itau-pdf -- &quot;$PDF_OUT26&quot; &quot;$PDF_SET26&quot;</p>
+                </div>
+              </details>
+            </article>
+            <article class="unit-card" data-uid="U2" data-status="done">
+              <div class="unit-head">
+                <span class="unit-uid">U2</span>
+                <span class="status-pill" title="Done" aria-label="Done">done</span>
+              </div>
+              <div class="unit-title">Build the strict Itaú table adapter</div>
+              <span class="dep-badge">depends on U1</span>
+              <details class="unit-body" data-unit-body="U2">
+                <summary>Unit spec</summary>
+                <div class="unit-field" data-unit-field="goal">
+                  <div class="unit-field-label">Goal</div>
+                  <p>The parser emits only current domestic and product or service rows in the existing raw import shape.</p>
+                </div>
+                <div class="unit-field" data-unit-field="requirements">
+                  <div class="unit-field-label">Requirements</div>
+                  <p>Ignore page one, international sections, and future installments; scan later pages; group text by coordinates; use the current year; emit date, title, and amount; take only the first merchant line; remove category and location text; require supported headings and matching section totals; reject zero rows, missing totals, nonzero deltas, scanned files, and encrypted files.</p>
+                </div>
+                <div class="unit-field" data-unit-field="dependencies">
+                  <div class="unit-field-label">Dependencies</div>
+                  <p>U1 text-item evidence and the pinned pdfjs-dist package.</p>
+                </div>
+                <div class="unit-field" data-unit-field="files">
+                  <div class="unit-field-label">Files</div>
+                  <p>web/src/lib/itauPdf.js; web/scripts/verify-itau-pdf.mjs; focused parser fixtures or checks that contain no private invoice data.</p>
+                </div>
+                <div class="unit-field" data-unit-field="approach">
+                  <div class="unit-field-label">Approach</div>
+                  <p>Separate PDF loading from pure coordinate parsing; normalize heading text only for recognition; rebuild each visual row inside the selected table bounds; clip the merchant field to its first visual line; parse integer cents; compare the row sum with the printed section total; return rows plus a small extraction summary.</p>
+                </div>
+                <div class="unit-field" data-unit-field="patterns-to-follow">
+                  <div class="unit-field-label">Patterns to follow</div>
+                  <p>gastos-auth/src/import.js parseAmountToCents and raw row contract; web/src/lib/categories.js for small focused frontend helpers.</p>
+                </div>
+                <div class="unit-field" data-unit-field="test-scenarios">
+                  <div class="unit-field-label">Test scenarios</div>
+                  <p>October produces 32 selected rows and 234360 cents; September produces 16 selected rows and 172286 cents; required private merchant titles remain exact through environment input; category and location lines stay absent; international and future installment rows stay absent; one changed amount blocks preview.</p>
+                </div>
+                <div class="unit-field" data-unit-field="verification">
+                  <div class="unit-field-label">Verification</div>
+                  <p>ITAU_PDF_EXPECT_TITLES_JSON=&#39;&lt;private local value&gt;&#39; npm --prefix web run verify:itau-pdf -- &quot;$PDF_OUT26&quot; &quot;$PDF_SET26&quot;; npm --prefix web run build</p>
+                </div>
+              </details>
+            </article>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-label">Reuse the import flow</div>
+          <div class="phase-units">
+            <article class="unit-card" data-uid="U3" data-status="pending">
+              <div class="unit-head">
+                <span class="unit-uid">U3</span>
+                <span class="status-pill" title="Pending / todo" aria-label="Pending / todo">pending</span>
+              </div>
+              <div class="unit-title">Extend the internal import contract for a selected card</div>
+              <span class="dep-badge">depends on U2</span>
+              <details class="unit-body" data-unit-body="U3">
+                <summary>Unit spec</summary>
+                <div class="unit-field" data-unit-field="goal">
+                  <div class="unit-field-label">Goal</div>
+                  <p>PDF confirmation assigns every row to one configured card while CSV keeps its current card inference.</p>
+                </div>
+                <div class="unit-field" data-unit-field="requirements">
+                  <div class="unit-field-label">Requirements</div>
+                  <p>Accept an optional import kind and top-level card; require and validate the card for PDF confirmation; preserve CSV behavior when those fields are absent; validate real calendar dates instead of shape alone; keep category, fatura, duplicate, and batch-insert behavior unchanged.</p>
+                </div>
+                <div class="unit-field" data-unit-field="dependencies">
+                  <div class="unit-field-label">Dependencies</div>
+                  <p>The current settings.cards contract and no database migration.</p>
+                </div>
+                <div class="unit-field" data-unit-field="files">
+                  <div class="unit-field-label">Files</div>
+                  <p>gastos-auth/src/index.js; gastos-auth/src/import.js; gastos-auth/src/import.test.js; gastos-auth/src/cards.js if shared validation needs a focused helper; gastos-auth/package.json; AGENTS.md contract note.</p>
+                </div>
+                <div class="unit-field" data-unit-field="approach">
+                  <div class="unit-field-label">Approach</div>
+                  <p>Thread import_kind and cartao from the route to confirmImport; branch only at card assignment; use the selected validated card for PDF rows; keep guessCardFromDescricao for legacy CSV rows; strengthen date validation with a calendar round trip; add Node built-in tests with a fake D1 environment that records prepared inserts.</p>
+                </div>
+                <div class="unit-field" data-unit-field="patterns-to-follow">
+                  <div class="unit-field-label">Patterns to follow</div>
+                  <p>gastos-auth/src/transactions.js for card validation; gastos-auth/src/errors.js and gastos-auth/src/index.js for stable validation errors.</p>
+                </div>
+                <div class="unit-field" data-unit-field="test-scenarios">
+                  <div class="unit-field-label">Test scenarios</div>
+                  <p>In gastos-auth/src/import.test.js, a PDF request with configured card Itaú Plat records Itaú Plat on every insert; missing and removed PDF cards return validation_failed on cartao; a legacy CSV row with prefix [Itaú 0947] keeps its existing inferred card; 2026-02-31 fails; duplicate preview flags stay unchanged.</p>
+                </div>
+                <div class="unit-field" data-unit-field="verification">
+                  <div class="unit-field-label">Verification</div>
+                  <p>npm --prefix gastos-auth test; node --check gastos-auth/src/index.js; node --check gastos-auth/src/import.js; npm --prefix gastos-auth exec wrangler deploy -- --dry-run</p>
+                </div>
+              </details>
+            </article>
+            <article class="unit-card" data-uid="U4" data-status="pending">
+              <div class="unit-head">
+                <span class="unit-uid">U4</span>
+                <span class="status-pill" title="Pending / todo" aria-label="Pending / todo">pending</span>
+              </div>
+              <div class="unit-title">Add PDF selection to the existing import screen</div>
+              <span class="dep-badge">depends on U2, U3</span>
+              <details class="unit-body" data-unit-body="U4">
+                <summary>Unit spec</summary>
+                <div class="unit-field" data-unit-field="goal">
+                  <div class="unit-field-label">Goal</div>
+                  <p>The Importar screen accepts either the existing CSV source or one Itaú PDF and then uses the same preview editor.</p>
+                </div>
+                <div class="unit-field" data-unit-field="requirements">
+                  <div class="unit-field-label">Requirements</div>
+                  <p>Keep CSV paste and upload unchanged; add a PDF Itaú choice; require one configured card; show parsing progress and selected-section counts and totals; display short Portuguese errors; never upload PDF bytes; clear stale state when the source changes; preserve row removal, category editing, duplicate warnings, and success navigation; load PDF.js and its local worker only after PDF selection; support current macOS Safari and iPhone Safari.</p>
+                </div>
+                <div class="unit-field" data-unit-field="dependencies">
+                  <div class="unit-field-label">Dependencies</div>
+                  <p>U2 parser output and U3 confirmation contract.</p>
+                </div>
+                <div class="unit-field" data-unit-field="files">
+                  <div class="unit-field-label">Files</div>
+                  <p>web/src/views/ImportView.jsx; web/src/hooks/useImport.js; web/src/styles/import.css; web/src/views/ConfigView.jsx if its import label needs broader wording.</p>
+                </div>
+                <div class="unit-field" data-unit-field="approach">
+                  <div class="unit-field-label">Approach</div>
+                  <p>Add a PDF file input with accept application/pdf; lazy import the PDF module in the selection handler; send parsed rows through previewImport; keep extraction metadata only in component state; include import_kind and cartao only in PDF confirmation.</p>
+                </div>
+                <div class="unit-field" data-unit-field="patterns-to-follow">
+                  <div class="unit-field-label">Patterns to follow</div>
+                  <p>web/src/views/ImportView.jsx for preview state and row editing; web/src/views/AddView.jsx for configured card selection; web/src/hooks/useImport.js for query invalidation.</p>
+                </div>
+                <div class="unit-field" data-unit-field="test-scenarios">
+                  <div class="unit-field-label">Test scenarios</div>
+                  <p>Paste `date,title,amount` then `2026-10-05,MERCHANT TEST,42.90`; preview must show 05/10/2026, MERCHANT TEST, and R$ 42,90; upload the same text as CSV and compare; each sample PDF opens the same preview editor; card selection reaches confirmation; an unsupported PDF gives an error; the normal app route does not load PDF.js; network inspection contains normalized rows and never PDF bytes; current macOS Safari and iPhone Safari stay responsive.</p>
+                </div>
+                <div class="unit-field" data-unit-field="verification">
+                  <div class="unit-field-label">Verification</div>
+                  <p>npm --prefix web run build; paste `date,title,amount
+2026-10-05,MERCHANT TEST,42.90` and compare the preview date, title, and value with the stated results; upload the same content as a .csv file and compare again; inspect built chunks for lazy PDF.js loading; manual macOS Safari preview; manual iPhone Safari preview from Files</p>
+                </div>
+              </details>
+            </article>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="phase-label">Release safely</div>
+          <div class="phase-units">
+            <article class="unit-card" data-uid="U5" data-status="pending">
+              <div class="unit-head">
+                <span class="unit-uid">U5</span>
+                <span class="status-pill" title="Pending / todo" aria-label="Pending / todo">pending</span>
+              </div>
+              <div class="unit-title">Review, document, and deploy the complete flow</div>
+              <span class="dep-badge">depends on U3, U4</span>
+              <details class="unit-body" data-unit-body="U5">
+                <summary>Unit spec</summary>
+                <div class="unit-field" data-unit-field="goal">
+                  <div class="unit-field-label">Goal</div>
+                  <p>GitHub and the live Worker and Pages deployments contain one reviewed PDF import implementation.</p>
+                </div>
+                <div class="unit-field" data-unit-field="requirements">
+                  <div class="unit-field-label">Requirements</div>
+                  <p>Update every rule or comment that describes import sources or card assignment; keep private PDFs outside Git; review parser failure behavior; run the complete quality gate; commit product and plan files; push master; deploy Worker before Pages; make sure that live deployment identifiers point to the pushed commit.</p>
+                </div>
+                <div class="unit-field" data-unit-field="dependencies">
+                  <div class="unit-field-label">Dependencies</div>
+                  <p>Valid GitHub and Cloudflare authentication; manual Safari checks from U4.</p>
+                </div>
+                <div class="unit-field" data-unit-field="files">
+                  <div class="unit-field-label">Files</div>
+                  <p>AGENTS.md; relevant import comments; plans/2026-10-05-itau-pdf-import.html; all product files from U1 through U4.</p>
+                </div>
+                <div class="unit-field" data-unit-field="approach">
+                  <div class="unit-field-label">Approach</div>
+                  <p>Run the PDF sample command and builds; dispatch Doctor and Reviewer checks; fix blocking findings; commit one coherent feature; push master; run npm run deploy; query live Worker and Pages state.</p>
+                </div>
+                <div class="unit-field" data-unit-field="patterns-to-follow">
+                  <div class="unit-field-label">Patterns to follow</div>
+                  <p>package.json deploy scripts; the repository delivery workflow used for commit 81004ec.</p>
+                </div>
+                <div class="unit-field" data-unit-field="test-scenarios">
+                  <div class="unit-field-label">Test scenarios</div>
+                  <p>Both private samples pass exact counts, totals, and merchant checks; a safe CSV fixture follows the old preview and confirmation path with expected values; raw PDFs stay untracked; GitHub and production reference the final commit.</p>
+                </div>
+                <div class="unit-field" data-unit-field="verification">
+                  <div class="unit-field-label">Verification</div>
+                  <p>ITAU_PDF_EXPECT_TITLES_JSON=&#39;&lt;private local value&gt;&#39; npm --prefix web run verify:itau-pdf -- &quot;$PDF_OUT26&quot; &quot;$PDF_SET26&quot;; npm --prefix gastos-auth test; paste `date,title,amount
+2026-10-05,MERCHANT TEST,42.90` and compare the live preview date, title, and value with the stated results; npm --prefix web run build; npm --prefix gastos-auth exec wrangler deploy -- --dry-run; git diff --check</p>
+                </div>
+              </details>
+            </article>
+          </div>
+        </div>
+      </div>
+      </section>
+
+      <section class="section" data-section="test-strategy">
+        <div class="eyebrow"><span class="num">06</span><span class="label">Test strategy &amp; validation</span></div>
+        <h2>How we know it works</h2>
+        <p>Use exact sample checks without committing the PDFs. October must produce 32 selected rows and 234360 cents. September must produce 16 selected rows and 172286 cents. Checks must read the two required private merchant titles from environment input, cover negative product or service credits, and exclude international and future installment rows. A changed amount must stop preview. The committed gastos-auth/src/import.test.js file must use Node built-in tests and a fake D1 environment for PDF cards, legacy CSV inference, impossible dates, and duplicate preview flags. The manual CSV regression input is `date,title,amount
+2026-10-05,MERCHANT TEST,42.90`. It must preview as 05/10/2026, MERCHANT TEST, and R$ 42,90 from pasted text and a file. The final manual pass must cover current macOS Safari and iPhone Safari.</p>
+      </section>
+
+      <section class="section" data-section="risks-dependencies">
+        <div class="eyebrow"><span class="num">07</span><span class="label">Risks &amp; dependencies</span></div>
+        <h2>What could go wrong</h2>
+        <p>PDF.js Safari support needs a real-device check. Itaú can change its layout, so the parser must stop on unknown anchors or total mismatch. Using the current year can assign December rows incorrectly when the user imports in January, but this behavior follows the approved requirement. First-line merchant text can contain unusual source spacing, so exact sample assertions guard the known formats. Duplicate warnings remain advisory to preserve the current import method. Private financial documents must never enter Git, logs, error reports, or network requests.</p>
+      </section>
+
+      <section class="section" data-section="questionables">
+        <div class="eyebrow"><span class="num">08</span><span class="label">Questionables</span></div>
+        <h2>Open decisions awaiting sign-off</h2>
+        
+      </section>
+
+      <section class="section" data-section="amendments">
+        <div class="eyebrow"><span class="num">09</span><span class="label">Amendments</span></div>
+        <h2>Append-only change log</h2>
+        <p class="append-note">Append new entries; never rewrite prior ones.</p>
+        <!-- append-only: append new entries; never rewrite prior ones -->
+      <div class="amendment"><span class="a-date">2026-10-05</span>Initial draft after sample analysis, import-flow review, architecture review, and operator scope approval.</div>
+      <div class="amendment"><span class="a-date">2026-10-05</span>Narrowed the north-star promise to the approved current-year import window after cold-reader review.</div>
+      <div class="amendment"><span class="a-date">2026-10-05</span>Made the approved production delivery boundary explicit after cold-reader review.</div>
+      <div class="amendment"><span class="a-date">2026-10-05</span>Added executable Safari, API contract, and CSV regression checks after cold-reader review.</div>
+      <div class="amendment"><span class="a-date">2026-10-05</span>Defined the CSV regression procedure and focused API checks after cold-reader review.</div>
+      <div class="amendment"><span class="a-date">2026-10-05</span>Owned the API contract checks and defined the exact CSV regression input and expected preview after second cold-reader review.</div>
+      <div class="amendment"><span class="a-date">2026-10-05</span>Defined repeatable API contract checks and the exact safe CSV regression procedure after second cold-reader review.</div>
+      <div class="amendment"><span class="a-date">2026-10-06</span>Plan approved by Eduardo (draft → approved).</div>
+      <div class="amendment"><span class="a-date">2026-10-06</span>Keep private merchant titles out of the committed plan.</div>
+      <div class="amendment"><span class="a-date">2026-10-06</span>Replace private sample paths and merchant titles with environment inputs before committing the plan.</div>
+      <div class="amendment"><span class="a-date">2026-10-06</span>Keep private merchant assertions in the local verification environment.</div>
+      </section>
+    </div>
+  </body>
+</html>
