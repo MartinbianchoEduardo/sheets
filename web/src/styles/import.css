@@ -36,6 +36,24 @@
   font-size: 12px;
   color: var(--text-dim);
 }
+.import-pdf-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  color: var(--text-dim);
+  font: 11px 'JetBrains Mono', monospace;
+}
+.import-pdf-status label { display: flex; align-items: center; gap: 6px; }
+.import-pdf-status select {
+  max-width: 150px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 5px;
+  font: inherit;
+}
 .import-btn-row {
   display: flex;
   gap: 12px;

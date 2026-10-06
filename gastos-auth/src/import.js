@@ -1,6 +1,5 @@
-// Credit-card CSV import: parse → preview (rule-based categorization + fatura
-// resolution) → bulk confirm. Nubank shape only (date,title,amount). No
-// bank-statement / Pix parsing — owner enters Pix rows manually (§9.5).
+// Credit-card import: parse → preview (rule-based categorization + fatura
+// resolution) → bulk confirm. Raw rows use the Nubank date,title,amount shape.
 
 import { batch } from './db.js';
 import { ERR } from './errors.js';
@@ -10,6 +9,12 @@ import { listRules, applyRule } from './rules.js';
 import { resolveFaturaForDate, validateIsoDate } from './faturas.js';
 
 function now() { return Date.now(); }
+
+function isValidImportDate(value) {
+  if (!validateIsoDate(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
 
 // Minimal CSV parser: handles quoted fields ("a,b" → a,b), escaped quotes (""),
 // and CRLF line endings. Throws csv_parse_failed only if the input is structurally
@@ -117,11 +122,12 @@ export async function previewImport(env, parsedRows) {
     const data = (raw.date || '').trim();
     const descricao = (raw.title || '').trim();
     const valor_cents = rowToCents(raw.amount);
+    const validDate = isValidImportDate(data);
 
-    if (!validateIsoDate(data) || !descricao || !Number.isInteger(valor_cents)) {
+    if (!validDate || !descricao || !Number.isInteger(valor_cents)) {
       out.push({
         invalid: true,
-        reason: !validateIsoDate(data) ? 'date'
+        reason: !validDate ? 'date'
               : !descricao ? 'title'
               : 'amount',
         data, descricao, raw_amount: raw.amount,
@@ -162,7 +168,11 @@ export async function previewImport(env, parsedRows) {
 // Confirm: bulk-insert rows after the user reviewed/edited categories in the
 // preview UI. `manually_categorized` per row is set by the frontend (1 if the
 // user changed the category from the rule's suggestion).
-export async function confirmImport(env, rows) {
+export async function confirmImport(env, rows, options = {}) {
+  const importKind = options && options.import_kind;
+  if (importKind !== undefined && importKind !== 'csv' && importKind !== 'pdf') {
+    return { error: ERR.validation_failed, fields: ['import_kind'] };
+  }
   if (!Array.isArray(rows) || !rows.length) {
     return { error: ERR.validation_failed, fields: ['rows'] };
   }
@@ -171,12 +181,18 @@ export async function confirmImport(env, rows) {
   // sees a clear failure and can fix the preview rather than a partial import.
   const custom = await customCategoryNames(env);
   const cards = await cardList(env);
+  const pdfCard = importKind === 'pdf' ? options.cartao : null;
+  if (importKind === 'pdf' && !isValidCard(pdfCard, cards)) {
+    return { error: ERR.validation_failed, fields: ['cartao'] };
+  }
   const fallbackCard = cards.find(c => typeof c?.name === 'string' && c.name)?.name;
-  if (!fallbackCard) return { error: ERR.validation_failed, fields: ['cards'] };
+  if (importKind !== 'pdf' && !fallbackCard) {
+    return { error: ERR.validation_failed, fields: ['cards'] };
+  }
   const prepared = [];
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
-    if (!validateIsoDate(r && r.data)) return { error: ERR.validation_failed, fields: [`rows.${i}.data`] };
+    if (!isValidImportDate(r && r.data)) return { error: ERR.validation_failed, fields: [`rows.${i}.data`] };
     const descricao = typeof r.descricao === 'string' ? r.descricao.trim() : '';
     if (!descricao || descricao.length > 200) return { error: ERR.validation_failed, fields: [`rows.${i}.descricao`] };
     if (!Number.isInteger(r.valor_cents)) return { error: ERR.validation_failed, fields: [`rows.${i}.valor_cents`] };
@@ -187,7 +203,9 @@ export async function confirmImport(env, rows) {
       descricao,
       valor_cents: r.valor_cents,
       categoria: r.categoria,
-      cartao: isValidCard(guessedCard, cards) ? guessedCard : fallbackCard,
+      cartao: importKind === 'pdf'
+        ? pdfCard
+        : (isValidCard(guessedCard, cards) ? guessedCard : fallbackCard),
       manually_categorized: r.manually_categorized ? 1 : 0,
     });
   }

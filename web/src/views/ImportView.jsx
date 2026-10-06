@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { allCategoriesSignal } from '../lib/categories.js';
+import { cardsSignal } from '../lib/cards.js';
 import { formatBRL, formatDate } from '../lib/format.js';
 import { subpageSignal, setTab } from '../lib/state.js';
 import { useImportPreview, useImportConfirm } from '../hooks/useImport.js';
@@ -103,7 +104,7 @@ function PreviewRow({ row, dupCsv, onChangeCategoria, onDismiss }) {
         <span>{row.fatura_nome || '—'}</span>
         {outro && <span class="outro-flag">Sem regra</span>}
         {row.ja_existe && <span class="dup-flag">já existe</span>}
-        {dupCsv && <span class="dup-flag">duplicado no CSV</span>}
+        {dupCsv && <span class="dup-flag">duplicado nesta importação</span>}
       </div>
     </div>
   );
@@ -119,16 +120,81 @@ export function ImportView() {
   const confirm = useImportConfirm();
   const [csv, setCsv] = useState('');
   const [rows, setRows] = useState([]);
+  const [source, setSource] = useState('csv');
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfSummary, setPdfSummary] = useState(null);
+  const [pdfError, setPdfError] = useState('');
+  const [pdfCard, setPdfCard] = useState('');
   const fileRef = useRef(null);
+  const pdfRef = useRef(null);
+  const sourceVersion = useRef(0);
+
+  function clearPreview(nextSource) {
+    sourceVersion.current += 1;
+    setRows([]);
+    setPdfBusy(false);
+    setPdfSummary(null);
+    setPdfError('');
+    setSource(nextSource);
+    if (nextSource === 'csv') {
+      setPdfFile(null);
+      if (pdfRef.current) pdfRef.current.value = '';
+    }
+  }
 
   async function onFile(e) {
     const file = e.currentTarget.files?.[0];
     if (!file) return;
-    setCsv(await file.text());
+    clearPreview('csv');
+    const version = sourceVersion.current;
+    setPdfFile(null);
+    const text = await file.text();
+    if (sourceVersion.current === version) setCsv(text);
+  }
+
+  async function onPdfFile(e) {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+    clearPreview('pdf');
+    const version = sourceVersion.current;
+    setCsv('');
+    if (fileRef.current) fileRef.current.value = '';
+    setPdfFile(file);
+    if (!cardsSignal.value.length) {
+      setPdfError('Cadastre um cartão antes de importar a fatura');
+      return;
+    }
+    setPdfCard(cardsSignal.value[0].name);
+    setPdfBusy(true);
+    try {
+      const { parseItauPdf } = await import('../lib/itauPdf.js');
+      const parsed = await parseItauPdf(await file.arrayBuffer());
+      if (sourceVersion.current !== version) return;
+      const res = await preview.mutateAsync({ rows: parsed.rows });
+      if (sourceVersion.current !== version) return;
+      setRows((res.rows || []).map(r => ({ ...r, original_categoria: r.categoria })));
+      setPdfSummary(parsed);
+    } catch (err) {
+      const messages = {
+        itau_pdf_encrypted: 'PDF protegido por senha',
+        itau_pdf_scanned_or_empty: 'PDF sem texto selecionável',
+        itau_pdf_total_mismatch: 'Os totais da fatura não conferem',
+        itau_pdf_unsupported_layout: 'Formato de fatura não reconhecido',
+        itau_pdf_zero_rows: 'Nenhum lançamento encontrado',
+      };
+      if (sourceVersion.current === version) {
+        setPdfError(messages[err.message] || (err.message === 'session_expired' ? '' : 'Não foi possível ler este PDF'));
+        if (err.message !== 'session_expired') setRows([]);
+      }
+    } finally {
+      if (sourceVersion.current === version) setPdfBusy(false);
+    }
   }
 
   async function onPreview() {
     if (!csv.trim()) return toast('Cole o CSV antes', 'err');
+    clearPreview('csv');
     try {
       const res = await preview.mutateAsync({ csv });
       setRows((res.rows || []).map(r => ({ ...r, original_categoria: r.categoria })));
@@ -139,11 +205,15 @@ export function ImportView() {
   }
 
   function onCancel() {
-    const had = rows.length || csv.trim() || (fileRef.current?.files?.length);
+    const had = rows.length || csv.trim() || pdfFile || (fileRef.current?.files?.length);
     if (!had) return;
     setRows([]);
     setCsv('');
+    setPdfFile(null);
+    setPdfSummary(null);
+    setPdfError('');
     if (fileRef.current) fileRef.current.value = '';
+    if (pdfRef.current) pdfRef.current.value = '';
     toast('Importação cancelada', 'ok');
   }
 
@@ -159,11 +229,17 @@ export function ImportView() {
       }));
     if (!payload.length) return toast('Nada para importar', 'err');
     try {
-      const res = await confirm.mutateAsync(payload);
+      const res = await confirm.mutateAsync(source === 'pdf'
+        ? { rows: payload, import_kind: 'pdf', cartao: pdfCard }
+        : payload);
       toast(`${res.inserted_count} lançamento(s) adicionado(s) ✓`, 'ok');
       setRows([]);
       setCsv('');
+      setPdfFile(null);
+      setPdfSummary(null);
+      setPdfError('');
       if (fileRef.current) fileRef.current.value = '';
+      if (pdfRef.current) pdfRef.current.value = '';
       subpageSignal.value = null;
       setTab('history');
     } catch (err) {
@@ -198,14 +274,27 @@ export function ImportView() {
           class="import-textarea"
           placeholder={'date,title,amount\n2026-05-04,IFOOD *RESTAURANT,42.90'}
           value={csv}
-          onInput={(e) => setCsv(e.currentTarget.value)}
+          onInput={(e) => {
+            if (source !== 'csv') clearPreview('csv');
+            setPdfFile(null);
+            setCsv(e.currentTarget.value);
+          }}
         />
         <label class="import-file">
           ou enviar arquivo:
           <input type="file" id="import-file" accept=".csv,text/csv" ref={fileRef} onChange={onFile} />
         </label>
+        <label class="import-file">
+          ou fatura Itaú em PDF:
+          <input type="file" accept="application/pdf,.pdf" ref={pdfRef} onChange={onPdfFile} />
+        </label>
+        {pdfFile && <div class="import-pdf-status">
+          {pdfBusy ? 'Lendo fatura localmente…' : `${pdfFile.name}${pdfSummary ? ` · ${pdfSummary.rows.length} lançamentos · ${formatBRL(pdfSummary.totalCents)}` : ''}`}
+          {pdfSummary && <label>Cartão <select value={pdfCard} onChange={e => setPdfCard(e.currentTarget.value)}>{cardsSignal.value.map(c => <option value={c.name}>{c.name}</option>)}</select></label>}
+        </div>}
+        {pdfError && <div class="preview-invalid">{pdfError}</div>}
         <div class="import-btn-row">
-          <button class="import-btn" type="button" disabled={preview.isPending} onClick={onPreview}>
+          <button class="import-btn" type="button" disabled={preview.isPending || pdfBusy || source === 'pdf'} onClick={onPreview}>
             {preview.isPending ? 'Processando...' : 'Pré-visualizar'}
           </button>
           <button class="import-btn primary" type="button" disabled={!canConfirm} onClick={onConfirm}>

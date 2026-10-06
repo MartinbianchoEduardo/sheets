@@ -393,7 +393,10 @@ const handleImportPreview = authed(async (env, body) => {
 });
 
 const handleImportConfirm = authed(async (env, body) =>
-  resultToResponse(env, await confirmImport(env, body.rows || [])),
+  resultToResponse(env, await confirmImport(env, body.rows || [], {
+    import_kind: body.import_kind,
+    cartao: body.cartao,
+  })),
 );
 
 // ---------- /api/budgets/* ----------
@@ -600,4 +603,3 @@ async function handleRefresh(request, env) {
   const jwt = await issueSession(env);
   return jsonResponse({ ok: true, jwt }, {}, env);
 }
-

@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "tail": "wrangler tail"
+    "tail": "wrangler tail",
+    "test": "node --test src/import.test.js"
   },
   "dependencies": {
     "@simplewebauthn/server": "^13.1.0"

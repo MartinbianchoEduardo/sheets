@@ -10,7 +10,7 @@ export function useImportPreview() {
 export function useImportConfirm() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (rows) => api('import/confirm', { rows }),
+    mutationFn: (payload) => api('import/confirm', Array.isArray(payload) ? { rows: payload } : payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] });
       qc.invalidateQueries({ queryKey: ['summary'] });
