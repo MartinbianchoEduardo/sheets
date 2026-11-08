@@ -41,9 +41,10 @@ function DisplayRow({ row, faturas, onLongPress }) {
   const press = useLongPress(onLongPress);
   return (
     <div class="entry" data-id={row.id} {...press}>
-      <div class="entry-desc">{row.descricao}</div>
+      <div class="entry-desc">{row.source === 'wallet' && <span class="automation-mark" title="Registrado pelo Atalhos" aria-label="Registrado pelo Atalhos">⚡ </span>}{row.descricao}</div>
       <div class="entry-valor">{formatBRL(row.valor_cents)}</div>
       <div class="entry-meta">
+        {row.source === 'wallet' && <span>{new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(new Date(row.created_at))}</span>}
         <span><CategoryDot category={row.categoria} /> {row.categoria}</span>
         {row.cartao && (
           <span class="entry-cartao" style={{ borderBottomColor: cardColor(row.cartao) || '#888' }}>

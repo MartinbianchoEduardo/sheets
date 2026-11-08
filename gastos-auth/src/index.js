@@ -35,6 +35,7 @@ import {
   listRecurring, createRecurring, updateRecurring, deleteRecurring, getRecurringStatus,
 } from './recurring.js';
 import { getHeatmap } from './heatmap.js';
+import { handleCapture, captureStatus, rotateCaptureKey, revokeCaptureKey } from './capture.js';
 
 export default {
   async fetch(request, env) {
@@ -54,6 +55,10 @@ export default {
 
       if (request.method === 'POST') {
         switch (path) {
+          case '/capture/wallet': return handleCapture(request, env);
+          case '/api/capture/status': return handleCaptureStatus(request, env);
+          case '/api/capture/rotate': return handleCaptureRotate(request, env);
+          case '/api/capture/revoke': return handleCaptureRevoke(request, env);
           case '/auth/register/options': return handleRegisterOptions(request, env);
           case '/auth/register/verify':  return handleRegisterVerify(request, env);
           case '/auth/login/options':    return handleLoginOptions(request, env);
@@ -335,6 +340,11 @@ function authed(handler) {
     return handler(env, body);
   };
 }
+
+const captureResponse = (env, data) => jsonResponse({ ok: true, ...data }, { headers: { 'Cache-Control': 'no-store' } }, env);
+const handleCaptureStatus = authed(async env => captureResponse(env, await captureStatus(env)));
+const handleCaptureRotate = authed(async env => captureResponse(env, await rotateCaptureKey(env)));
+const handleCaptureRevoke = authed(async env => captureResponse(env, await revokeCaptureKey(env)));
 
 // ---------- /api/rules/* ----------
 

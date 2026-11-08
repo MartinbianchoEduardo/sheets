@@ -44,6 +44,10 @@
   color: var(--text-dim);
   font: 11px 'JetBrains Mono', monospace;
 }
+.import-matches { grid-column: 1 / -1; font-size: 12px; color: var(--text-dim); }
+.import-matches summary { cursor: pointer; color: var(--accent, #f5ad68); padding: 8px 0; }
+.import-matches > div { display: grid; gap: 4px; padding: 8px 0; border-top: 1px solid var(--border); }
+.import-matches p { margin: 8px 0; }
 .import-pdf-status label { display: flex; align-items: center; gap: 6px; }
 .import-pdf-status select {
   max-width: 150px;

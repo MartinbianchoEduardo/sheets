@@ -27,7 +27,7 @@ function addDaysIso(iso, n) {
 function DrillRow({ row, onTap }) {
   return (
     <button class="drill-row" type="button" data-id={row.id} onClick={onTap}>
-      <span class="drill-desc">{row.descricao}</span>
+      <span class="drill-desc">{row.source === 'wallet' && <span title="Registrado pelo Atalhos" aria-label="Registrado pelo Atalhos">⚡ </span>}{row.descricao}</span>
       <span class="drill-val">{formatBRL(row.valor_cents)}</span>
       <span class="drill-date">
         <CategoryDot category={row.categoria} /> {row.categoria}

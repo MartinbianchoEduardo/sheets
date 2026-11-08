@@ -5,7 +5,8 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       gcTime: 30 * 60 * 1000,
-      refetchOnWindowFocus: true,
+      // Shortcuts can add purchases while the app is in the background.
+      refetchOnWindowFocus: 'always',
     },
   },
 });

@@ -4,13 +4,14 @@ A mobile-first personal expense tracker. Open the app on your phone, authenticat
 
 ## What's interesting about it
 
-I wanted to find out how far you can push **"zero secrets in the frontend"** for a real app. The static page is fully public — anyone can fetch its source — yet it has no exploitable credentials, because every backend call requires a WebAuthn signature from a passkey bound to the device's hardware Secure Enclave.
+The static website contains no embedded credentials. Passkey authentication issues a session JSON Web Token (JWT) for browser requests.
+Apple Shortcuts uses a separate capture key that can only add expenses.
 
 A few decisions worth highlighting:
 
-- **Three independent auth layers.** A passkey signature unlocks a short-lived JWT, which unlocks a server-to-server shared secret with the data layer. Compromising any single layer doesn't get you in.
+- **Worker access control.** Browser requests require a passkey session. Wallet captures require a separate, revocable key. Only the Worker accesses D1.
 - **Stateless WebAuthn challenges.** Challenges are HMAC-signed tokens passed through the client rather than stored in KV — half the round-trips and no replay-by-stale-state risk.
-- **Tiny Preact + Vite app, no React/Next bloat.** ~33 kB gzipped. Cross-component state in `@preact/signals`; data layer is stale-while-revalidate via TanStack Query. Mobile-first PWA installable to the home screen, with proactive JWT refresh so long-open tabs never dump you back to the lock screen.
+- **Preact + Vite frontend.** Signals share component state. TanStack Query refreshes server data when the app returns to the foreground.
 - **iOS user-activation chain preserved end-to-end.** No `prompt()` / `setTimeout` between a tap and the WebAuthn ceremony — a subtle constraint that silently breaks WebAuthn on iOS Safari if violated.
 
 ## Stack
@@ -23,7 +24,7 @@ A few decisions worth highlighting:
 ## Architecture
 
 ```
-┌──────────────────┐   HTTPS + short-lived JWT   ┌────────────────────────┐
+┌──────────────────┐   HTTPS + session JWT      ┌────────────────────────┐
 │ Browser (Face ID)│ ──────────────────────────▶ │ Cloudflare Worker      │
 │ Preact PWA       │                              │  • WebAuthn ceremonies │
 │ no secrets       │                              │  • JWT issuance        │
@@ -36,7 +37,22 @@ A few decisions worth highlighting:
                                                   └────────────────────────┘
 ```
 
-The frontend holds nothing sensitive. The Worker is the trust boundary — it owns the only credential that can reach the data layer, and it only issues sessions in exchange for a fresh, signed passkey challenge.
+The Worker controls database access. Browser sessions require a signed passkey challenge.
+Runtime session tokens and newly issued capture keys are private, even though the static website contains no credentials.
+
+## Wallet capture
+
+Apple Shortcuts can submit Wallet amounts and merchant names without opening Gastos.
+The Worker applies existing merchant rules and saves each purchase directly into `transactions`.
+Captures use `Itaú Latam Pass`, the São Paulo receipt date, and a visible ⚡ marker.
+Unknown merchants use `Outro`.
+
+Config contains key creation, revocation, and iPhone setup instructions.
+The capture key cannot read history or edit expenses.
+CSV and PDF imports show possible duplicates with equal values or descriptions in the same fatura.
+The user decides which incoming rows to remove.
+
+See [Wallet setup and request contract](WALLET_SETUP.md) for setup, deployment, and limitations.
 
 ## Status
 

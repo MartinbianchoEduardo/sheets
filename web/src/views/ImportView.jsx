@@ -104,8 +104,17 @@ function PreviewRow({ row, dupCsv, onChangeCategoria, onDismiss }) {
         <span>{row.fatura_nome || '—'}</span>
         {outro && <span class="outro-flag">Sem regra</span>}
         {row.ja_existe && <span class="dup-flag">já existe</span>}
-        {dupCsv && <span class="dup-flag">duplicado nesta importação</span>}
+        {dupCsv && <span class="dup-flag">valor ou descrição repetidos no arquivo</span>}
       </div>
+      {row.possiveis_duplicados?.length > 0 && <details class="import-matches">
+        <summary>{row.possiveis_duplicados.length} possível(is) duplicado(s) · comparar</summary>
+        {row.possiveis_duplicados.map((match, i) => <div key={match.id || i}>
+          <strong>{match.source === 'wallet' ? '⚡ ' : ''}{match.descricao}</strong>
+          <span>{formatDate(match.data)} · {formatBRL(match.valor_cents)} · {match.cartao || 'sem cartão'}</span>
+          <span>{[match.mesmo_valor && 'mesmo valor', match.mesma_descricao && 'mesma descrição'].filter(Boolean).join(' · ')}</span>
+        </div>)}
+        <p>Se já estiver registrado, remova a linha desta importação pelo ×</p>
+      </details>}
     </div>
   );
 }
@@ -195,8 +204,10 @@ export function ImportView() {
   async function onPreview() {
     if (!csv.trim()) return toast('Cole o CSV antes', 'err');
     clearPreview('csv');
+    const version = sourceVersion.current;
     try {
       const res = await preview.mutateAsync({ csv });
+      if (sourceVersion.current !== version) return;
       setRows((res.rows || []).map(r => ({ ...r, original_categoria: r.categoria })));
     } catch (err) {
       if (err.message === 'csv_parse_failed') toast('CSV inválido — confira o cabeçalho date,title,amount', 'err');
@@ -207,7 +218,7 @@ export function ImportView() {
   function onCancel() {
     const had = rows.length || csv.trim() || pdfFile || (fileRef.current?.files?.length);
     if (!had) return;
-    setRows([]);
+    clearPreview('csv');
     setCsv('');
     setPdfFile(null);
     setPdfSummary(null);
@@ -252,18 +263,19 @@ export function ImportView() {
   const outroCount = valid.filter(r => r.categoria === 'Outro').length;
   const canConfirm = valid.length > 0 && !confirm.isPending;
 
-  // Keys that appear more than once in the current batch; recomputed as rows
-  // are removed so the flag drops off the survivor.
   const csvDupKeys = useMemo(() => {
-    const counts = new Map();
+    const values = new Map();
+    const descriptions = new Map();
     for (const r of rows) {
       if (r.invalid) continue;
-      const k = dupKey(r);
-      counts.set(k, (counts.get(k) || 0) + 1);
+      const d = r.descricao.trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+      values.set(r.valor_cents, (values.get(r.valor_cents) || 0) + 1);
+      descriptions.set(d, (descriptions.get(d) || 0) + 1);
     }
-    return new Set([...counts].filter(([, n]) => n > 1).map(([k]) => k));
+    return new Set(rows.filter(r => !r.invalid && (values.get(r.valor_cents) > 1
+      || descriptions.get(r.descricao.trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR')) > 1)).map(dupKey));
   }, [rows]);
-  const dupCount = valid.filter(r => r.ja_existe || csvDupKeys.has(dupKey(r))).length;
+  const dupCount = valid.filter(r => r.ja_existe || r.possiveis_duplicados?.length || csvDupKeys.has(dupKey(r))).length;
 
   return (
     <div>
@@ -275,7 +287,7 @@ export function ImportView() {
           placeholder={'date,title,amount\n2026-05-04,IFOOD *RESTAURANT,42.90'}
           value={csv}
           onInput={(e) => {
-            if (source !== 'csv') clearPreview('csv');
+            clearPreview('csv');
             setPdfFile(null);
             setCsv(e.currentTarget.value);
           }}
@@ -300,7 +312,7 @@ export function ImportView() {
           <button class="import-btn primary" type="button" disabled={!canConfirm} onClick={onConfirm}>
             {confirm.isPending ? 'Enviando...' : 'Confirmar'}
           </button>
-          <button class="import-btn" type="button" disabled={!canConfirm} onClick={onCancel}>Cancelar</button>
+          <button class="import-btn" type="button" disabled={confirm.isPending || !(rows.length || csv || pdfFile)} onClick={onCancel}>Cancelar</button>
         </div>
       </div>
 
@@ -308,7 +320,7 @@ export function ImportView() {
         <div class="import-section">
           <div class="preview-summary">
             <span>{valid.length} lançamento{valid.length === 1 ? '' : 's'}</span>
-            {dupCount > 0 && <span class="dup-flag">{dupCount} duplicado{dupCount === 1 ? '' : 's'}</span>}
+            {dupCount > 0 && <span class="dup-flag">{dupCount} possível(is) duplicado(s)</span>}
             <span>{outroCount} sem regra</span>
           </div>
           {rows.map((r, i) => (

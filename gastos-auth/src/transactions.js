@@ -38,7 +38,7 @@ function validateTxInput(input, { partial = false, custom = [], cards = [] } = {
 
 const SELECT_TX = `
   SELECT id, data, descricao, valor_cents, categoria, cartao, fatura_id, notes,
-         manually_categorized, created_at, updated_at
+         manually_categorized, created_at, updated_at, source
     FROM transactions`;
 
 export async function getTx(env, id) {
@@ -90,7 +90,7 @@ export async function listTx(env, filter = {}) {
   return query(env, sql, ...params, limit, offset);
 }
 
-export async function createTx(env, input) {
+export async function createTx(env, input, { source = null, captureId = null } = {}) {
   const errs = validateTxInput(input, {
     custom: await customCategoryNames(env),
     cards: await cardList(env),
@@ -101,12 +101,13 @@ export async function createTx(env, input) {
   const t = now();
   const id = crypto.randomUUID();
 
-  await exec(
+  const inserted = await exec(
     env,
     `INSERT INTO transactions
        (id, data, descricao, valor_cents, categoria, cartao, fatura_id, notes,
-        manually_categorized, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        manually_categorized, created_at, updated_at, source, capture_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(capture_id) DO NOTHING`,
     id,
     input.data,
     input.descricao.trim(),
@@ -118,7 +119,10 @@ export async function createTx(env, input) {
     input.manually_categorized ? 1 : 0,
     t,
     t,
+    source,
+    captureId,
   );
+  if (captureId) return { duplicate: inserted.meta.changes === 0 };
   return { transaction: await getTx(env, id) };
 }
 

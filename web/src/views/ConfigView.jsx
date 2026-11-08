@@ -8,6 +8,7 @@ import { useFaturas, useCreateFatura, useUpdateFatura, useDeleteFatura } from '.
 import { useBudgets, useUpsertBudget } from '../hooks/useBudgets.js';
 import { CategoryDot } from '../components/CategoryDot.jsx';
 import { useToast } from '../components/Toast.jsx';
+import { CaptureSettings } from '../components/CaptureSettings.jsx';
 
 function ActionCards() {
   return (
@@ -22,7 +23,7 @@ function ActionCards() {
         </div>
         <div class="ac-body">
           <div class="ac-title">Importar</div>
-          <div class="ac-sub">Carregar CSV do cartão</div>
+          <div class="ac-sub">Carregar CSV ou PDF Itaú</div>
         </div>
         <div class="ac-chev">›</div>
       </button>
@@ -521,6 +522,7 @@ export function ConfigView() {
             <SettingsForm key={settings.updated_at} settings={settings} faturas={faturas} />
             <CategoriesSection />
             <CardsSection />
+            <CaptureSettings />
             <BudgetsSection />
             <FaturasSection faturas={faturas} />
           </>
