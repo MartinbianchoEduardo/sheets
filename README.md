@@ -48,6 +48,8 @@ Captures use `Itaú Latam Pass`, the São Paulo receipt date, and a visible ⚡ 
 Unknown merchants use `Outro`.
 
 Config contains key creation, revocation, and iPhone setup instructions.
+The basic automation sends only amount and merchant. The Worker generates the capture identifier.
+Separate requests create separate entries. Clients can supply a UUID to prevent duplicate retries.
 The capture key cannot read history or edit expenses.
 CSV and PDF imports show possible duplicates with equal values or descriptions in the same fatura.
 The user decides which incoming rows to remove.

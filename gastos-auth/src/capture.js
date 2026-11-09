@@ -77,7 +77,7 @@ export async function handleCapture(request, env) {
   const descricao = typeof body?.description === 'string' ? body.description.trim() : '';
   const valor_cents = captureAmountCents(body?.amount);
   const fields = [];
-  if (!UUID.test(body?.event_id || '')) fields.push('event_id');
+  if (body?.event_id !== undefined && (typeof body.event_id !== 'string' || !UUID.test(body.event_id))) fields.push('event_id');
   if (!descricao || descricao.length > 200) fields.push('description');
   if (valor_cents === null) fields.push('amount');
   if (body?.currency != null && body.currency !== 'BRL') fields.push('currency');
@@ -86,7 +86,7 @@ export async function handleCapture(request, env) {
   const { categoria } = applyRule(descricao, await listRules(env));
   const result = await createTx(env, {
     data: todayIsoSaoPaulo(), descricao, valor_cents, categoria, cartao: DEFAULT_CARD,
-  }, { source: 'wallet', captureId: body.event_id.toLowerCase() });
+  }, { source: 'wallet', captureId: body.event_id?.toLowerCase() ?? crypto.randomUUID() });
   if (result.error) return respond({ ok: false, ...result }, 400);
   return respond({ ok: true, saved: true, duplicate: result.duplicate });
 }

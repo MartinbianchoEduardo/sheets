@@ -50,18 +50,24 @@ export function CaptureSettings() {
       <details>
         <summary>Como configurar no iPhone</summary>
         <ol>
-          <li>No Atalhos, crie uma automação Wallet / Transação para o cartão Itaú Latam Pass.</li>
-          <li>Ative a execução imediata. Permita a execução com o iPhone bloqueado, se essa opção aparecer.</li>
-          <li>Na própria automação, extraia Amount e Merchant da Entrada do Atalho. Toque na variável para escolher cada propriedade.</li>
-          <li>Adicione Gerar UUID. Use o resultado em event_id.</li>
-          <li>Adicione Obter Conteúdo de URL com o endereço acima e método POST.</li>
-          <li>Nos cabeçalhos, adicione Authorization com o valor copiado e Content-Type com application/json.</li>
-          <li>No corpo JSON, adicione amount com Amount, description com Merchant e event_id com o UUID.</li>
-          <li>Confira o campo ok da resposta. Se for verdadeiro, mostre uma notificação de registro concluído.</li>
+          <li>No Atalhos do iOS 27, crie um atalho chamado Gastos Wallet. Abra Editar → Automação.</li>
+          <li>Escolha o gatilho Transação e selecione o cartão Itaú em Quando eu aproximar. Configure a execução imediata, sem confirmação.</li>
+          <li>Adicione Obter Conteúdo de URL. Cole o endereço acima e abra as opções da ação.</li>
+          <li>Escolha o método POST e o corpo da solicitação JSON.</li>
+          <li>Nos cabeçalhos, adicione Authorization com o valor copiado, incluindo Bearer.</li>
+          <li>No corpo JSON, adicione um campo de texto com a chave amount. No valor, selecione a variável Transação.</li>
+          <li>Toque na variável Transação dentro desse valor e escolha a propriedade Amount / Valor.</li>
+          <li>Adicione outro campo de texto com a chave description. Selecione Transação e escolha Merchant / Comerciante.</li>
+          <li>Adicione Mostrar Notificação após a solicitação. Use Gastos como título e o resultado Conteúdo de URL como texto.</li>
+          <li>Salve a automação. A resposta com ok e saved verdadeiros indica que o registro foi salvo.</li>
         </ol>
-        <p>Não envie o objeto Transação inteiro. Envie os campos Amount e Merchant separadamente.</p>
+        <p>Os nomes variam conforme o idioma e o iOS. A variável pode aparecer como Entrada do Atalho. A Apple não publica a lista completa de propriedades da Transação.</p>
+        <p>Os valores devem ser variáveis, não as palavras Amount ou Merchant. Não envie o objeto Transação inteiro.</p>
+        <p>O servidor gera o identificador. Não é necessário adicionar Gerar UUID ou event_id.</p>
+        <p>O Gastos lê o corpo JSON sem exigir o cabeçalho Content-Type. Não é necessário adicioná-lo manualmente.</p>
         <p>O valor deve estar em reais. A data e a hora usam o momento de recebimento em São Paulo.</p>
         <p>A automação precisa de internet. Não há reenvio automático sem conexão.</p>
+        <p>Uma nova execução cria um novo registro, mesmo com o mesmo valor e estabelecimento.</p>
         <p>Este método usa os campos do Wallet, não interpreta texto livre de notificações. Compras recusadas podem exigir exclusão manual.</p>
       </details>
     </>}
